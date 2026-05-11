@@ -4,10 +4,10 @@ import { auth } from "@/lib/auth"
 import { z } from "zod"
 
 const updateActivitySchema = z.object({
-  title:       z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
   description: z.string().optional(),
-  isDone:      z.boolean().optional(),
-  dueDate:     z.string().optional(),
+  isDone: z.boolean().optional(),
+  dueDate: z.string().optional(),
 })
 
 // PUT /api/activities/[id]
@@ -15,32 +15,59 @@ export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  try {
+    const session = await auth()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await context.params
+
+    const body = await req.json()
+
+    const parsed = updateActivitySchema.safeParse(body)
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Validasi gagal",
+          details: parsed.error.flatten(),
+        },
+        { status: 400 }
+      )
+    }
+
+    const activity = await prisma.activity.update({
+      where: { id },
+      data: {
+        ...parsed.data,
+        dueDate: parsed.data.dueDate
+          ? new Date(parsed.data.dueDate)
+          : undefined,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(activity)
+  } catch (error) {
+    console.error("PUT ACTIVITY ERROR:", error)
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    )
   }
-
-  const { id } = await context.params   // ← await params
-
-  const body   = await req.json()
-  const parsed = updateActivitySchema.safeParse(body)
-
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Validasi gagal" }, { status: 400 })
-  }
-
-  const activity = await prisma.activity.update({
-    where: { id },
-    data:  {
-      ...parsed.data,
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : undefined,
-    },
-    include: {
-      user: { select: { id: true, name: true } },
-    },
-  })
-
-  return NextResponse.json(activity)
 }
 
 // DELETE /api/activities/[id]
@@ -48,14 +75,31 @@ export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  try {
+    const session = await auth()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await context.params
+
+    await prisma.activity.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({
+      message: "Aktivitas dihapus",
+    })
+  } catch (error) {
+    console.error("DELETE ACTIVITY ERROR:", error)
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    )
   }
-
-  const { id } = await context.params   // ← await params
-
-  await prisma.activity.delete({ where: { id } })
-
-  return NextResponse.json({ message: "Aktivitas dihapus" })
 }
