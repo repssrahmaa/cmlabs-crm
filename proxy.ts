@@ -120,9 +120,10 @@ export default auth((req) => {
       pathname,
       rule.allow
     )
+
     return NextResponse.redirect(unauthorizedUrl)
   }
-
+ console.log("PROXY RUNNING:", pathname)
   return NextResponse.next()
 })
 
