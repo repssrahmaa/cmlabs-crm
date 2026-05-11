@@ -57,13 +57,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
+        console.log("CREDENTIALS:", credentials)
         const parsed = loginSchema.safeParse(credentials)
+         console.log("PARSED:", parsed)
         if (!parsed.success) return null
 
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         })
-
+ console.log("USER:", user)
         if (!user)          return null
         if (!user.isActive) return null
 
@@ -71,6 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           parsed.data.password,
           user.password
         )
+        console.log("PASSWORD MATCH:", match)
         if (!match) return null
 
         return {
