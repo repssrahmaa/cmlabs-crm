@@ -1,0 +1,121 @@
+/* ── Reset ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── Light Mode ─────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  --bg-page:      #f0f4f8;
+  --bg-card:      #ffffff;
+  --bg-card2:     #f8fafc;
+  --bg-sidebar:   #1a2332;
+  --bg-input:     #ffffff;
+  --bg-hover:     #f1f5f9;
+  --bg-glass:     rgba(255,255,255,0.7);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-inverse:   #f8fafc;
+
+  --border:       #e2e8f0;
+  --border-focus: #4B9EF3;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-glow: 0 4px 20px rgba(75,158,243,0.25);
+
+  --chart-grid: #f1f5f9;
+  --chart-text: #94a3b8;
+
+  --primary:      #4B9EF3;
+  --primary-dark: #1a6fd4;
+  --primary-pale: #eff6ff;
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #ef4444;
+  --purple:       #8b5cf6;
+
+  --hero-bg: linear-gradient(135deg, #1a2332 0%, #243447 50%, #1e3a5f 100%);
+  --hero-glass: rgba(255,255,255,0.06);
+  --hero-border: rgba(255,255,255,0.10);
+}
+
+/* ── Dark Mode ──────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-page:      #0d1117;
+  --bg-card:      #161b22;
+  --bg-card2:     #1c2230;
+  --bg-sidebar:   #0d1117;
+  --bg-input:     #1c2230;
+  --bg-hover:     #1c2230;
+  --bg-glass:     rgba(22,27,34,0.85);
+
+  --text-primary:   #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted:     #484f58;
+  --text-inverse:   #0d1117;
+
+  --border:       #30363d;
+  --border-focus: #4B9EF3;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.6);
+  --shadow-glow: 0 4px 24px rgba(75,158,243,0.35);
+
+  --chart-grid: #21262d;
+  --chart-text: #484f58;
+
+  --primary:      #4B9EF3;
+  --primary-dark: #388bfd;
+  --primary-pale: rgba(75,158,243,0.1);
+  --success:      #3fb950;
+  --warning:      #d29922;
+  --danger:       #f85149;
+  --purple:       #a371f7;
+
+  --hero-bg: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0c2136 100%);
+  --hero-glass: rgba(255,255,255,0.04);
+  --hero-border: rgba(255,255,255,0.07);
+}
+
+/* ── Global ─────────────────────────────────────── */
+body {
+  background: var(--bg-page);
+  color:      var(--text-primary);
+}
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ── Selection ──────────────────────────────────── */
+::selection { background: rgba(75,158,243,0.2); color: var(--primary); }
+
+/* ── Focus ──────────────────────────────────────── */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+input, select, textarea {
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(75,158,243,0.15) !important;
+}
