@@ -339,7 +339,7 @@ export default function DashboardPage() {
           <div key={i} style={{
             position: "absolute", top: c.t, right: c.r,
             width: c.s, height: c.s, borderRadius: "50%",
-            background: "#4B9EF3", opacity: c.o, pointerEvents: "none",
+            background: "var(--primary)", opacity: c.o, pointerEvents: "none",
           }} />
         ))}
 
@@ -357,7 +357,7 @@ export default function DashboardPage() {
               <p style={{ margin: "0 0 2px", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 {format(new Date(), "EEEE, d MMMM yyyy", { locale: localeId })}
               </p>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#f8fafc" }}>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>
                 Halo, {session?.user?.name?.split(" ")[0]} 👋
               </h1>
             </div>

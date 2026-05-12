@@ -286,17 +286,17 @@ export default function TeamPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 480, padding: 28 }}
+            style={{ background: "var(--bg-card)", borderRadius: 12, width: "100%", maxWidth: 480, padding: 28 }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
                 {editUser ? "Edit Anggota" : "Tambah Anggota"}
               </h2>
-              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>✕</button>
             </div>
 
             {error && (
-              <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 6, color: "#dc2626", fontSize: 14 }}>
+              <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text)", fontSize: 14 }}>
                 {error}
               </div>
             )}

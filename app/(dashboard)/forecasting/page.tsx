@@ -115,12 +115,12 @@ export default function ForecastingPage() {
           onClick={fetchForecast}
           style={{
             padding:      "5px 12px",
-            background:   "#fff",
-            border:       "1px solid #fecaca",
+            background:   "var(--bg-card)",
+            border:       "1px solid var(--border)",
             borderRadius: 6,
             cursor:       "pointer",
             fontSize:     13,
-            color:        "#dc2626",
+            color:        "var(--text)",
           }}
         >
           Coba lagi
@@ -139,7 +139,7 @@ export default function ForecastingPage() {
         background:   "linear-gradient(135deg, #1e293b, #334155)",
         borderRadius: 12,
         padding:      24,
-        color:        "#fff",
+        color:        "var(--text)",
         display:      "flex",
         justifyContent: "space-between",
         alignItems:   "flex-start",
@@ -150,7 +150,7 @@ export default function ForecastingPage() {
           <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700 }}>
             Dashboard Forecasting
           </h2>
-          <p style={{ margin: 0, fontSize: 13, color: "#94a3b8" }}>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>
             Proyeksi revenue berdasarkan pipeline aktif
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function ForecastingPage() {
             {connected ? "Live" : "Offline"}
           </span>
           {lastUpdated && (
-            <span style={{ fontSize: 11, color: "#64748b" }}>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
               · {format(lastUpdated, "HH:mm:ss", { locale: localeId })}
             </span>
           )}
@@ -179,7 +179,7 @@ export default function ForecastingPage() {
               background:   "rgba(255,255,255,0.1)",
               border:       "1px solid rgba(255,255,255,0.2)",
               borderRadius: 6,
-              color:        "#fff",
+              color:        "var(--text)",
               fontSize:     11,
               cursor:       "pointer",
             }}
@@ -223,7 +223,7 @@ export default function ForecastingPage() {
           },
         ].map((card) => (
           <div key={card.label} style={{
-background: "var(--bg-card)", // ← BUKAN #fff
+background: "var(--bg-card)",
 borderRadius: 12,
 padding: 20,
 border: "1px solid var(--border)",
