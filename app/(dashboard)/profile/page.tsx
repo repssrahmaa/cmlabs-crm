@@ -1,228 +1,290 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Button from "@/components/ui/Button"
 
 interface Profile {
-  id:        string
-  name:      string
-  email:     string
-  role:      string
-  phone:     string | null
-  createdAt: string
-  _count:    { assignedLeads: number; activities: number }
+id: string
+name: string
+email: string
+role: string
+phone: string | null
+createdAt: string
+_count: { assignedLeads: number; activities: number }
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN:     "Admin",
-  MANAGER:   "Manajer",
-  SALES:     "Sales",
-  MARKETING: "Marketing",
+const ROLE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+SUPER_ADMIN: { label: "Super Admin", color: "#ef4444", icon: "👑" },
+EXECUTIVE: { label: "Executive", color: "#8b5cf6", icon: "💼" },
+SALES_MANAGER: { label: "Sales Manager", color: "#4B9EF3", icon: "📊" },
+ACCOUNT_EXECUTIVE: { label: "Account Executive", color: "#10b981", icon: "🎯" },
+VIEWER: { label: "Viewer", color: "#64748b", icon: "👁️" },
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile]   = useState<Profile | null>(null)
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-  const [success, setSuccess]   = useState("")
-  const [error, setError]       = useState("")
+const [profile, setProfile] = useState<Profile | null>(null)
+const [loading, setLoading] = useState(true)
+const [saving, setSaving] = useState(false)
+const [success, setSuccess] = useState("")
+const [error, setError] = useState("")
+const [showOldPw, setShowOldPw] = useState(false)
+const [showNewPw, setShowNewPw] = useState(false)
+const [showConPw, setShowConPw] = useState(false)
+const [infoForm, setInfoForm] = useState({ name: "", phone: "" })
+const [passForm, setPassForm] = useState({ oldPassword: "", newPassword: "", confirmPassword: "" })
 
-  const [infoForm, setInfoForm] = useState({ name: "", phone: "" })
-  const [passForm, setPassForm] = useState({
-    oldPassword: "", newPassword: "", confirmPassword: "",
-  })
+useEffect(() => {
+fetch("/api/profile")
+.then((r) => r.json())
+.then((d) => {
+setProfile(d)
+setInfoForm({ name: d.name, phone: d.phone ?? "" })
+setLoading(false)
+})
+}, [])
 
-  useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((data) => {
-        setProfile(data)
-        setInfoForm({ name: data.name, phone: data.phone ?? "" })
-        setLoading(false)
-      })
-  }, [])
+async function handleUpdateInfo(e: React.FormEvent) {
+e.preventDefault()
+setSaving(true); setError(""); setSuccess("")
+const res = await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(infoForm) })
+const data = await res.json()
+setSaving(false)
+if (!res.ok) { setError(data.error) }
+else { setProfile((p) => p ? { ...p, ...data } : p); setSuccess("Profil berhasil diperbarui!"); setTimeout(() => setSuccess(""), 3000) }
+}
 
-  async function handleUpdateInfo(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    setError("")
-    setSuccess("")
+async function handleUpdatePassword(e: React.FormEvent) {
+e.preventDefault()
+if (passForm.newPassword !== passForm.confirmPassword) { setError("Konfirmasi password tidak cocok"); return }
+setSaving(true); setError(""); setSuccess("")
+const res = await fetch("/api/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ oldPassword: passForm.oldPassword, newPassword: passForm.newPassword }) })
+const data = await res.json()
+setSaving(false)
+if (!res.ok) { setError(data.error) }
+else { setSuccess("Password berhasil diperbarui!"); setPassForm({ oldPassword: "", newPassword: "", confirmPassword: "" }); setTimeout(() => setSuccess(""), 3000) }
+}
 
-    const res = await fetch("/api/profile", {
-      method:  "PUT",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(infoForm),
-    })
-    const data = await res.json()
-    setSaving(false)
+if (loading) return (
+<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+<div style={{ textAlign: "center" }}>
+<div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin 0.7s linear infinite", margin: "0 auto 12px" }} />
+<p style={{ color: "var(--text-muted)", fontSize: 13 }}>Memuat profil...</p>
+</div>
+</div>
+)
 
-    if (!res.ok) {
-      setError(data.error)
-    } else {
-      setProfile((p) => p ? { ...p, ...data } : p)
-      setSuccess("Profil berhasil diperbarui!")
-      setTimeout(() => setSuccess(""), 3000)
-    }
-  }
+if (!profile) return null
+const roleCfg = ROLE_CONFIG[profile.role] ?? ROLE_CONFIG.VIEWER
 
-  async function handleUpdatePassword(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-    setSuccess("")
+return (
+<div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
 
-    if (passForm.newPassword !== passForm.confirmPassword) {
-      setError("Konfirmasi password tidak cocok")
-      return
-    }
+{/* Alert */}
+{(success || error) && (
+<div className="animate-scaleIn" style={{
+display: "flex", alignItems: "center", gap: 10,
+padding: "12px 16px", borderRadius: 12,
+background: success ? "var(--success-pale)" : "var(--danger-pale)",
+border: `1px solid ${success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`,
+color: success ? "var(--success)" : "var(--danger)",
+fontSize: 13, fontWeight: 500,
+}}>
+<span style={{ fontSize: 18 }}>{success ? "✅" : "⚠️"}</span>
+<span>{success || error}</span>
+</div>
+)}
 
-    setSaving(true)
-    const res = await fetch("/api/profile", {
-      method:  "PUT",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
-        oldPassword: passForm.oldPassword,
-        newPassword: passForm.newPassword,
-      }),
-    })
-    const data = await res.json()
-    setSaving(false)
+{/* Profile Hero */}
+<div style={{
+background: "var(--hero-bg, linear-gradient(135deg, var(--hero-from,#0f172a), var(--hero-mid,#1e293b), var(--hero-to,#1e3a5f)))",
+borderRadius: 20,
+padding: "28px 32px",
+position: "relative",
+overflow: "hidden",
+}}>
+<div style={{ position:"absolute", top:-40, right:-40, width:160, height:160, borderRadius:"50%", background:"rgba(75,158,243,0.08)", pointerEvents:"none" }} />
+<div style={{ position:"absolute", bottom:-20, left:40, width:80, height:80, borderRadius:"50%", background:"rgba(139,92,246,0.08)", pointerEvents:"none" }} />
 
-    if (!res.ok) {
-      setError(data.error)
-    } else {
-      setSuccess("Password berhasil diperbarui!")
-      setPassForm({ oldPassword: "", newPassword: "", confirmPassword: "" })
-      setTimeout(() => setSuccess(""), 3000)
-    }
-  }
+<div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+{/* Avatar */}
+<div style={{
+width: 72, height: 72,
+borderRadius: 18,
+background: `linear-gradient(135deg, ${roleCfg.color}, ${roleCfg.color}88)`,
+display: "flex", alignItems: "center",
+justifyContent: "center",
+fontSize: 28, fontWeight: 900, color: "#fff",
+boxShadow: `0 8px 24px ${roleCfg.color}50`,
+border: "2px solid rgba(255,255,255,0.15)",
+flexShrink: 0,
+}}>
+{profile.name.charAt(0).toUpperCase()}
+</div>
 
-  if (loading || !profile) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh", color: "#64748b" }}>
-        Memuat profil...
-      </div>
-    )
-  }
+<div style={{ flex: 1 }}>
+<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
+<h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#f1f5f9" }}>
+{profile.name}
+</h1>
+<span style={{
+display: "flex", alignItems: "center", gap: 4,
+fontSize: 11, fontWeight: 700, padding: "3px 10px",
+borderRadius: 999, background: roleCfg.color + "25",
+color: roleCfg.color === "#ef4444" ? "#fca5a5" : roleCfg.color,
+border: `1px solid ${roleCfg.color}30`,
+}}>
+{roleCfg.icon} {roleCfg.label}
+</span>
+</div>
+<p style={{ margin: "0 0 12px", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+{profile.email}
+</p>
+<div style={{ display: "flex", gap: 16 }}>
+{[
+{ v: profile._count.assignedLeads, l: "Leads", c: "#4B9EF3" },
+{ v: profile._count.activities, l: "Aktivitas", c: "#10b981" },
+].map((s) => (
+<div key={s.l}>
+<div style={{ fontSize: 20, fontWeight: 800, color: s.c }}>{s.v}</div>
+<div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.l}</div>
+</div>
+))}
+</div>
+</div>
+</div>
+</div>
 
-  return (
-    <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      {/* Alert */}
-      {success && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, color: "#16a34a", fontSize: 14 }}>
-          {success}
-        </div>
-      )}
-      {error && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, color: "#dc2626", fontSize: 14 }}>
-          {error}
-        </div>
-      )}
+{/* Info Form */}
+<div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: "1px solid var(--border)" }}>
+<div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--primary-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+✏️
+</div>
+<div>
+<h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Informasi Akun</h3>
+<p style={{ margin: 0, fontSize: 11, color: "var(--text-muted)" }}>Perbarui nama dan nomor telepon</p>
+</div>
+</div>
 
-      {/* Profile Card */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 28, marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 24 }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            background: "#2563eb", color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, fontWeight: 700,
-          }}>
-            {profile.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>{profile.name}</div>
-            <div style={{ fontSize: 14, color: "#64748b", marginTop: 2 }}>{profile.email}</div>
-            <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: "#dbeafe", color: "#2563eb", marginTop: 6, display: "inline-block" }}>
-              {ROLE_LABEL[profile.role]}
-            </span>
-          </div>
-        </div>
+<form onSubmit={handleUpdateInfo} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+{[
+{ label: "Nama Lengkap", key: "name", type: "text", required: true, icon: "👤" },
+{ label: "No. Telepon", key: "phone", type: "text", required: false, icon: "📱" },
+].map(({ label, key, type, required, icon }) => (
+<div key={key}>
+<label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+{label} {required && <span style={{ color: "var(--danger)" }}>*</span>}
+</label>
+<div style={{ position: "relative" }}>
+<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, pointerEvents: "none", opacity: 0.5 }}>{icon}</span>
+<input
+type={type}
+value={(infoForm as any)[key]}
+onChange={(e) => setInfoForm((f) => ({ ...f, [key]: e.target.value }))}
+required={required}
+style={{
+width: "100%",
+padding: "10px 12px 10px 38px",
+background: "var(--bg-input)",
+border: "1px solid var(--border)",
+borderRadius: 10,
+fontSize: 14,
+color: "var(--text-primary)",
+boxSizing: "border-box",
+}}
+/>
+</div>
+</div>
+))}
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-          {[
-            { label: "Leads Ditangani", value: profile._count.assignedLeads },
-            { label: "Total Aktivitas", value: profile._count.activities    },
-          ].map((stat) => (
-            <div key={stat.label} style={{ background: "#f8fafc", borderRadius: 8, padding: 16, textAlign: "center" }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#2563eb" }}>{stat.value}</div>
-              <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+{/* Email (disabled) */}
+<div>
+<label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+Email <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(tidak dapat diubah)</span>
+</label>
+<div style={{ position: "relative" }}>
+<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, opacity: 0.3, pointerEvents: "none" }}>✉️</span>
+<input
+type="email"
+value={profile.email}
+disabled
+style={{ width: "100%", padding: "10px 12px 10px 38px", background: "var(--bg-card2)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 14, color: "var(--text-muted)", boxSizing: "border-box", cursor: "not-allowed" }}
+/>
+</div>
+</div>
 
-      {/* Edit Info */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 28, marginBottom: 20 }}>
-        <h3 style={{ margin: "0 0 20px", fontSize: 16, fontWeight: 600 }}>Informasi Akun</h3>
-        <form onSubmit={handleUpdateInfo} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Nama Lengkap</label>
-            <input
-              type="text"
-              value={infoForm.name}
-              onChange={(e) => setInfoForm((f) => ({ ...f, name: e.target.value }))}
-              required
-              style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, boxSizing: "border-box" }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>Email</label>
-            <input
-              type="email"
-              value={profile.email}
-              disabled
-              style={{ width: "100%", padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 14, boxSizing: "border-box", background: "#f8fafc", color: "#94a3b8" }}
-            />
-            <p style={{ fontSize: 12, color: "#94a3b8", margin: "4px 0 0" }}>Email tidak dapat diubah</p>
-          </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>No. Telepon</label>
-            <input
-              type="text"
-              value={infoForm.phone}
-              onChange={(e) => setInfoForm((f) => ({ ...f, phone: e.target.value }))}
-              style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, boxSizing: "border-box" }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            style={{ padding: "10px", background: saving ? "#93c5fd" : "#2563eb", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
-          >
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
-        </form>
-      </div>
+<Button type="submit" loading={saving} fullWidth>
+Simpan Perubahan
+</Button>
+</form>
+</div>
 
-      {/* Ganti Password */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", padding: 28 }}>
-        <h3 style={{ margin: "0 0 20px", fontSize: 16, fontWeight: 600 }}>Ganti Password</h3>
-        <form onSubmit={handleUpdatePassword} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {[
-            { label: "Password Lama",       key: "oldPassword"     },
-            { label: "Password Baru",       key: "newPassword"     },
-            { label: "Konfirmasi Password", key: "confirmPassword" },
-          ].map(({ label, key }) => (
-            <div key={key}>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>{label}</label>
-              <input
-                type="password"
-                required
-                value={(passForm as any)[key]}
-                onChange={(e) => setPassForm((f) => ({ ...f, [key]: e.target.value }))}
-                style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, boxSizing: "border-box" }}
-              />
-            </div>
-          ))}
-          <button
-            type="submit"
-            disabled={saving}
-            style={{ padding: "10px", background: saving ? "#93c5fd" : "#0f172a", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
-          >
-            {saving ? "Menyimpan..." : "Ganti Password"}
-          </button>
-        </form>
-      </div>
-    </div>
-  )
+{/* Password Form */}
+<div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: "1px solid var(--border)" }}>
+<div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--warning-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+🔐
+</div>
+<div>
+<h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Ganti Password</h3>
+<p style={{ margin: 0, fontSize: 11, color: "var(--text-muted)" }}>Pastikan gunakan password yang kuat</p>
+</div>
+</div>
+
+<form onSubmit={handleUpdatePassword} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+{[
+{ label: "Password Lama", key: "oldPassword", show: showOldPw, setShow: setShowOldPw },
+{ label: "Password Baru", key: "newPassword", show: showNewPw, setShow: setShowNewPw },
+{ label: "Konfirmasi Password", key: "confirmPassword", show: showConPw, setShow: setShowConPw },
+].map(({ label, key, show, setShow }) => (
+<div key={key}>
+<label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+{label} *
+</label>
+<div style={{ position: "relative" }}>
+<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, opacity: 0.4, pointerEvents: "none" }}>🔒</span>
+<input
+type={show ? "text" : "password"}
+required
+value={(passForm as any)[key]}
+onChange={(e) => setPassForm((f) => ({ ...f, [key]: e.target.value }))}
+style={{
+width: "100%",
+padding: "10px 42px 10px 38px",
+background: "var(--bg-input)",
+border: "1px solid var(--border)",
+borderRadius: 10,
+fontSize: 14,
+color: "var(--text-primary)",
+boxSizing: "border-box",
+letterSpacing: show ? "normal" : "0.1em",
+}}
+/>
+<button
+type="button"
+onClick={() => setShow(!show)}
+style={{
+position: "absolute", right: 10, top: "50%",
+transform: "translateY(-50%)",
+background: "none", border: "none",
+cursor: "pointer", fontSize: 15,
+opacity: 0.5, transition: "opacity 0.2s",
+padding: "4px",
+}}
+onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
+onMouseLeave={(e) => e.currentTarget.style.opacity = "0.5"}
+>
+{show ? "🙈" : "👁️"}
+</button>
+</div>
+</div>
+))}
+
+<Button type="submit" variant="warning" loading={saving} fullWidth>
+🔐 Ganti Password
+</Button>
+</form>
+</div>
+</div>
+)
 }
