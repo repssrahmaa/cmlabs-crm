@@ -1,22 +1,23 @@
 "use client"
 
-import { Draggable } from "@hello-pangea/dnd"
+import { Draggable }                    from "@hello-pangea/dnd"
 import { Lead, PRIORITY_COLOR, PRIORITY_LABEL } from "@/types/lead"
 
 interface Props {
-  lead:  Lead
-  index: number
+  lead:    Lead
+  index:   number
   onClick: (lead: Lead) => void
 }
 
+function formatRupiah(v: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency", currency: "IDR", notation: "compact",
+  }).format(v)
+}
+
 export default function LeadCard({ lead, index, onClick }: Props) {
-  const valueFormatted = lead.value
-    ? new Intl.NumberFormat("id-ID", {
-        style:    "currency",
-        currency: "IDR",
-        notation: "compact",
-      }).format(lead.value)
-    : null
+  const pc  = PRIORITY_COLOR[lead.priority]
+  const val = lead.value ? formatRupiah(Number(lead.value)) : null
 
   return (
     <Draggable draggableId={lead.id} index={index}>
@@ -27,32 +28,32 @@ export default function LeadCard({ lead, index, onClick }: Props) {
           {...provided.dragHandleProps}
           onClick={() => onClick(lead)}
           style={{
-            background:   "#fff",
-            borderRadius: 8,
+            background:   snapshot.isDragging
+              ? "var(--primary-pale)"
+              : "var(--kanban-card-bg)",
+            borderRadius: 10,
             padding:      12,
             marginBottom: 8,
-            border:       "1px solid #e2e8f0",
+            border:       `1px solid ${snapshot.isDragging ? "var(--border-focus)" : "var(--border)"}`,
             cursor:       "pointer",
-            boxShadow:    snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
-            transform:    snapshot.isDragging ? "rotate(2deg)" : "none",
-            transition:   "box-shadow 0.2s",
+            boxShadow:    snapshot.isDragging
+              ? "var(--shadow-lg)"
+              : "var(--shadow-xs)",
+            transition:   "box-shadow 0.2s, border-color 0.2s",
             ...provided.draggableProps.style,
           }}
         >
-          {/* Priority Badge */}
+          {/* Priority + Activity count */}
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
             <span style={{
-              fontSize:     11,
-              fontWeight:   600,
-              padding:      "2px 8px",
-              borderRadius: 999,
-              background:   PRIORITY_COLOR[lead.priority] + "20",
-              color:        PRIORITY_COLOR[lead.priority],
+              fontSize:     10, fontWeight: 700,
+              padding:      "2px 8px", borderRadius: 999,
+              background:   pc + "20", color: pc,
             }}>
               {PRIORITY_LABEL[lead.priority]}
             </span>
             {lead._count.activities > 0 && (
-              <span style={{ fontSize: 11, color: "#94a3b8" }}>
+              <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
                 {lead._count.activities} aktivitas
               </span>
             )}
@@ -60,17 +61,15 @@ export default function LeadCard({ lead, index, onClick }: Props) {
 
           {/* Title */}
           <div style={{
-            fontSize:   13,
-            fontWeight: 600,
-            color:      "#0f172a",
-            marginBottom: 4,
-            lineHeight: 1.4,
+            fontSize:     13, fontWeight: 600,
+            color:        "var(--text-primary)",
+            marginBottom: 3, lineHeight: 1.4,
           }}>
             {lead.title}
           </div>
 
           {/* Client */}
-          <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>
             {lead.clientName}
             {lead.clientCompany && ` · ${lead.clientCompany}`}
           </div>
@@ -80,29 +79,25 @@ export default function LeadCard({ lead, index, onClick }: Props) {
             display:        "flex",
             justifyContent: "space-between",
             alignItems:     "center",
-            marginTop:      8,
             paddingTop:     8,
-            borderTop:      "1px solid #f1f5f9",
+            borderTop:      "1px solid var(--border-light)",
           }}>
-            {valueFormatted ? (
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#059669" }}>
-                {valueFormatted}
+            {val ? (
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--success)" }}>
+                {val}
               </span>
             ) : (
-              <span style={{ fontSize: 12, color: "#cbd5e1" }}>Nilai belum diset</span>
+              <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Nilai belum diset</span>
             )}
             {lead.assignedTo && (
               <div style={{
-                width:        24,
-                height:       24,
-                borderRadius: "50%",
-                background:   "#2563eb",
-                display:      "flex",
-                alignItems:   "center",
+                width:          22, height: 22,
+                borderRadius:   "50%",
+                background:     "var(--primary)",
+                display:        "flex", alignItems: "center",
                 justifyContent: "center",
-                fontSize:     10,
-                fontWeight:   700,
-                color:        "#fff",
+                fontSize:       9, fontWeight: 700,
+                color:          "#fff",
               }}>
                 {lead.assignedTo.name.charAt(0).toUpperCase()}
               </div>

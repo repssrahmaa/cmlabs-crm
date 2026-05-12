@@ -181,8 +181,8 @@ export default function TeamPage() {
           const count = users.filter((u) => u.role === roleKey).length
           const cfg   = ROLE_COLOR[roleKey]
           return (
-            <div key={roleKey} style={{ background: "#fff", borderRadius: 10, padding: 14, border: "1px solid #e2e8f0" }}>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>{label}</div>
+            <div key={roleKey} style={{ background: "var(--bg-card)", borderRadius: 10, padding: 14, border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>{label}</div>
               <div style={{ fontSize: 24, fontWeight: 700, color: cfg.color }}>{count}</div>
             </div>
           )
@@ -190,12 +190,12 @@ export default function TeamPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+      <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#f8fafc" }}>
+            <tr style={{ background: "var(--bg-header)" }}>
               {["Nama", "Email", "Role", "Telepon", "Leads", "Status", "Aksi"].map((h) => (
-                <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   {h}
                 </th>
               ))}
@@ -203,9 +203,9 @@ export default function TeamPage() {
           </thead>
           <tbody>
             {users.map((user, i) => {
-              const cfg = ROLE_COLOR[user.role] ?? { bg: "#f8fafc", color: "#64748b" }
+              const cfg = ROLE_COLOR[user.role] ?? { bg: "var(--bg-card)", color: "var(--text-muted)" }
               return (
-                <tr key={user.id} style={{ borderTop: "1px solid #f1f5f9", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+                <tr key={user.id} style={{ borderTop: "1px solid var(--border)", background: i % 2 === 0 ? "var(--bg-card)" : "var(--bg-alt)" }}>
                   <td style={{ padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
@@ -238,7 +238,7 @@ export default function TeamPage() {
                   </td>
                   <td style={{ padding: "14px 16px" }}>
                     {isReadOnly ? (
-                      <span style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic" }}>Hanya lihat</span>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Hanya lihat</span>
                     ) : (
                       <div style={{ display: "flex", gap: 6 }}>
                         {canEdit && (

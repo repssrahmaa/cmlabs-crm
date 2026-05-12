@@ -223,19 +223,19 @@ export default function ForecastingPage() {
           },
         ].map((card) => (
           <div key={card.label} style={{
-            background:   "#fff",
-            borderRadius: 12,
-            padding:      20,
-            border:       "1px solid #e2e8f0",
-            borderTop:    `3px solid ${card.color}`,
-          }}>
-            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 6 }}>
+background: "var(--bg-card)", // ← BUKAN #fff
+borderRadius: 12,
+padding: 20,
+border: "1px solid var(--border)",
+borderTop: `3px solid ${card.color}`,
+}}>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
               {card.label}
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: card.color }}>
               {card.value}
-            </div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+            </div> 
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>
               {card.sub}
             </div>
           </div>
@@ -250,12 +250,12 @@ export default function ForecastingPage() {
 
       {/* ── Forecast by Status ───────────────────────────── */}
       <div style={{
-        background:   "#fff",
+        background:   "var(--bg-card)",
         borderRadius: 12,
         padding:      24,
-        border:       "1px solid #e2e8f0",
+        border:       "1px solid var(--border)",
       }}>
-        <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
+        <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
           Weighted Forecast per Stage
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -273,23 +273,23 @@ export default function ForecastingPage() {
                     marginBottom:   4,
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
                         {STATUS_LABEL[stage.status] ?? stage.status}
                       </span>
-                      <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                         {stage.count} leads · {stage.probability}%
                       </span>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--success)" }}>
                         {formatRupiah(stage.weightedValue)}
                       </span>
-                      <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 6 }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 6 }}>
                         dari {formatRupiah(stage.totalValue)}
                       </span>
                     </div>
                   </div>
-                  <div style={{ height: 8, background: "#f1f5f9", borderRadius: 999 }}>
+                  <div style={{ height: 8, background: "var(--bg-card2)", borderRadius: 999 }}>
                     <div style={{
                       height:       "100%",
                       borderRadius: 999,

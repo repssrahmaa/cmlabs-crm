@@ -77,7 +77,7 @@ export function AccessToast({
         <div style={{ fontSize: 13, fontWeight: 700, color: cfg.color, marginBottom: 2 }}>
           {cfg.title}
         </div>
-        <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>
           {message ?? defaultMessage(type)}
         </div>
       </div>
@@ -87,7 +87,7 @@ export function AccessToast({
           background: "none",
           border:     "none",
           cursor:     "pointer",
-          color:      "#94a3b8",
+          color:      "var(--text-muted)",
           fontSize:   16,
           padding:    "0 4px",
           flexShrink: 0,
@@ -146,7 +146,7 @@ export function AccessBanner({
             </span>
           )}
         </span>
-        <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
+        <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>
           {message ?? defaultMessage(type)}
         </span>
       </div>

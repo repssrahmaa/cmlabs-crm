@@ -71,7 +71,7 @@ const pipelineValue = useMemo(() => {
 
     updateLeadStatus(draggableId, destination.droppableId as LeadStatus)
   }
-  
+
 function formatRupiah(value: number): string {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -154,13 +154,17 @@ function formatRupiah(value: number): string {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
-            padding: "9px 14px", border: "1px solid #d1d5db",
-            borderRadius: 8, fontSize: 14, width: 300, outline: "none",
-          }}
+padding: "9px 14px",
+border: "1px solid var(--input-border)",
+borderRadius: 8, fontSize: 14,
+width: 300,
+background: "var(--input-bg)",
+color: "var(--input-text)",
+}}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 13, color: "#64748b" }}>
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
             Total: <strong>{leads.length}</strong> leads
           </span>
 
@@ -180,8 +184,6 @@ function formatRupiah(value: number): string {
         </div>
       </div>
 
-
-/* ── Summary Bar ──────────────────────────── */
 <div
   style={{
     display: "grid",
@@ -191,89 +193,39 @@ function formatRupiah(value: number): string {
   }}
 >
   {[
-    {
-      label: "Total Leads",
-      value: leads.length,
-      suffix: "leads",
-      color: "var(--primary)",
-      icon: "📋",
-    },
-    {
-      label: "Pipeline Value",
-      value: formatRupiah(pipelineValue),
-      suffix: "",
-      color: "var(--warning)",
-      icon: "🔥",
-    },
-    {
-      label: "Total Revenue",
-      value: formatRupiah(wonValue),
-      suffix: "",
-      color: "var(--success)",
-      icon: "💰",
-    },
-    {
-      label: "Won",
-      value: leads.filter((l) => l.status === "WON").length,
-      suffix: "leads",
-      color: "#8b5cf6",
-      icon: "🏆",
-    },
-  ].map((s) => (
-    <div
-      key={s.label}
-      style={{
-        background: "var(--bg-card)",
-        borderRadius: 10,
-        padding: "10px 14px",
-        border: "1px solid var(--border)",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        boxShadow: "var(--shadow-xs)",
-      }}
-    >
-      <span style={{ fontSize: 18 }}>{s.icon}</span>
-
-      <div>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: s.color,
-          }}
-        >
-          {String(s.value)}
-
-          {s.suffix && (
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--text-muted)",
-                marginLeft: 3,
-              }}
-            >
-              {s.suffix}
-            </span>
-          )}
-        </div>
-
-        <div
-          style={{
-            fontSize: 10,
-            color: "var(--text-muted)",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          {s.label}
-        </div>
-      </div>
-    </div>
-  ))}
+{ label: "Total Leads", value: leads.length, suffix: "leads", color: "var(--primary)", icon: "📋" },
+{ label: "Pipeline Value", value: formatRupiah(pipelineValue), suffix: "", color: "var(--warning)", icon: "🔥" },
+{ label: "Revenue Won", value: formatRupiah(wonValue), suffix: "", color: "var(--success)", icon: "💰" },
+{ label: "Won", value: leads.filter(l => l.status === "WON").length, suffix: "leads", color: "var(--purple)", icon: "🏆" },
+].map((s) => (
+<div key={s.label} style={{
+background: "var(--bg-card)", // ← BUKAN #fff
+borderRadius: 10,
+padding: "10px 14px",
+border: "1px solid var(--border)", // ← BUKAN hardcoded
+display: "flex", alignItems: "center", gap: 10,
+boxShadow: "var(--shadow-xs)",
+}}>
+<span style={{ fontSize: 18 }}>{s.icon}</span>
+<div>
+<div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>
+{s.value}
+{s.suffix && (
+<span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)", marginLeft: 3 }}>
+{s.suffix}
+</span>
+)}
 </div>
+<div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+{s.label}
+</div>
+</div>
+</div>
+))}
+</div>
+
+
+
 
       {/* ── Kanban Board ──────────────────────────────────── */}
       <DragDropContext onDragEnd={onDragEnd}>

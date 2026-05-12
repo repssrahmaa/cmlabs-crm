@@ -90,21 +90,19 @@ async function handleUpdate() {
     <div
       onClick={onClose}
       style={{
-        position:       "fixed",
-        inset:          0,
-        background:     "rgba(0,0,0,0.5)",
-        zIndex:         100,
-        display:        "flex",
-        alignItems:     "center",
-        justifyContent: "center",
-        padding:        24,
-      }}
+  position: "fixed", inset: 0,
+  background: "rgba(0,0,0,0.6)",
+  zIndex: 100,
+  display: "flex", alignItems: "center",
+  justifyContent: "center", padding: 24,
+}}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background:   "#fff",
-          borderRadius: 12,
+          background: "var(--bg-card)",
+color: "var(--text-primary)",
+border: "1px solid var(--border)",
           width:        "100%",
           maxWidth:     560,
           maxHeight:    "90vh",
@@ -114,10 +112,10 @@ async function handleUpdate() {
       >
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
             {editing ? "Edit Lead" : "Detail Lead"}
           </h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>
             ✕
           </button>
         </div>
@@ -135,7 +133,7 @@ async function handleUpdate() {
               { label: "Sumber",       key: "source",        type: "text"  },
             ].map(({ label, key, type }) => (
               <div key={key}>
-                <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4, color: "var(--text-secondary)" }}>
                   {label}
                 </label>
                 <input
@@ -143,13 +141,13 @@ async function handleUpdate() {
                   value={(form as any)[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                   style={{
-                    width:        "100%",
-                    padding:      "8px 12px",
-                    border:       "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize:     14,
-                    boxSizing:    "border-box",
-                  }}
+width: "100%", padding: "8px 12px",
+border: "1px solid var(--input-border)",
+borderRadius: 6, fontSize: 14,
+background: "var(--input-bg)",
+color: "var(--input-text)",
+boxSizing: "border-box",
+}}
                 />
               </div>
             ))}
@@ -178,7 +176,13 @@ async function handleUpdate() {
               <select
                 value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 }}
+                style={{
+width: "100%", padding: "8px 12px",
+border: "1px solid var(--input-border)",
+borderRadius: 6, fontSize: 14,
+background: "var(--input-bg)",
+color: "var(--input-text)",
+}}
               >
                 {KANBAN_COLUMNS.map((col) => (
                   <option key={col.id} value={col.id}>{col.label}</option>
@@ -245,14 +249,21 @@ async function handleUpdate() {
             ].map(({ label, value }) =>
               value ? (
                 <div key={label} style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: "#64748b", width: 90, flexShrink: 0 }}>{label}</span>
+                  <span style={{ fontSize: 13, color: "var(--text-muted)", width: 90, flexShrink: 0 }}>{label}</span>
                   <span style={{ fontSize: 13, color: "#0f172a", fontWeight: 500 }}>{value}</span>
                 </div>
               ) : null
             )}
 
             {lead.description && (
-              <div style={{ marginTop: 12, padding: 12, background: "#f8fafc", borderRadius: 8, fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              <div style={{
+marginTop: 12, padding: 12,
+background: "var(--bg-card2)",
+borderRadius: 8, fontSize: 13,
+color: "var(--text-secondary)",
+lineHeight: 1.6,
+}}
+>
                 {lead.description}
               </div>
             )}

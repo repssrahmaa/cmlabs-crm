@@ -179,8 +179,8 @@ export default function ReportsPage() {
               padding:      "10px 20px",
               background:   "transparent",
               border:       "none",
-              borderBottom: activeTab === tab.key ? "2px solid #4B9EF3" : "2px solid transparent",
-color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
+              borderBottom: activeTab === tab.key ? "2px solid var(--primary)" : "2px solid transparent",
+color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
               fontSize:     14,
               fontWeight:   activeTab === tab.key ? 600 : 400,
               cursor:       "pointer",
@@ -205,9 +205,9 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                   onClick={() => setPeriod(opt.value)}
                   style={{
                     padding:      "6px 14px",
-                    background: period === opt.value ? "#4B9EF3" : "#f8fafc",
-                    border:     `1px solid ${period === opt.value ? "#4B9EF3" : "#e2e8f0"}`,
-                    color:        period === opt.value ? "#fff" : "#64748b",
+                    background: period === opt.value ? "var(--primary)" : "var(--bg-card)",
+                    border:     `1px solid ${period === opt.value ? "var(--primary)" : "var(--border)"}`,
+                    color:        period === opt.value ? "var(--text-inverse)" : "var(--text-muted)",
                     borderRadius: 6,
                     fontSize:     12,
                     fontWeight:   period === opt.value ? 600 : 400,
@@ -235,15 +235,15 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                   { label: "Total Aktivitas",  value: reportData.summary.totalActivities, color: "#0891b2", sub: "Semua tipe" },
                 ].map((card) => (
                   <div key={card.label} style={{
-                    background:   "#fff",
+                    background:   "var(--bg-card)",
                     borderRadius: 10,
                     padding:      20,
-                    border:       "1px solid #e2e8f0",
-                    borderTop: `3px solid #4B9EF3`,
+                    border:       "1px solid var(--border)",
+                    borderTop: `3px solid var(--primary)`,
                   }}>
-                    <div style={{ fontSize: 12, color: "#64748b", marginBottom: 6 }}>{card.label}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>{card.label}</div>
                     <div style={{ fontSize: 26, fontWeight: 700, color: card.color }}>{card.value}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{card.sub}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{card.sub}</div>
                   </div>
                 ))}
               </div>
@@ -251,13 +251,13 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
               {/* Charts Row */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 {/* Monthly Trend */}
-                <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0" }}>
+                <div style={{ background: "var(--bg-card)", borderRadius: 12, padding: 20, border: "1px solid var(--border)" }}>
                   <h3 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 600 }}>Tren Leads Bulanan</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={reportData.charts.monthlyBreakdown}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#64748b" }} />
-                      <YAxis tick={{ fontSize: 10, fill: "#64748b" }} allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-card)" />
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} allowDecimals={false} />
                       <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Line type="monotone" dataKey="created" name="Dibuat"  stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
@@ -268,17 +268,17 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                 </div>
 
                 {/* Leads by Status */}
-                <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0" }}>
+                <div style={{ background: "var(--bg-card)", borderRadius: 12, padding: 20, border: "1px solid var(--border)" }}>
                   <h3 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 600 }}>Distribusi per Status</h3>
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={reportData.charts.leadsByStatus} margin={{ bottom: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="status" tick={{ fontSize: 9, fill: "#64748b" }} angle={-30} textAnchor="end" interval={0} tickFormatter={(v) => STATUS_LABEL[v] ?? v} />
-                      <YAxis tick={{ fontSize: 10, fill: "#64748b" }} allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-card)" />
+                      <XAxis dataKey="status" tick={{ fontSize: 9, fill: "var(--text-muted)" }} angle={-30} textAnchor="end" interval={0} tickFormatter={(v) => STATUS_LABEL[v] ?? v} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--text-muted)" }} allowDecimals={false} />
                       <Tooltip formatter={(v) => [`${v} leads`, "Jumlah"]} labelFormatter={(l) => STATUS_LABEL[l] ?? l} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                       <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                         {reportData.charts.leadsByStatus.map((entry, i) => (
-                          <Cell key={i} fill={STATUS_COLOR[entry.status] ?? "#94a3b8"} />
+                          <Cell key={i} fill={STATUS_COLOR[entry.status] ?? "var(--bg-card)"} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -287,16 +287,16 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
               </div>
 
               {/* Sales Performance Table */}
-              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-                <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
+                <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Performa Sales</h3>
                 </div>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "#f8fafc" }}>
+                      <tr style={{ background: "var(--bg-card)" }}>
                         {["#", "Nama", "Total", "Won", "Lost", "Aktif", "Win Rate", "Revenue"].map((h) => (
-                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {h}
                           </th>
                         ))}
@@ -304,16 +304,16 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                     </thead>
                     <tbody>
                       {reportData.salesPerformance.map((s, i) => (
-                        <tr key={s.name} style={{ borderTop: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>{i + 1}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500, color: "#0f172a" }}>{s.name}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569" }}>{s.total}</td>
+                        <tr key={s.name} style={{ borderTop: "1px solid var(--border)" }}>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{i + 1}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{s.name}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{s.total}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#059669" }}>{s.won}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#ef4444" }}>{s.lost}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, color: "#f59e0b" }}>{s.active}</td>
                           <td style={{ padding: "12px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <div style={{ width: 60, height: 6, background: "#f1f5f9", borderRadius: 999 }}>
+                              <div style={{ width: 60, height: 6, background: "var(--bg-card)", borderRadius: 999 }}>
                                 <div style={{ height: "100%", borderRadius: 999, width: `${s.winRate}%`, background: s.winRate >= 60 ? "#10b981" : s.winRate >= 30 ? "#f59e0b" : "#ef4444" }} />
                               </div>
                               <span style={{ fontSize: 12, fontWeight: 600 }}>{s.winRate}%</span>
@@ -329,15 +329,15 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
 
               {/* Recent Won Leads */}
               {reportData.recentWonLeads.length > 0 && (
-                <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-                  <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
+                  <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
                     <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Leads Won Terbaru</h3>
                   </div>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "#f8fafc" }}>
+                      <tr style={{ background: "var(--bg-card)" }}>
                         {["Judul Lead", "Klien", "Perusahaan", "PIC", "Nilai"].map((h) => (
-                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {h}
                           </th>
                         ))}
@@ -345,12 +345,12 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                     </thead>
                     <tbody>
                       {reportData.recentWonLeads.map((lead, i) => (
-                        <tr key={lead.id} style={{ borderTop: "1px solid #f1f5f9", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{lead.title}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569" }}>{lead.clientName}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569" }}>{lead.clientCompany ?? "-"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569" }}>{lead.assignedTo?.name ?? "-"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#059669" }}>
+                        <tr key={lead.id} style={{ borderTop: "1px solid var(--border)", background: i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-hover)" }}>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{lead.title}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{lead.clientName}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{lead.clientCompany ?? "-"}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{lead.assignedTo?.name ?? "-"}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
                             {lead.value ? formatRupiah(Number(lead.value)) : "-"}
                           </td>
                         </tr>
@@ -383,15 +383,15 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
           {/* Layout: List + Detail */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             {/* List Dokumen */}
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-              <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", fontSize: 12, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px", background: "var(--bg-card-header)", borderBottom: "1px solid var(--border)", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Daftar Dokumen
               </div>
 
               {loadingDocs ? (
-                <div style={{ padding: 32, textAlign: "center", color: "#64748b", fontSize: 13 }}>Memuat dokumen...</div>
+                <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Memuat dokumen...</div>
               ) : documents.length === 0 ? (
-                <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
                   Belum ada dokumen
                 </div>
@@ -407,7 +407,7 @@ color:        activeTab === tab.key ? "#4B9EF3" : "#64748b",
                         onClick={() => setSelectedDoc(doc)}
                         style={{
                           padding:    "14px 16px",
-                          borderBottom: "1px solid #f1f5f9",
+                          borderBottom: "1px solid var(--border)",
                           cursor:     "pointer",
                           borderTop: `3px solid #4B9EF3`,
                         }}
