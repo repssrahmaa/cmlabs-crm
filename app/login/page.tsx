@@ -437,9 +437,6 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              <p style={{ margin: "10px 0 0", fontSize: 10, color: isDark ? "#374151" : "#94a3b8", textAlign: "center" }}>
-                Password semua akun: <strong style={{ color: "#4B9EF3" }}>Test1234!</strong>
-              </p>
             </div>
           </div>
         </div>

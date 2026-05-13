@@ -16,11 +16,11 @@ interface User {
 }
 
 const ROLE_COLOR: Record<string, { bg: string; color: string }> = {
-  SUPER_ADMIN:       { bg: "#fef3c7", color: "#d97706" },
-  EXECUTIVE:         { bg: "#ede9fe", color: "#7c3aed" },
-  SALES_MANAGER:     { bg: "#dbeafe", color: "#2563eb" },
-  ACCOUNT_EXECUTIVE: { bg: "#d1fae5", color: "#059669" },
-  VIEWER:            { bg: "#f1f5f9", color: "#64748b" },
+  SUPER_ADMIN:       { bg: "var(--bg-card)", color: "#d97706" },
+  EXECUTIVE:         { bg: "var(--bg-card)", color: "#7c3aed" },
+  SALES_MANAGER:     { bg: "var(--bg-card)", color: "#2563eb" },
+  ACCOUNT_EXECUTIVE: { bg: "var(--bg-card)", color: "#059669" },
+  VIEWER:            { bg: "var(--bg-card)", color: "#64748b" },
 }
 
 const ROLE_LABEL: Record<string, string> = {
