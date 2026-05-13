@@ -147,7 +147,7 @@ export default function ForecastingPage() {
         gap:          12,
       }}>
         <div>
-          <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700 }}>
+          <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>
             Dashboard Forecasting
           </h2>
           <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>

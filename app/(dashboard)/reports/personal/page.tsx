@@ -295,9 +295,9 @@ export default function PersonalPerformancePage() {
 
           {/* Trend Charts */}
           <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
-            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Tren Bulanan Saya</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 12, color: "#94a3b8" }}>Leads dibuat dan won per bulan</p>
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Tren Bulanan Saya</h3>
+              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Leads dibuat dan won per bulan</p>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={charts.monthlyPersonal} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
                   <defs>
@@ -310,13 +310,13 @@ export default function PersonalPerformancePage() {
                       <stop offset="95%" stopColor={B.success} stopOpacity={0}   />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ background: "#1a2332", border: "none", borderRadius: 10, fontSize: 12 }}
-                    labelStyle={{ color: "#94a3b8" }}
-                    itemStyle={{ color: "#f8fafc" }}
+                    contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
+                    labelStyle={{ color: "var(--text-muted)" }}
+                    itemStyle={{ color: "var(--text)" }}
                   />
                   <Area type="monotone" dataKey="created" name="Dibuat" stroke={B.primary} strokeWidth={2.5} fill="url(#gC)" dot={{ r: 4, fill: B.primary }} />
                   <Area type="monotone" dataKey="won"     name="Won"    stroke={B.success} strokeWidth={2.5} fill="url(#gW)" dot={{ r: 4, fill: B.success }} />
@@ -325,9 +325,9 @@ export default function PersonalPerformancePage() {
             </div>
 
             {/* Donut chart untuk leads breakdown */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Komposisi Leads</h3>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#94a3b8" }}>Breakdown status saat ini</p>
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Komposisi Leads</h3>
+              <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--text-muted)" }}>Breakdown status saat ini</p>
               <div style={{ display: "flex", justifyContent: "center" }}>
                 <div style={{ position: "relative", width: 140, height: 140 }}>
                   <PieChart width={140} height={140}>
@@ -348,8 +348,8 @@ export default function PersonalPerformancePage() {
                     </Pie>
                   </PieChart>
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>{kpi.totalLeads}</div>
-                    <div style={{ fontSize: 9, color: "#94a3b8" }}>Total</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{kpi.totalLeads}</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Total</div>
                   </div>
                 </div>
               </div>
@@ -420,9 +420,9 @@ export default function PersonalPerformancePage() {
       {tab === "pipeline" && (
         <>
           {/* Pipeline by Status */}
-          <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Pipeline per Stage</h3>
-            <p style={{ margin: "0 0 24px", fontSize: 12, color: "#94a3b8" }}>Distribusi nilai pipeline Anda</p>
+          <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Pipeline per Stage</h3>
+            <p style={{ margin: "0 0 24px", fontSize: 12, color: "var(--text-muted)" }}>Distribusi nilai pipeline Anda</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {(charts.pipelineByStatus ?? [])
                 .sort((a: any, b: any) => b.value - a.value)
@@ -446,11 +446,11 @@ export default function PersonalPerformancePage() {
                             {stage.count} leads
                           </span>
                         </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
                           {formatRupiah(stage.value)}
                         </span>
                       </div>
-                      <div style={{ height: 10, background: "#f1f5f9", borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ height: 10, background: "var(--bg-card)", borderRadius: 999, overflow: "hidden" }}>
                         <div style={{
                           height: "100%", borderRadius: 999,
                           width:  `${barWidth}%`, background: color,
@@ -462,7 +462,7 @@ export default function PersonalPerformancePage() {
                   )
                 })}
               {(!charts.pipelineByStatus || charts.pipelineByStatus.length === 0) && (
-                <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 14 }}>
+                <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)", fontSize: 14 }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
                   Tidak ada leads aktif saat ini
                 </div>
@@ -472,9 +472,9 @@ export default function PersonalPerformancePage() {
 
           {/* Active Leads Detail */}
           {activeLeadsDetail.length > 0 && (
-            <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: "var(--bg-card)" }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
                   Leads Aktif Saya ({activeLeadsDetail.length})
                 </h3>
               </div>
@@ -484,8 +484,8 @@ export default function PersonalPerformancePage() {
                   <div key={lead.id} style={{
                     display:      "flex", alignItems: "center",
                     gap:          16, padding:    "14px 24px",
-                    borderBottom: i < activeLeadsDetail.length - 1 ? "1px solid #f1f5f9" : "none",
-                    background:   i % 2 === 0 ? "#fff" : "#fafafa",
+                    borderBottom: i < activeLeadsDetail.length - 1 ? "1px solid var(--border)" : "none",
+                    background:   i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-alt)",
                   }}>
                     <div style={{
                       width:        10, height:      10,
@@ -494,16 +494,16 @@ export default function PersonalPerformancePage() {
                       flexShrink:   0,
                     }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.title}</div>
-                      <div style={{ fontSize: 11, color: "#64748b" }}>{lead.clientName}{lead.clientCompany ? ` · ${lead.clientCompany}` : ""}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{lead.clientName}{lead.clientCompany ? ` · ${lead.clientCompany}` : ""}</div>
                     </div>
                     <span style={{
                       fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
-                      background: color + "15", color, flexShrink: 0,
+                      background: color + "15", color: "var(--text)", flexShrink: 0,
                     }}>
                       {STATUS_LABEL[lead.status] ?? lead.status}
                     </span>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: B.success, flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", flexShrink: 0 }}>
                       {lead.value ? formatRupiah(Number(lead.value)) : "-"}
                     </div>
                   </div>
@@ -542,9 +542,9 @@ export default function PersonalPerformancePage() {
             </div>
 
             {/* Task completion */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Task Completion</h3>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#94a3b8" }}>Progress penyelesaian tugas</p>
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Task Completion</h3>
+              <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--text-muted)" }}>Progress penyelesaian tugas</p>
 
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
                 <div style={{ position: "relative", width: 140, height: 140 }}>
@@ -552,7 +552,7 @@ export default function PersonalPerformancePage() {
                     <Pie
                       data={[
                         { name: "Selesai", value: kpi.completedTasks, fill: B.success },
-                        { name: "Pending", value: Math.max(kpi.totalTasks - kpi.completedTasks, 0), fill: "#f1f5f9" },
+                        { name: "Pending", value: Math.max(kpi.totalTasks - kpi.completedTasks, 0), fill: "var(--bg-card-alt)" },
                       ]}
                       cx={65} cy={65}
                       innerRadius={42} outerRadius={60}
@@ -561,12 +561,12 @@ export default function PersonalPerformancePage() {
                       startAngle={90} endAngle={-270}
                     >
                       <Cell fill={B.success} />
-                      <Cell fill="#f1f5f9" />
+                      <Cell fill="var(--bg-card-alt)" />
                     </Pie>
                   </PieChart>
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: B.success }}>{kpi.taskCompletionRate}%</div>
-                    <div style={{ fontSize: 9, color: "#94a3b8" }}>Selesai</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Selesai</div>
                   </div>
                 </div>
               </div>
@@ -579,11 +579,11 @@ export default function PersonalPerformancePage() {
                   { label: "Total Aktivitas", value: kpi.totalActivities, color: "#0891b2" },
                 ].map((s) => (
                   <div key={s.label} style={{
-                    background:   "#f8fafc", borderRadius: 10,
+                    background:   "var(--bg-card)", borderRadius: 10,
                     padding:      "12px 14px",
-                    border:       "1px solid #e2e8f0",
+                    border:       "1px solid var(--border)",
                   }}>
-                    <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>{s.label}</div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>{s.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
                   </div>
                 ))}

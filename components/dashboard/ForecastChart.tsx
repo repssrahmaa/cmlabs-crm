@@ -44,30 +44,30 @@ export default function ForecastChart({ historical, projections }: Props) {
 
   return (
     <div style={{
-      background:   "#fff",
+      background:   "var(--bg-card)",
       borderRadius: 12,
       padding:      24,
-      border:       "1px solid #e2e8f0",
+      border:       "1px solid var(--border)",
     }}>
       <div style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
           Revenue Aktual vs Proyeksi
         </h3>
-        <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
           6 bulan historis + 3 bulan proyeksi ke depan
         </p>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart data={allData} margin={{ top: 4, right: 8, left: 10, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#64748b" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--text-muted)" }} />
           <YAxis
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "var(--text-muted)" }}
             tickFormatter={(v) => formatRupiah(v)}
           />
           <Tooltip
-  contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13 }}
+  contentStyle={{ borderRadius: 8, border: "1px solid var(--border)", fontSize: 13 }}
   formatter={(value, name) => {
     if (typeof value !== 'number') return null;
     return [formatRupiah(value), name];
