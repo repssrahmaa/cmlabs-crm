@@ -168,7 +168,7 @@ export default function TeamPage() {
         {!isReadOnly && (
           <button
             onClick={openAdd}
-            style={{ padding: "9px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+            style={{ padding: "9px 18px", background: "var(--bg-button)", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
           >
             + Tambah Anggota
           </button>
@@ -230,7 +230,7 @@ export default function TeamPage() {
                   <td style={{ padding: "14px 16px" }}>
                     <span style={{
                       fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
-                      background: user.isActive ? "#dcfce7" : "#fee2e2",
+                      background: user.isActive ? "var(--bg-card)" : "var(--bg-card)",
                       color:      user.isActive ? "#16a34a" : "#dc2626",
                     }}>
                       {user.isActive ? "Aktif" : "Nonaktif"}
