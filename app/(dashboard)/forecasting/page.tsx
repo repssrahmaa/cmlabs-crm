@@ -136,7 +136,7 @@ export default function ForecastingPage() {
 
       {/* ── Header ───────────────────────────────────────── */}
       <div style={{
-        background:   "linear-gradient(135deg, #1e293b, #334155)",
+        background:   "var(--bg-card)",
         borderRadius: 12,
         padding:      24,
         color:        "var(--text)",

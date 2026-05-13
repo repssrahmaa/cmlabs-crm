@@ -52,10 +52,10 @@ function MetricTile({ icon, label, value, sub, color, size = "normal" }: {
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background:   "#fff",
+        background:   "var(--bg-card)",
         borderRadius: 14,
         padding:      size === "large" ? 24 : 18,
-        border:       `1px solid ${hov ? color + "50" : "#e2e8f0"}`,
+        border:       `1px solid ${hov ? color + "50" : "var(--border)"}`,
         transition:   "all 0.2s",
         transform:    hov ? "translateY(-2px)" : "none",
         boxShadow:    hov ? `0 8px 24px ${color}20` : "0 1px 4px rgba(0,0,0,0.04)",
