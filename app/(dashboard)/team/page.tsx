@@ -16,11 +16,11 @@ interface User {
 }
 
 const ROLE_COLOR: Record<string, { bg: string; color: string }> = {
-  SUPER_ADMIN:       { bg: "var(--bg-card)", color: "#d97706" },
-  EXECUTIVE:         { bg: "var(--bg-card)", color: "#7c3aed" },
-  SALES_MANAGER:     { bg: "var(--bg-card)", color: "#2563eb" },
-  ACCOUNT_EXECUTIVE: { bg: "var(--bg-card)", color: "#059669" },
-  VIEWER:            { bg: "var(--bg-card)", color: "#64748b" },
+  SUPER_ADMIN:       { bg: "#fef3c7", color: "#d97706" },
+  EXECUTIVE:         { bg: "#ede9fe", color: "#7c3aed" },
+  SALES_MANAGER:     { bg: "#dbeafe", color: "#2563eb" },
+  ACCOUNT_EXECUTIVE: { bg: "#d1fae5", color: "#059669" },
+  VIEWER:            { bg: "#f1f5f9", color: "#64748b" },
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -216,17 +216,17 @@ export default function TeamPage() {
                       }}>
                         {user.name.charAt(0).toUpperCase()}
                       </div>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: "#0f172a" }}>{user.name}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{user.name}</span>
                     </div>
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 14, color: "#475569" }}>{user.email}</td>
+                  <td style={{ padding: "14px 16px", fontSize: 14, color: "var(--text)" }}>{user.email}</td>
                   <td style={{ padding: "14px 16px" }}>
                     <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: cfg.bg, color: cfg.color }}>
                       {ROLE_LABEL[user.role] ?? user.role}
                     </span>
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 14, color: "#475569" }}>{user.phone ?? "-"}</td>
-                  <td style={{ padding: "14px 16px", fontSize: 14, color: "#475569" }}>{user._count.assignedLeads}</td>
+                  <td style={{ padding: "14px 16px", fontSize: 14, color: "var(--text)" }}>{user.phone ?? "-"}</td>
+                  <td style={{ padding: "14px 16px", fontSize: 14, color: "var(--text) " }}>{user._count.assignedLeads}</td>
                   <td style={{ padding: "14px 16px" }}>
                     <span style={{
                       fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
@@ -244,7 +244,7 @@ export default function TeamPage() {
                         {canEdit && (
                           <button
                             onClick={() => openEdit(user)}
-                            style={{ padding: "5px 12px", background: "#eff6ff", color: "#2563eb", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer", fontWeight: 500 }}
+                            style={{ padding: "5px 12px", background: "var(--bg-card)", color: "#2563eb", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer", fontWeight: 500 }}
                           >
                             Edit
                           </button>
@@ -254,7 +254,7 @@ export default function TeamPage() {
                           style={{
                             padding: "5px 12px", border: "none", borderRadius: 6,
                             fontSize: 12, cursor: "pointer", fontWeight: 500,
-                            background: user.isActive ? "#fff7ed" : "#f0fdf4",
+                            background: user.isActive ? "var(--bg-card)" : "var(--bg-card)",
                             color:      user.isActive ? "#ea580c" : "#16a34a",
                           }}
                         >
@@ -263,7 +263,7 @@ export default function TeamPage() {
                         {canDelete && (
                           <button
                             onClick={() => handleDelete(user.id)}
-                            style={{ padding: "5px 12px", background: "#fef2f2", color: "#dc2626", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
+                            style={{ padding: "5px 12px", background: "var(--bg-card)", color: "#dc2626", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer" }}
                           >
                             Hapus
                           </button>

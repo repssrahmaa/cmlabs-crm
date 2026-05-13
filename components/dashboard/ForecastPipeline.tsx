@@ -48,16 +48,16 @@ function formatRupiah(value: number) {
 export default function ForecastPipeline({ leads }: Props) {
   return (
     <div style={{
-      background:   "#fff",
+      background:   "var(--bg-card)",
       borderRadius: 12,
-      border:       "1px solid #e2e8f0",
+      border:       "1px solid var(--border)",
       overflow:     "hidden",
     }}>
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
-        <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+        <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "var(--text)" }}>
           Pipeline Forecast (Top 10)
         </h3>
-        <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
           Diurutkan berdasarkan weighted value tertinggi
         </p>
       </div>
@@ -65,14 +65,14 @@ export default function ForecastPipeline({ leads }: Props) {
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#f8fafc" }}>
+            <tr style={{ background: "var(--bg-card)" }}>
               {["Judul Lead", "Status", "Prioritas", "Nilai", "Probabilitas", "Weighted Value", "PIC"].map((h) => (
                 <th key={h} style={{
                   padding:       "10px 16px",
                   textAlign:     "left",
                   fontSize:      11,
                   fontWeight:    600,
-                  color:         "#64748b",
+                  color:         "var(--text-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   whiteSpace:    "nowrap",
@@ -86,9 +86,9 @@ export default function ForecastPipeline({ leads }: Props) {
             {leads.map((lead, i) => (
               <tr key={lead.id} style={{
                 borderTop:  "1px solid #f1f5f9",
-                background: i % 2 === 0 ? "#fff" : "#fafafa",
+                background: i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card)",
               }}>
-                <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 500, color: "#0f172a", maxWidth: 200 }}>
+                <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 500, color: "var(--text)", maxWidth: 200 }}>
                   <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {lead.title}
                   </div>
@@ -118,12 +118,12 @@ export default function ForecastPipeline({ leads }: Props) {
                     {lead.priority}
                   </span>
                 </td>
-                <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569", whiteSpace: "nowrap" }}>
+                <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text)", whiteSpace: "nowrap" }}>
                   {formatRupiah(lead.value)}
                 </td>
                 <td style={{ padding: "12px 16px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ flex: 1, height: 6, background: "#f1f5f9", borderRadius: 999, minWidth: 60 }}>
+                    <div style={{ flex: 1, height: 6, background: "var(--bg-card)", borderRadius: 999, minWidth: 60 }}>
                       <div style={{
                         height:     "100%",
                         borderRadius: 999,
