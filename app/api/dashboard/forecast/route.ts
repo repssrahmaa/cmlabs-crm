@@ -5,6 +5,7 @@ import { hasPermission } from "@/lib/permissions"
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns"
 import { STATUS_PROBABILITY } from "@/types/lead"
 import type { RoleType } from "@/lib/permissions"
+import { LeadStatus } from "@prisma/client"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -49,8 +50,8 @@ export async function GET(req: Request) {
     const probability   = STATUS_PROBABILITY[lead.status as keyof typeof STATUS_PROBABILITY] ?? 0
     const value         = Number(lead.value ?? 0)
     const weightedValue = Math.round(value * probability)
-    const isDeal        = lead.status === "DEAL"
-    const isRecycle     = lead.status === "RECYCLE"
+    const isDeal        = lead.status === LeadStatus.DEAL
+    const isRecycle     = lead.status === LeadStatus.RECYCLE
 
     return {
       id:             lead.id,
@@ -124,11 +125,25 @@ export async function GET(req: Request) {
       const created = new Date(l.createdAt)
       return created >= start && created <= end
     })
-    const deals      = monthLeads.filter((l) => l.status === "DEAL")
-    const revenue    = deals.reduce((s, l) => s + Number(l.value ?? 0), 0)
-    const pipeline   = monthLeads.filter((l) => l.status !== "DEAL" && l.status !== "RECYCLE")
-    const pipelineV  = pipeline.reduce((s, l) => s + Number(l.value ?? 0), 0)
+    const deals = monthLeads.filter(
+  (l) => l.status === LeadStatus.DEAL
+)
 
+const revenue = deals.reduce(
+  (s, l) => s + Number(l.value ?? 0),
+  0
+)
+
+const pipeline = monthLeads.filter(
+  (l) =>
+    l.status !== LeadStatus.DEAL &&
+    l.status !== LeadStatus.RECYCLE
+)
+
+const pipelineV = pipeline.reduce(
+  (s, l) => s + Number(l.value ?? 0),
+  0
+)
     monthlyHistory.push({
       month:         format(d, "MMM yyyy"),
       monthShort:    format(d, "MMM"),
