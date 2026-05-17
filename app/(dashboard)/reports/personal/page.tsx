@@ -3,93 +3,38 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSession }                       from "next-auth/react"
 import { useRealtimeDashboard }             from "@/hooks/useRealtimeDashboard"
-import { format }                           from "date-fns"
-import { id as localeId }                   from "date-fns/locale"
 import {
-  AreaChart, Area, BarChart, Bar, RadialBarChart, RadialBar,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, PieChart, Pie,
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 
-const B = {
-  primary: "#4B9EF3", dark: "#1a2332", success: "#10b981",
-  warning: "#f59e0b", danger: "#ef4444", purple: "#8b5cf6",
+const MONTHS  = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+const CUR_YEAR = new Date().getFullYear()
+const YEARS   = Array.from({ length: 5 }, (_, i) => String(CUR_YEAR - i))
+
+function formatRp(v: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", notation: "compact" }).format(v)
 }
 
-function formatRupiah(v: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR", notation: "compact",
-  }).format(v)
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  APPROACH: "Lead Masuk", COLD_LEAD: "Dihubungi",
-  NEEDS_IDENTIFIED: "Kebutuhan", DECK_REQUEST: "Proposal",
-  MEETING: "Negosiasi", CONTRACT_SENT: "Kontrak",
-}
-const STATUS_COLOR: Record<string, string> = {
-  APPROACH: "#6366f1", COLD_LEAD: "#4B9EF3",
-  NEEDS_IDENTIFIED: "#0ea5e9", DECK_REQUEST: "#f59e0b",
-  MEETING: "#f97316", CONTRACT_SENT: "#8b5cf6",
-}
-const ACTIVITY_LABEL: Record<string, string> = {
-  INTERNAL_NOTE: "Catatan", EMAIL_SENT: "Email",
-  CALL: "Telepon", MEETING: "Meeting", TASK: "Tugas", NOTE: "Catatan",
-}
-const ACTIVITY_COLOR: Record<string, string> = {
-  INTERNAL_NOTE: "#6366f1", EMAIL_SENT: "#4B9EF3",
-  CALL: "#0891b2", MEETING: "#10b981", TASK: "#f59e0b", NOTE: "#94a3b8",
-}
-
-// ── Metric Tile ────────────────────────────────────────────────
-function MetricTile({ icon, label, value, sub, color, size = "normal" }: {
-  icon: string; label: string; value: string | number
-  sub?: string; color: string; size?: "normal" | "large"
-}) {
-  const [hov, setHov] = useState(false)
+function CTooltip({ active, payload, label, fmt }: any) {
+  if (!active || !payload?.length) return null
   return (
-    <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        background:   "var(--bg-card)",
-        borderRadius: 14,
-        padding:      size === "large" ? 24 : 18,
-        border:       `1px solid ${hov ? color + "50" : "var(--border)"}`,
-        transition:   "all 0.2s",
-        transform:    hov ? "translateY(-2px)" : "none",
-        boxShadow:    hov ? `0 8px 24px ${color}20` : "0 1px 4px rgba(0,0,0,0.04)",
-        position:     "relative", overflow: "hidden",
-      }}
-    >
-      <div style={{
-        position: "absolute", bottom: -20, right: -20,
-        width: 80, height: 80, borderRadius: "50%",
-        background: color + "08",
-        transition: "transform 0.3s",
-        transform:  hov ? "scale(1.4)" : "scale(1)",
-      }} />
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{
-          width:        36, height: 36, borderRadius: 8,
-          background:   color + "15",
-          display:      "flex", alignItems: "center",
-          justifyContent: "center", fontSize: 16,
-          marginBottom: 10,
-        }}>
-          {icon}
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: 10, padding: "10px 14px", boxShadow: "var(--shadow-lg)",
+    }}>
+      <p style={{ margin: "0 0 6px", fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>{label}</p>
+      {payload.map((p: any, i: number) => (
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: p.color ?? p.fill }} />
+            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.name}</span>
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)" }}>
+            {fmt ? fmt(p.value) : p.value}
+          </span>
         </div>
-        <div style={{ fontSize: size === "large" ? 32 : 24, fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
-          {value}
-        </div>
-        <div style={{ fontSize: 12, color: "#64748b", marginTop: 4, fontWeight: 500 }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{sub}</div>}
-      </div>
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0,
-        height: 3, background: `linear-gradient(90deg, ${color}, ${color}60)`,
-        borderRadius: "14px 14px 0 0",
-      }} />
+      ))}
     </div>
   )
 }
@@ -98,179 +43,149 @@ export default function PersonalPerformancePage() {
   const { data: session }         = useSession()
   const [data, setData]           = useState<any>(null)
   const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState("")
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [tab, setTab]             = useState<"overview" | "pipeline" | "activity">("overview")
+  const [tab, setTab]             = useState<"overview"|"pipeline"|"activity">("overview")
+
+  // Filter state
+  const [year,  setYear]  = useState(String(CUR_YEAR))
+  const [month, setMonth] = useState("all")
+  const [view,  setView]  = useState<"monthly"|"yearly">("monthly")
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/reports/personal", { cache: "no-store" })
+      const params = new URLSearchParams({ year, month, view })
+      const res = await fetch(`/api/reports/personal?${params}`, { cache: "no-store" })
       if (!res.ok) throw new Error("Gagal memuat data")
       setData(await res.json())
-      setLastUpdated(new Date())
-      setError("")
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    } catch {}
+    finally { setLoading(false) }
+  }, [year, month, view])
 
   useEffect(() => { fetchData() }, [fetchData])
-  const { connected } = useRealtimeDashboard({ onDashboardRefresh: fetchData, onLeadChange: fetchData })
+  useRealtimeDashboard({ onDashboardRefresh: fetchData, onLeadChange: fetchData })
+
+  const role = session?.user?.role
 
   if (loading) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 16 }}>
-      <div style={{ width: 48, height: 48, borderRadius: "50%", border: `3px solid ${B.primary}30`, borderTopColor: B.primary, animation: "spin 0.8s linear infinite" }} />
-      <p style={{ color: "#64748b", fontSize: 14 }}>Memuat performa Anda...</p>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+      <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin .7s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
+  if (!data) return null
 
-  if (error || !data) return (
-    <div style={{ padding: 20, background: "var(--bg-destructive)", borderRadius: 12, color: "var(--text-destructive)" }}>
-      {error} <button onClick={fetchData} style={{ marginLeft: 10, padding: "5px 12px", background: "var(--bg-card)", border: "1px solid #fca5a5", borderRadius: 6, cursor: "pointer", color: "#dc2626" }}>Coba lagi</button>
-    </div>
-  )
-
-  const { kpi, charts, recentDEAL, activeLeadsDetail } = data
-  const role = session?.user?.role
-
-  const activityChartData = Object.entries(charts.activityByType ?? {}).map(([type, count]) => ({
-    name:  ACTIVITY_LABEL[type] ?? type,
-    value: count as number,
-    color: ACTIVITY_COLOR[type] ?? "var(--text-muted)",
-  }))
+  const { kpi, charts } = data
+  const trendData       = view === "yearly" ? charts.yearlyTrend : charts.monthlyPersonal
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
       {/* ── Profile Hero ─────────────────────────────────── */}
       <div style={{
-        background:   `linear-gradient(135deg, ${B.dark} 0%, #1e3a5f 60%, #0c4a6e 100%)`,
-        borderRadius: 20,
-        padding:      "28px 32px",
-        position:     "relative",
-        overflow:     "hidden",
+        background: "linear-gradient(135deg, var(--hero-from,#0f172a), var(--hero-mid,#1e293b), var(--hero-to,#1e3a5f))",
+        borderRadius: 20, padding: "22px 28px",
+        position: "relative", overflow: "hidden",
       }}>
-        {[
-          { s: 160, t: -40, r: -20, o: 0.07 },
-          { s: 90,  t: 30,  r: 120, o: 0.05 },
-        ].map((c, i) => (
-          <div key={i} style={{
-            position: "absolute", top: c.t, right: c.r,
-            width: c.s, height: c.s, borderRadius: "50%",
-            background: B.primary, opacity: c.o, pointerEvents: "none",
-          }} />
-        ))}
-
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              {/* Avatar */}
-              <div style={{
-                width:        64, height: 64,
-                borderRadius: 16,
-                background:   `linear-gradient(135deg, ${B.primary}, #1a6fd4)`,
-                display:      "flex", alignItems: "center",
-                justifyContent: "center",
-                fontSize:     26, fontWeight: 800, color: "#f8fafc",
-                boxShadow:    `0 4px 16px ${B.primary}50`,
-                border:       "2px solid rgba(255,255,255,0.2)",
-              }}>
-                {(session?.user?.name ?? "U").charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#f8fafc" }}>
-                    {session?.user?.name}
-                  </h1>
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, padding: "2px 8px",
-                    background: B.primary + "30", color: "#93c5fd",
-                    border: `1px solid ${B.primary}40`, borderRadius: 999,
-                  }}>
-                    {role === "SALES_MANAGER" ? "Sales Manager" : "Account Executive"}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
-                  {session?.user?.email}
-                </p>
-              </div>
+        <div style={{ position:"absolute", top:-30, right:-30, width:120, height:120, borderRadius:"50%", background:"#4B9EF3", opacity:0.07, pointerEvents:"none" }} />
+        <div style={{ position:"relative", zIndex:1 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16, flexWrap:"wrap" }}>
+            <div style={{
+              width:50, height:50, borderRadius:14,
+              background: "linear-gradient(135deg, #4B9EF3, #1a6fd4)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:20, fontWeight:900, color:"#fff",
+              boxShadow: "0 4px 16px rgba(75,158,243,0.5)",
+            }}>
+              {(session?.user?.name ?? "U").charAt(0).toUpperCase()}
             </div>
-
-            {/* Live indicator */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: connected ? B.success : B.warning,
-                boxShadow:  connected ? `0 0 0 3px ${B.success}40` : `0 0 0 3px ${B.warning}40`,
-              }} />
-              <span style={{ fontSize: 12, color: connected ? B.success : B.warning, fontWeight: 600 }}>
-                {connected ? "Live" : "Offline"}
-              </span>
-              {lastUpdated && (
-                <span style={{ fontSize: 11, color: "#64748b" }}>
-                  · {format(lastUpdated, "HH:mm:ss", { locale: localeId })}
-                </span>
-              )}
-              <button onClick={fetchData} style={{ padding: "4px 12px", background: "rgba(75,158,243,0.2)", border: `1px solid ${B.primary}40`, borderRadius: 8, color: "#93c5fd", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
-                ↻ Refresh
-              </button>
+            <div>
+              <h1 style={{ margin:"0 0 3px", fontSize:18, fontWeight:800, color:"#f8fafc" }}>
+                {session?.user?.name}
+              </h1>
+              <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,0.4)" }}>
+                {role === "SALES_MANAGER" ? "Sales Manager" : "Account Executive"}
+              </p>
             </div>
           </div>
 
-          {/* Quick stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 24 }}>
+          {/* Quick KPIs */}
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:10 }}>
             {[
-              { label: "Total Leads",    value: kpi.totalLeads,                   color: B.primary  },
-              { label: "DEAL",            value: kpi.DEALLeads,                     color: B.success  },
-              { label: "Win Rate",       value: `${kpi.winRate}%`,               color: "#a78bfa"  },
-              { label: "Revenue",        value: formatRupiah(kpi.totalRevenue),   color: "#34d399"  },
-              { label: "Task Done",      value: `${kpi.taskCompletionRate}%`,     color: B.warning  },
+              { l:"Total Lead",  v:kpi.totalLeads,               c:"#4B9EF3" },
+              { l:"Deal",        v:kpi.wonLeads,                 c:"#34d399" },
+              { l:"Win Rate",    v:`${kpi.winRate}%`,            c:"#a78bfa" },
+              { l:"Revenue",     v:formatRp(kpi.totalRevenue),   c:"#fbbf24" },
+              { l:"Tugas Selesai", v:`${kpi.taskCompletionRate}%`, c:"#fb923c" },
             ].map((s) => (
-              <div key={s.label} style={{
-                background:   "rgba(255,255,255,0.06)",
-                border:       "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 12,
-                padding:      "12px 14px",
-              }}>
-                <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
+              <div key={s.l} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"10px 12px" }}>
+                <div style={{ fontSize:10, color:"rgba(255,255,255,0.35)", marginBottom:3 }}>{s.l}</div>
+                <div style={{ fontSize:16, fontWeight:800, color:s.c }}>{s.v}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Tab Navigation ───────────────────────────────── */}
+      {/* ── Global Filter Bar ─────────────────────────────── */}
       <div style={{
-        display:      "flex", gap: 4, padding: 4,
-        background:   "#f8fafc", borderRadius: 12,
-        border:       "1px solid #e2e8f0",
+        display:"flex", justifyContent:"space-between", alignItems:"center",
+        padding:"12px 16px", background:"var(--bg-card)",
+        borderRadius:12, border:"1px solid var(--border)",
+        flexWrap:"wrap", gap:10,
       }}>
+        <h3 style={{ margin:0, fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>
+          Filter Periode
+        </h3>
+        <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+          {/* View mode */}
+          <div style={{ display:"flex", gap:4, padding:3, background:"var(--bg-card2)", borderRadius:8, border:"1px solid var(--border)" }}>
+            {[{ v:"monthly", l:"Bulanan" },{ v:"yearly", l:"Tahunan" }].map((m) => (
+              <button key={m.v} onClick={() => setView(m.v as any)} style={{
+                padding:"4px 12px",
+                background: view === m.v ? "var(--primary)" : "transparent",
+                color: view === m.v ? "#fff" : "var(--text-muted)",
+                border:"none", borderRadius:5, fontSize:11, fontWeight:600, cursor:"pointer",
+              }}>
+                {m.l}
+              </button>
+            ))}
+          </div>
+
+          <select value={year} onChange={(e) => setYear(e.target.value)} style={{
+            padding:"5px 10px", background:"var(--bg-card2)", color:"var(--text-secondary)",
+            border:"1px solid var(--border)", borderRadius:6, fontSize:11, cursor:"pointer",
+          }}>
+            {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+
+          {view === "monthly" && (
+            <select value={month} onChange={(e) => setMonth(e.target.value)} style={{
+              padding:"5px 10px", background:"var(--bg-card2)", color:"var(--text-secondary)",
+              border:"1px solid var(--border)", borderRadius:6, fontSize:11, cursor:"pointer",
+            }}>
+              <option value="all">Semua Bulan</option>
+              {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* ── Tab Navigation ───────────────────────────────── */}
+      <div style={{ display:"flex", gap:4, padding:4, background:"var(--bg-card2)", borderRadius:12, border:"1px solid var(--border)" }}>
         {[
-          { key: "overview",  label: "Overview",        icon: "📊" },
-          { key: "pipeline",  label: "Pipeline Aktif",  icon: "🔀" },
-          { key: "activity",  label: "Aktivitas",       icon: "📅" },
+          { k:"overview",  l:"Overview"      },
+          { k:"pipeline",  l:"Pipeline"      },
+          { k:"activity",  l:"Aktivitas"     },
         ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key as any)}
-            style={{
-              flex:         1, padding:    "10px 16px",
-              background:   tab === t.key ? "var(--bg-card)" : "transparent",
-              border:       "none",
-              borderRadius: 10,
-              fontSize:     13, fontWeight: tab === t.key ? 700 : 500,
-              color:        tab === t.key ? "var(--text)" : "var(--text-muted)",
-              cursor:       "pointer", transition: "all 0.2s",
-              boxShadow:    tab === t.key ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-              display:      "flex", alignItems: "center",
-              justifyContent: "center", gap: 6,
-            }}
-          >
-            {t.icon} {t.label}
+          <button key={t.k} onClick={() => setTab(t.k as any)} style={{
+            flex:1, padding:"9px 14px",
+            background: tab === t.k ? "var(--bg-card)" : "transparent",
+            border:"none", borderRadius:9,
+            fontSize:12, fontWeight: tab === t.k ? 700 : 500,
+            color: tab === t.k ? "var(--primary)" : "var(--text-muted)",
+            cursor:"pointer", transition:"all 0.15s",
+            boxShadow: tab === t.k ? "var(--shadow-xs)" : "none",
+          }}>
+            {t.l}
           </button>
         ))}
       </div>
@@ -278,319 +193,174 @@ export default function PersonalPerformancePage() {
       {/* ── TAB: OVERVIEW ────────────────────────────────── */}
       {tab === "overview" && (
         <>
-          {/* KPI Tiles */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-            <MetricTile icon="📋" label="Total Leads"    value={kpi.totalLeads}                  color={B.primary} />
-            <MetricTile icon="🏆" label="Leads DEAL"      value={kpi.DEALLeads}                    color={B.success} sub={`Win rate ${kpi.winRate}%`} />
-            <MetricTile icon="💰" label="Total Revenue"  value={formatRupiah(kpi.totalRevenue)}  color="#a78bfa"   sub={`Avg ${formatRupiah(kpi.avgDealSize)}`} />
-            <MetricTile icon="🔥" label="Pipeline Value" value={formatRupiah(kpi.pipelineValue)} color={B.warning} sub={`${kpi.activeLeads} aktif`} />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-            <MetricTile icon="🎯" label="Win Rate"       value={`${kpi.winRate}%`}                 color={B.success} />
-            <MetricTile icon="✅" label="Tugas Selesai"  value={`${kpi.completedTasks}/${kpi.totalTasks}`} color={B.primary} sub={`${kpi.taskCompletionRate}% completion`} />
-            <MetricTile icon="📉" label="Leads RECYCLE"     value={kpi.RECYCLELeads}                    color={B.danger}  />
-            <MetricTile icon="⚡" label="Total Aktivitas" value={kpi.totalActivities}              color="#0891b2"   />
-          </div>
-
-          {/* Trend Charts */}
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Tren Bulanan Saya</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Leads dibuat dan DEAL per bulan</p>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={charts.monthlyPersonal} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={B.primary} stopOpacity={0.2} />
-                      <stop offset="95%" stopColor={B.primary} stopOpacity={0}   />
-                    </linearGradient>
-                    <linearGradient id="gW" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={B.success} stopOpacity={0.2} />
-                      <stop offset="95%" stopColor={B.success} stopOpacity={0}   />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
-                    labelStyle={{ color: "var(--text-muted)" }}
-                    itemStyle={{ color: "var(--text)" }}
-                  />
-                  <Area type="monotone" dataKey="created" name="Dibuat" stroke={B.primary} strokeWidth={2.5} fill="url(#gC)" dot={{ r: 4, fill: B.primary }} />
-                  <Area type="monotone" dataKey="DEAL"     name="DEAL"    stroke={B.success} strokeWidth={2.5} fill="url(#gW)" dot={{ r: 4, fill: B.success }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Donut chart untuk leads breakdown */}
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Komposisi Leads</h3>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--text-muted)" }}>Breakdown status saat ini</p>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <div style={{ position: "relative", width: 140, height: 140 }}>
-                  <PieChart width={140} height={140}>
-                    <Pie
-                      data={[
-                        { name: "DEAL",   value: kpi.DEALLeads,   fill: B.success },
-                        { name: "Aktif", value: kpi.activeLeads, fill: B.primary },
-                        { name: "RECYCLE",  value: kpi.RECYCLELeads,  fill: B.danger  },
-                      ]}
-                      cx={65} cy={65}
-                      innerRadius={42} outerRadius={60}
-                      dataKey="value" paddingAngle={3}
-                      strokeWidth={0}
-                    >
-                      {[B.success, B.primary, B.danger].map((c, i) => (
-                        <Cell key={i} fill={c} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{kpi.totalLeads}</div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Total</div>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
-                {[
-                  { label: "DEAL",   value: kpi.DEALLeads,    color: B.success },
-                  { label: "Aktif", value: kpi.activeLeads, color: B.primary },
-                  { label: "RECYCLE",  value: kpi.RECYCLELeads,   color: B.danger  },
-                ].map((s) => (
-                  <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color }} />
-                      <span style={{ fontSize: 12, color: "#64748b" }}>{s.label}</span>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: s.color }}>{s.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent DEAL Leads */}
-          {recentDEAL.length > 0 && (
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <div style={{
-                padding:    "16px 24px",
-                background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-                borderBottom: "1px solid var(--border)",
-                display:    "flex", alignItems: "center", gap: 10,
+          {/* KPI Grid */}
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:12 }}>
+            {[
+              { l:"Total Lead",    v:kpi.totalLeads,               c:"var(--primary)", sub:`${kpi.activeLeads} aktif`  },
+              { l:"Deal (Won)",    v:kpi.wonLeads,                 c:"var(--success)", sub:`Win rate ${kpi.winRate}%`  },
+              { l:"Total Revenue", v:formatRp(kpi.totalRevenue),   c:"var(--purple)",  sub:`Avg ${formatRp(kpi.avgDealSize)}` },
+              { l:"Pipeline",      v:formatRp(kpi.pipelineValue),  c:"var(--warning)", sub:`${kpi.activeLeads} aktif`  },
+            ].map((s) => (
+              <div key={s.l} style={{
+                background:"var(--bg-card)", borderRadius:12, padding:"16px 18px",
+                border:"1px solid var(--border)", boxShadow:"var(--shadow-xs)",
+                borderTop:`3px solid ${s.c}`,
               }}>
-                <span style={{ fontSize: 20 }}>🏆</span>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#065f46" }}>Leads DEAL Terakhir</h3>
-                  <p style={{ margin: 0, fontSize: 11, color: "#059669" }}>Deal yang berhasil Anda closing</p>
-                </div>
+                <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em", fontWeight:600 }}>{s.l}</div>
+                <div style={{ fontSize:22, fontWeight:800, color:s.c, lineHeight:1 }}>{s.v}</div>
+                <div style={{ fontSize:11, color:"var(--text-muted)", marginTop:4 }}>{s.sub}</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {recentDEAL.map((lead: any, i: number) => (
-                  <div key={lead.id} style={{
-                    display:      "flex", alignItems: "center",
-                    gap:          16, padding:    "14px 24px",
-                    borderBottom: i < recentDEAL.length - 1 ? "1px solid var(--border)" : "none",
-                    background:   i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-alt)",
-                  }}>
-                    <div style={{
-                      width:        36, height: 36, borderRadius: 10,
-                      background:   B.success + "15",
-                      display:      "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 16, flexShrink: 0,
-                    }}>✅</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.title}</div>
-                      <div style={{ fontSize: 11, color: "#64748b" }}>{lead.clientName}{lead.clientCompany ? ` · ${lead.clientCompany}` : ""}</div>
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: B.success }}>{lead.value ? formatRupiah(Number(lead.value)) : "-"}</div>
-                      <div style={{ fontSize: 10, color: "#94a3b8" }}>{lead.closedAt ? format(new Date(lead.closedAt), "d MMM yyyy", { locale: localeId }) : "-"}</div>
-                    </div>
-                  </div>
-                ))}
+            ))}
+          </div>
+
+          {/* Trend Chart dengan filter */}
+          <div style={{ background:"var(--bg-card)", borderRadius:16, padding:20, border:"1px solid var(--border)" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, flexWrap:"wrap", gap:10 }}>
+              <div>
+                <h3 style={{ margin:"0 0 3px", fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>
+                  Tren Performa — {view === "yearly" ? "Per Tahun" : `${MONTHS[Number(month)-1] ?? "Semua Bulan"} ${year}`}
+                </h3>
+                <p style={{ margin:0, fontSize:11, color:"var(--text-muted)" }}>
+                  {view === "yearly" ? "Perbandingan antar tahun" : "Lead masuk, deal, dan revenue per bulan"}
+                </p>
               </div>
             </div>
-          )}
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={trendData ?? []} margin={{ top:4, right:4, left:0, bottom:0 }}>
+                <defs>
+                  {[["c","#4B9EF3"],["d","#10b981"],["r","#8b5cf6"]].map(([id,c]) => (
+                    <linearGradient key={id} id={`pg${id}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor={c} stopOpacity={0.2} />
+                      <stop offset="95%" stopColor={c} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey={view === "yearly" ? "year" : "month"} tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<CTooltip />} />
+                <Legend wrapperStyle={{ fontSize:11, color:"var(--text-secondary)" }} />
+                <Area type="monotone" dataKey="created" name="Lead Masuk"  stroke="#4B9EF3" strokeWidth={2.5} fill="url(#pgc)" dot={{ r:3, fill:"#4B9EF3", strokeWidth:0 }} />
+                <Area type="monotone" dataKey="won"     name="Deal"        stroke="#10b981" strokeWidth={2.5} fill="url(#pgd)" dot={{ r:3, fill:"#10b981", strokeWidth:0 }} />
+                <Area type="monotone" dataKey="revenue" name="Revenue"     stroke="#8b5cf6" strokeWidth={2.5} fill="url(#pgr)" dot={{ r:3, fill:"#8b5cf6", strokeWidth:0 }}
+                  yAxisId={0}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Revenue bar per bulan */}
+          <div style={{ background:"var(--bg-card)", borderRadius:16, padding:20, border:"1px solid var(--border)" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>Revenue per Bulan</h3>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={charts.monthlyPersonal ?? []} margin={{ top:4, right:4, left:0, bottom:0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey="month" tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} tickFormatter={(v) => formatRp(v)} />
+                <Tooltip content={<CTooltip fmt={formatRp} />} />
+                <Bar dataKey="revenue" name="Revenue" radius={[5,5,0,0]} maxBarSize={32}>
+                  {(charts.monthlyPersonal ?? []).map((_: any, i: number) => (
+                    <Cell key={i} fill={`hsl(${210+i*8}, 70%, 55%)`} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </>
       )}
 
       {/* ── TAB: PIPELINE ─────────────────────────────────── */}
       {tab === "pipeline" && (
-        <>
-          {/* Pipeline by Status */}
-          <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Pipeline per Stage</h3>
-            <p style={{ margin: "0 0 24px", fontSize: 12, color: "var(--text-muted)" }}>Distribusi nilai pipeline Anda</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {(charts.pipelineByStatus ?? [])
-                .sort((a: any, b: any) => b.value - a.value)
-                .map((stage: any) => {
-                  const max      = Math.max(...(charts.pipelineByStatus ?? []).map((s: any) => s.value), 1)
-                  const barWidth = Math.round((stage.value / max) * 100)
-                  const color    = STATUS_COLOR[stage.status] ?? "#94a3b8"
-
-                  return (
-                    <div key={stage.status}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <div style={{ width: 10, height: 10, borderRadius: "50%", background: color }} />
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
-                            {STATUS_LABEL[stage.status] ?? stage.status}
-                          </span>
-                          <span style={{
-                            fontSize: 11, padding: "1px 8px", borderRadius: 999,
-                            background: color + "15", color,
-                          }}>
-                            {stage.count} leads
-                          </span>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
-                          {formatRupiah(stage.value)}
-                        </span>
-                      </div>
-                      <div style={{ height: 10, background: "var(--bg-card)", borderRadius: 999, overflow: "hidden" }}>
-                        <div style={{
-                          height: "100%", borderRadius: 999,
-                          width:  `${barWidth}%`, background: color,
-                          transition: "width 1s ease",
-                          boxShadow: `0 0 8px ${color}60`,
-                        }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              {(!charts.pipelineByStatus || charts.pipelineByStatus.length === 0) && (
-                <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)", fontSize: 14 }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
-                  Tidak ada leads aktif saat ini
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Active Leads Detail */}
-          {activeLeadsDetail.length > 0 && (
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: "var(--bg-card)" }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                  Leads Aktif Saya ({activeLeadsDetail.length})
-                </h3>
-              </div>
-              {activeLeadsDetail.map((lead: any, i: number) => {
-                const color = STATUS_COLOR[lead.status] ?? "#94a3b8"
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          <div style={{ background:"var(--bg-card)", borderRadius:16, padding:20, border:"1px solid var(--border)" }}>
+            <h3 style={{ margin:"0 0 4px", fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>Pipeline per Stage</h3>
+            <p style={{ margin:"0 0 20px", fontSize:11, color:"var(--text-muted)" }}>Distribusi nilai dan jumlah lead aktif</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              {(charts.pipelineByStatus ?? []).map((stage: any) => {
+                const max = Math.max(...(charts.pipelineByStatus ?? []).map((s: any) => s.value), 1)
+                const w   = Math.round((stage.value / max) * 100)
+                const c   = stage.color ?? "#4B9EF3"
                 return (
-                  <div key={lead.id} style={{
-                    display:      "flex", alignItems: "center",
-                    gap:          16, padding:    "14px 24px",
-                    borderBottom: i < activeLeadsDetail.length - 1 ? "1px solid var(--border)" : "none",
-                    background:   i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-alt)",
-                  }}>
-                    <div style={{
-                      width:        10, height:      10,
-                      borderRadius: "50%", background: color,
-                      boxShadow:    `0 0 6px ${color}80`,
-                      flexShrink:   0,
-                    }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.title}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{lead.clientName}{lead.clientCompany ? ` · ${lead.clientCompany}` : ""}</div>
+                  <div key={stage.status}>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <div style={{ width:8, height:8, borderRadius:"50%", background:c }} />
+                        <span style={{ fontSize:13, fontWeight:600, color:"var(--text-primary)" }}>{stage.status}</span>
+                        <span style={{ fontSize:11, padding:"1px 7px", borderRadius:999, background:c+"18", color:c }}>{stage.count} lead</span>
+                      </div>
+                      <span style={{ fontSize:13, fontWeight:700, color:c }}>{formatRp(stage.value)}</span>
                     </div>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
-                      background: color + "15", color: "var(--text)", flexShrink: 0,
-                    }}>
-                      {STATUS_LABEL[lead.status] ?? lead.status}
-                    </span>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", flexShrink: 0 }}>
-                      {lead.value ? formatRupiah(Number(lead.value)) : "-"}
+                    <div style={{ height:8, background:"var(--bg-card2)", borderRadius:999, overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${w}%`, background:c, borderRadius:999, transition:"width .8s ease" }} />
                     </div>
                   </div>
                 )
               })}
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
 
       {/* ── TAB: ACTIVITY ─────────────────────────────────── */}
       {tab === "activity" && (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {/* Activity by type chart */}
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Aktivitas per Tipe</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Distribusi jenis aktivitas</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={activityChartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ background: "var(--bg-card)", border: "none", borderRadius: 10, fontSize: 12 }}
-                    labelStyle={{ color: "var(--text-muted)" }}
-                    itemStyle={{ color: "var(--text)" }}
-                  />
-                  <Bar dataKey="value" name="Jumlah" radius={[6, 6, 0, 0]} maxBarSize={40}>
-                    {activityChartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+          <div style={{ background:"var(--bg-card)", borderRadius:16, padding:20, border:"1px solid var(--border)" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>Aktivitas per Tipe</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={Object.entries(charts.activityByType ?? {}).map(([type, count]) => ({ name: type.replace("_"," "), value: count }))}
+                margin={{ top:4, right:4, left:-10, bottom:0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                <XAxis dataKey="name" tick={{ fontSize:9, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip content={<CTooltip />} />
+                <Bar dataKey="value" name="Jumlah" radius={[5,5,0,0]} maxBarSize={36}>
+                  {Object.keys(charts.activityByType ?? {}).map((_,i) => (
+                    <Cell key={i} fill={["#6366f1","#4B9EF3","#0891b2","#10b981","#f59e0b"][i%5]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-            {/* Task completion */}
-            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Task Completion</h3>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--text-muted)" }}>Progress penyelesaian tugas</p>
-
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-                <div style={{ position: "relative", width: 140, height: 140 }}>
-                  <PieChart width={140} height={140}>
-                    <Pie
-                      data={[
-                        { name: "Selesai", value: kpi.completedTasks, fill: B.success },
-                        { name: "Pending", value: Math.max(kpi.totalTasks - kpi.completedTasks, 0), fill: "var(--bg-card-alt)" },
-                      ]}
-                      cx={65} cy={65}
-                      innerRadius={42} outerRadius={60}
-                      dataKey="value" paddingAngle={4}
-                      strokeWidth={0}
-                      startAngle={90} endAngle={-270}
-                    >
-                      <Cell fill={B.success} />
-                      <Cell fill="var(--bg-card-alt)" />
-                    </Pie>
-                  </PieChart>
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: B.success }}>{kpi.taskCompletionRate}%</div>
-                    <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Selesai</div>
-                  </div>
+          <div style={{ background:"var(--bg-card)", borderRadius:16, padding:20, border:"1px solid var(--border)" }}>
+            <h3 style={{ margin:"0 0 16px", fontSize:14, fontWeight:700, color:"var(--text-primary)" }}>Task Completion</h3>
+            <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}>
+              <div style={{ position:"relative", width:130, height:130 }}>
+                <PieChart width={130} height={130}>
+                  <Pie data={[
+                    { name:"Selesai", value: kpi.completedTasks, fill:"var(--success)" },
+                    { name:"Pending", value: Math.max(kpi.totalTasks-kpi.completedTasks,0), fill:"var(--bg-card2)" },
+                  ]} cx={60} cy={60} innerRadius={40} outerRadius={56}
+                    dataKey="value" paddingAngle={4} strokeWidth={0}
+                    startAngle={90} endAngle={-270}
+                  >
+                    <Cell fill="var(--success)" />
+                    <Cell fill="var(--border)" />
+                  </Pie>
+                </PieChart>
+                <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+                  <div style={{ fontSize:20, fontWeight:800, color:"var(--success)" }}>{kpi.taskCompletionRate}%</div>
+                  <div style={{ fontSize:9, color:"var(--text-muted)" }}>Selesai</div>
                 </div>
               </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {[
-                  { label: "Total Tugas",  value: kpi.totalTasks,      color: B.primary },
-                  { label: "Selesai",      value: kpi.completedTasks,  color: B.success },
-                  { label: "Pending",      value: kpi.totalTasks - kpi.completedTasks, color: B.warning },
-                  { label: "Total Aktivitas", value: kpi.totalActivities, color: "#0891b2" },
-                ].map((s) => (
-                  <div key={s.label} style={{
-                    background:   "var(--bg-card)", borderRadius: 10,
-                    padding:      "12px 14px",
-                    border:       "1px solid var(--border)",
-                  }}>
-                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
-                  </div>
-                ))}
-              </div>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              {[
+                { l:"Total Tugas",  v:kpi.totalTasks,       c:"var(--primary)" },
+                { l:"Selesai",      v:kpi.completedTasks,   c:"var(--success)" },
+                { l:"Pending",      v:kpi.totalTasks-kpi.completedTasks, c:"var(--warning)" },
+                { l:"Semua Aktivitas", v:kpi.totalActivities, c:"var(--purple)" },
+              ].map((s) => (
+                <div key={s.l} style={{ background:"var(--bg-card2)", borderRadius:8, padding:"10px 12px", border:"1px solid var(--border)" }}>
+                  <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:3 }}>{s.l}</div>
+                  <div style={{ fontSize:18, fontWeight:800, color:s.c }}>{s.v}</div>
+                </div>
+              ))}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

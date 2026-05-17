@@ -168,7 +168,11 @@ export default function TeamPage() {
         {!isReadOnly && (
           <button
             onClick={openAdd}
-            style={{ padding: "9px 18px", background: "var(--bg-button)", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+            style={{
+                padding: "9px 18px", background: "#2563eb",
+                color: "#fff", border: "none", borderRadius: 8,
+                fontSize: 14, fontWeight: 500, cursor: "pointer",
+              }}
           >
             + Tambah Anggota
           </button>

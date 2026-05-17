@@ -287,3 +287,35 @@ textarea:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* ── Responsive Breakpoints ─────────────────────── */
+
+/* ── Mobile (max 640px) ────────────────────────── */
+@media (max-width: 640px) {
+  /* Sidebar hilang, ganti floating menu */
+  aside { display: none !important; }
+  main  { margin-left: 0 !important; }
+
+  /* Grid jadi 2 kolom */
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: repeat(1, 1fr) !important; }
+  .grid-2 { grid-template-columns: repeat(1, 1fr) !important; }
+
+  /* Font lebih kecil */
+  h1 { font-size: 18px !important; }
+  h2 { font-size: 16px !important; }
+  h3 { font-size: 14px !important; }
+
+  /* Padding lebih kecil */
+  main > div { padding: 12px !important; }
+  .card      { padding: 14px !important; }
+}
+
+/* ── Tablet (641px–1024px) ─────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  aside { width: 200px !important; }
+  main  { margin-left: 200px !important; }
+
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+}
