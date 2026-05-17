@@ -18,28 +18,28 @@ export async function GET() {
   }
 
   // ✅ Tidak ada whereClause filter by user — semua role lihat data yang sama
-  const [totalLeads, wonLeads, lostLeads, activeLeads] = await Promise.all([
+  const [totalLeads, DEALLeads, RECYCLELeads, activeLeads] = await Promise.all([
     prisma.lead.count(),
-    prisma.lead.count({ where: { status: "WON"  } }),
-    prisma.lead.count({ where: { status: "LOST" } }),
-    prisma.lead.count({ where: { status: { notIn: ["WON", "LOST"] } } }),
+    prisma.lead.count({ where: { status: "DEAL"  } }),
+    prisma.lead.count({ where: { status: "RECYCLE" } }),
+    prisma.lead.count({ where: { status: { notIn: ["DEAL", "RECYCLE"] } } }),
   ])
 
   const revenueResult = await prisma.lead.aggregate({
-    where: { status: "WON" },
+    where: { status: "DEAL" },
     _sum:  { value: true },
   })
   const totalRevenue = Number(revenueResult._sum.value ?? 0)
 
   const pipelineResult = await prisma.lead.aggregate({
-    where: { status: { notIn: ["WON", "LOST"] } },
+    where: { status: { notIn: ["DEAL", "RECYCLE"] } },
     _sum:  { value: true },
   })
   const pipelineValue = Number(pipelineResult._sum.value ?? 0)
 
-  const closedLeads = wonLeads + lostLeads
+  const closedLeads = DEALLeads + RECYCLELeads
   const winRate     = closedLeads > 0
-    ? Math.round((wonLeads / closedLeads) * 100)
+    ? Math.round((DEALLeads / closedLeads) * 100)
     : 0
 
   // Leads per Status
@@ -59,12 +59,12 @@ export async function GET() {
     const start = startOfMonth(date)
     const end   = endOfMonth(date)
 
-    const [created, won] = await Promise.all([
+    const [created, DEAL] = await Promise.all([
       prisma.lead.count({ where: { createdAt: { gte: start, lte: end } } }),
-      prisma.lead.count({ where: { status: "WON", closedAt: { gte: start, lte: end } } }),
+      prisma.lead.count({ where: { status: "DEAL", closedAt: { gte: start, lte: end } } }),
     ])
 
-    monthlyData.push({ month: format(date, "MMM"), created, won })
+    monthlyData.push({ month: format(date, "MMM"), created, DEAL })
   }
 
   // Monthly Revenue
@@ -75,7 +75,7 @@ export async function GET() {
     const end    = endOfMonth(date)
 
     const result = await prisma.lead.aggregate({
-      where: { status: "WON", closedAt: { gte: start, lte: end } },
+      where: { status: "DEAL", closedAt: { gte: start, lte: end } },
       _sum:  { value: true },
     })
 
@@ -98,17 +98,17 @@ export async function GET() {
 
   const salesPerformance = salesUsers.map((u) => {
     const total   = u.assignedLeads.length
-    const won     = u.assignedLeads.filter((l) => l.status === "WON").length
+    const DEAL     = u.assignedLeads.filter((l) => l.status === "DEAL").length
     const revenue = u.assignedLeads
-      .filter((l) => l.status === "WON")
+      .filter((l) => l.status === "DEAL")
       .reduce((s, l) => s + Number(l.value ?? 0), 0)
 
     return {
       name:    u.name,
       role:    u.role,
       total,
-      won,
-      winRate: total > 0 ? Math.round((won / total) * 100) : 0,
+      DEAL,
+      winRate: total > 0 ? Math.round((DEAL / total) * 100) : 0,
       revenue,
     }
   }).sort((a, b) => b.revenue - a.revenue)
@@ -124,7 +124,7 @@ export async function GET() {
 
   return NextResponse.json({
     kpi: {
-      totalLeads, wonLeads, lostLeads,
+      totalLeads, DEALLeads, RECYCLELeads,
       activeLeads, totalRevenue, pipelineValue, winRate,
     },
     charts: {

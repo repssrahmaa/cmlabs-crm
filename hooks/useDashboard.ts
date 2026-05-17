@@ -6,8 +6,8 @@ import { useRealtimeDashboard } from "./useRealtimeDashboard"
 export interface DashboardData {
   kpi: {
     totalLeads:    number
-    wonLeads:      number
-    lostLeads:     number
+    DEALLeads:      number
+    RECYCLELeads:     number
     activeLeads:   number
     totalRevenue:  number
     pipelineValue: number
@@ -15,13 +15,13 @@ export interface DashboardData {
   }
   charts: {
     leadsByStatus:    { status: string; _count: number }[]
-    monthlyData:      { month: string; created: number; won: number }[]
+    monthlyData:      { month: string; created: number; DEAL: number }[]
     monthlyRevenue:   { month: string; revenue: number }[]
     salesPerformance: {
       name:    string
       role:    string
       total:   number
-      won:     number
+      DEAL:     number
       winRate: number
       revenue: number
     }[]

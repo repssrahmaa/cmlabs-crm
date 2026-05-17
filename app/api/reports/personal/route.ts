@@ -36,26 +36,26 @@ export async function GET() {
 
   // ── KPI Personal ──────────────────────────────────────────
   const totalLeads  = userLeads.length
-  const wonLeads    = userLeads.filter((l) => l.status === "WON").length
-  const lostLeads   = userLeads.filter((l) => l.status === "LOST").length
+  const DEALLeads    = userLeads.filter((l) => l.status === "DEAL").length
+  const RECYCLELeads   = userLeads.filter((l) => l.status === "RECYCLE").length
   const activeLeads = userLeads.filter(
-    (l) => !["WON", "LOST"].includes(l.status)
+    (l) => !["DEAL", "RECYCLE"].includes(l.status)
   ).length
 
   const totalRevenue = userLeads
-    .filter((l) => l.status === "WON")
+    .filter((l) => l.status === "DEAL")
     .reduce((s, l) => s + Number(l.value ?? 0), 0)
 
   const pipelineValue = userLeads
-    .filter((l) => !["WON", "LOST"].includes(l.status))
+    .filter((l) => !["DEAL", "RECYCLE"].includes(l.status))
     .reduce((s, l) => s + Number(l.value ?? 0), 0)
 
-  const winRate = (wonLeads + lostLeads) > 0
-    ? Math.round((wonLeads / (wonLeads + lostLeads)) * 100)
+  const winRate = (DEALLeads + RECYCLELeads) > 0
+    ? Math.round((DEALLeads / (DEALLeads + RECYCLELeads)) * 100)
     : 0
 
-  const avgDealSize = wonLeads > 0
-    ? Math.round(totalRevenue / wonLeads)
+  const avgDealSize = DEALLeads > 0
+    ? Math.round(totalRevenue / DEALLeads)
     : 0
 
   // ── Activity stats ────────────────────────────────────────
@@ -89,20 +89,20 @@ export async function GET() {
       return d >= start && d <= end
     })
 
-    const monthWon = userLeads.filter((l) => {
-      if (l.status !== "WON" || !l.closedAt) return false
+    const monthDEAL = userLeads.filter((l) => {
+      if (l.status !== "DEAL" || !l.closedAt) return false
       const d = new Date(l.closedAt)
       return d >= start && d <= end
     })
 
-    const monthRevenue = monthWon.reduce(
+    const monthRevenue = monthDEAL.reduce(
       (s, l) => s + Number(l.value ?? 0), 0
     )
 
     monthlyPersonal.push({
       month:   format(date, "MMM"),
       created: monthLeads.length,
-      won:     monthWon.length,
+      DEAL:     monthDEAL.length,
       revenue: monthRevenue,
     })
   }
@@ -118,7 +118,7 @@ export async function GET() {
 
   // ── Pipeline value per status ─────────────────────────────
   const pipelineByStatus = userLeads
-    .filter((l) => !["WON", "LOST"].includes(l.status))
+    .filter((l) => !["DEAL", "RECYCLE"].includes(l.status))
     .reduce(
       (acc, l) => {
         const existing = acc.find((a) => a.status === l.status)
@@ -133,9 +133,9 @@ export async function GET() {
       [] as { status: string; value: number; count: number }[]
     )
 
-  // ── Recent won leads ──────────────────────────────────────
-  const recentWon = userLeads
-    .filter((l) => l.status === "WON")
+  // ── Recent DEAL leads ──────────────────────────────────────
+  const recentDEAL = userLeads
+    .filter((l) => l.status === "DEAL")
     .sort((a, b) =>
       new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime()
     )
@@ -143,15 +143,15 @@ export async function GET() {
 
   // ── Active leads detail ───────────────────────────────────
   const activeLeadsDetail = userLeads
-    .filter((l) => !["WON", "LOST"].includes(l.status))
+    .filter((l) => !["DEAL", "RECYCLE"].includes(l.status))
     .sort((a, b) => Number(b.value ?? 0) - Number(a.value ?? 0))
     .slice(0, 10)
 
   return NextResponse.json({
     kpi: {
       totalLeads,
-      wonLeads,
-      lostLeads,
+      DEALLeads,
+      RECYCLELeads,
       activeLeads,
       totalRevenue,
       pipelineValue,
@@ -170,7 +170,7 @@ export async function GET() {
       pipelineByStatus,
       activityByType,
     },
-    recentWon,
+    recentDEAL,
     activeLeadsDetail,
   })
 }

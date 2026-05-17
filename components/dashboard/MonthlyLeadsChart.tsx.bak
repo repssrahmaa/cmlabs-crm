@@ -6,25 +6,25 @@ import {
 } from "recharts"
 
 const STATUS_LABEL: Record<string, string> = {
-  LEAD_IN:          "Lead Masuk",
-  CONTACT_MADE:     "Dihubungi",
+  APPROACH:          "Lead Masuk",
+  COLD_LEAD:     "Dihubungi",
   NEEDS_IDENTIFIED: "Kebutuhan",
-  PROPOSAL_MADE:    "Proposal",
-  NEGOTIATION:      "Negosiasi",
+  DECK_REQUEST:    "Proposal",
+  MEETING:      "Negosiasi",
   CONTRACT_SENT:    "Kontrak",
-  WON:              "Berhasil",
-  LOST:             "Gagal",
+  DEAL:              "Berhasil",
+  RECYCLE:             "Gagal",
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  LEAD_IN:          "#6366f1",
-  CONTACT_MADE:     "#3b82f6",
+  APPROACH:          "#6366f1",
+  COLD_LEAD:     "#3b82f6",
   NEEDS_IDENTIFIED: "#0ea5e9",
-  PROPOSAL_MADE:    "#f59e0b",
-  NEGOTIATION:      "#f97316",
+  DECK_REQUEST:    "#f59e0b",
+  MEETING:      "#f97316",
   CONTRACT_SENT:    "#8b5cf6",
-  WON:              "#10b981",
-  LOST:             "#ef4444",
+  DEAL:              "#10b981",
+  RECYCLE:             "#ef4444",
 }
 
 interface Props {

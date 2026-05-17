@@ -12,7 +12,7 @@ const updateLeadSchema = z.object({
   clientEmail:   z.union([z.string().email(), z.string().max(0), z.null()]).optional(),
   clientPhone:   z.string().optional().nullable(),
   clientCompany: z.string().optional().nullable(),
-  status:        z.enum(["LEAD_IN","CONTACT_MADE","NEEDS_IDENTIFIED","PROPOSAL_MADE","NEGOTIATION","CONTRACT_SENT","WON","LOST"]).optional(),
+  status:        z.enum(["APPROACH","COLD_LEAD","NEEDS_IDENTIFIED","DECK_REQUEST","MEETING","CONTRACT_SENT","DEAL","RECYCLE"]).optional(),
   priority:      z.enum(["LOW","MEDIUM","HIGH"]).optional(),
   value:         z.union([
     z.number(),
@@ -121,9 +121,9 @@ export async function PUT(
   }
 
   const closedAt =
-    parsed.data.status === "WON" || parsed.data.status === "LOST"
+    parsed.data.status === "DEAL" || parsed.data.status === "RECYCLE"
       ? new Date()
-      : parsed.data.status && !["WON", "LOST"].includes(parsed.data.status)
+      : parsed.data.status && !["DEAL", "RECYCLE"].includes(parsed.data.status)
       ? null
       : undefined
 

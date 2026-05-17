@@ -6,7 +6,7 @@ import {
 } from "recharts"
 
 interface Props {
-  data: { month: string; created: number; won: number }[]
+  data: { month: string; created: number; DEAL: number }[]
 }
 
 export default function MonthlyLeadsChart({ data }: Props) {
@@ -26,12 +26,12 @@ export default function MonthlyLeadsChart({ data }: Props) {
   if (typeof value !== 'number') return null;
   return [
     String(value),
-    name === "created" ? "Created" : "Won",
+    name === "created" ? "Created" : "DEAL",
   ];
 }}
           />
           <Bar dataKey="created" name="Created" fill="#2563eb" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="won" name="Won" fill="#10b981" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="DEAL" name="DEAL" fill="#10b981" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -24,16 +24,16 @@ function formatRupiah(v: number, compact = true) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  LEAD_IN: "Lead Masuk", CONTACT_MADE: "Dihubungi",
-  NEEDS_IDENTIFIED: "Kebutuhan", PROPOSAL_MADE: "Proposal",
-  NEGOTIATION: "Negosiasi", CONTRACT_SENT: "Kontrak",
-  WON: "Berhasil", LOST: "Gagal",
+  APPROACH: "Lead Masuk", COLD_LEAD: "Dihubungi",
+  NEEDS_IDENTIFIED: "Kebutuhan", DECK_REQUEST: "Proposal",
+  MEETING: "Negosiasi", CONTRACT_SENT: "Kontrak",
+  DEAL: "Berhasil", RECYCLE: "Gagal",
 }
 const STATUS_COLOR: Record<string, string> = {
-  LEAD_IN: "#6366f1", CONTACT_MADE: "#4B9EF3",
-  NEEDS_IDENTIFIED: "#0ea5e9", PROPOSAL_MADE: "#f59e0b",
-  NEGOTIATION: "#f97316", CONTRACT_SENT: "#8b5cf6",
-  WON: "#10b981", LOST: "#ef4444",
+  APPROACH: "#6366f1", COLD_LEAD: "#4B9EF3",
+  NEEDS_IDENTIFIED: "#0ea5e9", DECK_REQUEST: "#f59e0b",
+  MEETING: "#f97316", CONTRACT_SENT: "#8b5cf6",
+  DEAL: "#10b981", RECYCLE: "#ef4444",
 }
 
 // ── Custom Tooltip ─────────────────────────────────────────────
@@ -281,7 +281,7 @@ export default function DashboardPage() {
     if (!data) return []
     return data.charts.salesPerformance.slice(0, 5).map((s) => ({
       name:    s.name.split(" ")[0],
-      won:     s.won,
+      DEAL:     s.DEAL,
       total:   s.total,
       winRate: s.winRate,
     }))
@@ -403,7 +403,7 @@ export default function DashboardPage() {
             {[
               { l: "Total Leads",   v: kpi.totalLeads,              c: "#4B9EF3", i: "📋" },
               { l: "Leads Aktif",   v: kpi.activeLeads,             c: "#f59e0b", i: "🔥" },
-              { l: "Won",           v: kpi.wonLeads,                c: "#10b981", i: "🏆" },
+              { l: "DEAL",           v: kpi.DEALLeads,                c: "#10b981", i: "🏆" },
               { l: "Revenue",       v: formatRupiah(kpi.totalRevenue), c: "#a78bfa", i: "💰" },
             ].map((s) => (
               <div key={s.l} style={{
@@ -429,9 +429,9 @@ export default function DashboardPage() {
       {/* ── KPI Cards ───────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         <StatCard icon="📊" label="Pipeline Value"  value={formatRupiah(kpi.pipelineValue)} color="#8b5cf6" sub="Potensi aktif"    trend="up"      sparkData={[5,8,3,9,6,11,8]}        />
-        <StatCard icon="🎯" label="Win Rate"        value={`${kpi.winRate}%`}               color="#10b981" sub={`${kpi.wonLeads} won / ${kpi.wonLeads + kpi.lostLeads} closed`} trend="up" sparkData={[40,45,38,52,48,55,kpi.winRate]} />
-        <StatCard icon="💵" label="Total Revenue"   value={formatRupiah(kpi.totalRevenue)}  color="#4B9EF3" sub="Dari leads won"   trend="up"      sparkData={[2,5,3,8,5,9,7]}        />
-        <StatCard icon="📉" label="Leads Lost"      value={kpi.lostLeads}                   color="#ef4444" sub="Perlu evaluasi"  trend="down"    sparkData={[3,2,4,1,3,2,kpi.lostLeads]} />
+        <StatCard icon="🎯" label="Win Rate"        value={`${kpi.winRate}%`}               color="#10b981" sub={`${kpi.DEALLeads} DEAL / ${kpi.DEALLeads + kpi.RECYCLELeads} closed`} trend="up" sparkData={[40,45,38,52,48,55,kpi.winRate]} />
+        <StatCard icon="💵" label="Total Revenue"   value={formatRupiah(kpi.totalRevenue)}  color="#4B9EF3" sub="Dari leads DEAL"   trend="up"      sparkData={[2,5,3,8,5,9,7]}        />
+        <StatCard icon="📉" label="Leads RECYCLE"      value={kpi.RECYCLELeads}                   color="#ef4444" sub="Perlu evaluasi"  trend="down"    sparkData={[3,2,4,1,3,2,kpi.RECYCLELeads]} />
       </div>
 
       {/* ── Main Chart ──────────────────────────────────── */}
@@ -476,7 +476,7 @@ export default function DashboardPage() {
               <Bar dataKey={metric === "leads" ? "created" : "revenue"} name={metric === "leads" ? "Dibuat" : "Revenue"}
                 fill="#4B9EF3" radius={[4, 4, 0, 0]} fillOpacity={0.8} maxBarSize={32} />
               {metric === "leads" && (
-                <Line type="monotone" dataKey="won" name="Won" stroke="#10b981" strokeWidth={2.5}
+                <Line type="monotone" dataKey="DEAL" name="DEAL" stroke="#10b981" strokeWidth={2.5}
                   dot={{ r: 4, fill: "#10b981" }} />
               )}
             </ComposedChart>
@@ -492,7 +492,7 @@ export default function DashboardPage() {
               {metric === "leads" ? (
                 <>
                   <Bar dataKey="created" name="Dibuat" fill="#4B9EF3" radius={[4,4,0,0]} maxBarSize={28} />
-                  <Bar dataKey="won"     name="Won"    fill="#10b981" radius={[4,4,0,0]} maxBarSize={28} />
+                  <Bar dataKey="DEAL"     name="DEAL"    fill="#10b981" radius={[4,4,0,0]} maxBarSize={28} />
                 </>
               ) : (
                 <Bar dataKey="revenue" name="Revenue" radius={[4,4,0,0]} maxBarSize={32}>
@@ -529,7 +529,7 @@ export default function DashboardPage() {
               {metric === "leads" ? (
                 <>
                   <Area type="monotone" dataKey="created" name="Dibuat" stroke="#4B9EF3" strokeWidth={2.5} fill="url(#ag1)" dot={{ r: 4, fill: "#4B9EF3", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
-                  <Area type="monotone" dataKey="won"     name="Won"    stroke="#10b981" strokeWidth={2.5} fill="url(#ag2)" dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="DEAL"     name="DEAL"    stroke="#10b981" strokeWidth={2.5} fill="url(#ag2)" dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
                 </>
               ) : (
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#agr)" dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
@@ -564,9 +564,9 @@ export default function DashboardPage() {
         <ChartCard title="Win vs Loss" sub="Rasio keberhasilan closing" minH={240}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {[
-              { l: "Won",    v: kpi.wonLeads,    c: "#10b981", pct: kpi.totalLeads > 0 ? Math.round(kpi.wonLeads / kpi.totalLeads * 100) : 0 },
+              { l: "DEAL",    v: kpi.DEALLeads,    c: "#10b981", pct: kpi.totalLeads > 0 ? Math.round(kpi.DEALLeads / kpi.totalLeads * 100) : 0 },
               { l: "Aktif",  v: kpi.activeLeads, c: "#4B9EF3", pct: kpi.totalLeads > 0 ? Math.round(kpi.activeLeads / kpi.totalLeads * 100) : 0 },
-              { l: "Lost",   v: kpi.lostLeads,   c: "#ef4444", pct: kpi.totalLeads > 0 ? Math.round(kpi.lostLeads / kpi.totalLeads * 100) : 0 },
+              { l: "RECYCLE",   v: kpi.RECYCLELeads,   c: "#ef4444", pct: kpi.totalLeads > 0 ? Math.round(kpi.RECYCLELeads / kpi.totalLeads * 100) : 0 },
             ].map((s) => (
               <div key={s.l}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -603,7 +603,7 @@ export default function DashboardPage() {
                 {kpi.winRate}%
               </div>
               <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                {kpi.wonLeads} won dari {kpi.wonLeads + kpi.lostLeads} closed
+                {kpi.DEALLeads} DEAL dari {kpi.DEALLeads + kpi.RECYCLELeads} closed
               </div>
             </div>
           </div>
@@ -616,7 +616,7 @@ export default function DashboardPage() {
               <RadarChart data={radarData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
                 <PolarGrid stroke="var(--chart-grid)" />
                 <PolarAngleAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--chart-text)" }} />
-                <Radar name="Won"   dataKey="won"     stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} />
+                <Radar name="DEAL"   dataKey="DEAL"     stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} />
                 <Radar name="Total" dataKey="total"   stroke="#4B9EF3" fill="#4B9EF3" fillOpacity={0.15} strokeWidth={2} />
                 <Tooltip content={<DarkTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }} />
@@ -663,7 +663,7 @@ export default function DashboardPage() {
                     {s.name}
                   </div>
                   <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                    {s.won} won · {s.total} total
+                    {s.DEAL} DEAL · {s.total} total
                   </div>
                 </div>
 

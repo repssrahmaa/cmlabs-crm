@@ -20,8 +20,8 @@ interface ReportData {
   period: { label: string; startDate: string; endDate: string }
   summary: {
     totalLeads:      number
-    wonLeads:        number
-    lostLeads:       number
+    DEALLeads:        number
+    RECYCLELeads:       number
     activeLeads:     number
     totalRevenue:    number
     avgDealSize:     number
@@ -32,19 +32,19 @@ interface ReportData {
     leadsByStatus:    { status: string; count: number }[]
     leadsByPriority:  { priority: string; count: number }[]
     leadsBySource:    { source: string; count: number }[]
-    monthlyBreakdown: { month: string; created: number; won: number; lost: number; revenue: number }[]
+    monthlyBreakdown: { month: string; created: number; DEAL: number; RECYCLE: number; revenue: number }[]
   }
   salesPerformance: {
     name:    string
     role:    string
     total:   number
-    won:     number
-    lost:    number
+    DEAL:     number
+    RECYCLE:    number
     active:  number
     winRate: number
     revenue: number
   }[]
-  recentWonLeads: any[]
+  recentDEALLeads: any[]
 }
 
 interface Document {
@@ -76,25 +76,25 @@ function formatRupiah(value: number): string {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  LEAD_IN:          "#6366f1",
-  CONTACT_MADE:     "#3b82f6",
+  APPROACH:          "#6366f1",
+  COLD_LEAD:     "#3b82f6",
   NEEDS_IDENTIFIED: "#0ea5e9",
-  PROPOSAL_MADE:    "#f59e0b",
-  NEGOTIATION:      "#f97316",
+  DECK_REQUEST:    "#f59e0b",
+  MEETING:      "#f97316",
   CONTRACT_SENT:    "#8b5cf6",
-  WON:              "#10b981",
-  LOST:             "#ef4444",
+  DEAL:              "#10b981",
+  RECYCLE:             "#ef4444",
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  LEAD_IN:          "Lead Masuk",
-  CONTACT_MADE:     "Dihubungi",
+  APPROACH:          "Lead Masuk",
+  COLD_LEAD:     "Dihubungi",
   NEEDS_IDENTIFIED: "Kebutuhan",
-  PROPOSAL_MADE:    "Proposal",
-  NEGOTIATION:      "Negosiasi",
+  DECK_REQUEST:    "Proposal",
+  MEETING:      "Negosiasi",
   CONTRACT_SENT:    "Kontrak",
-  WON:              "Won",
-  LOST:             "Lost",
+  DEAL:              "DEAL",
+  RECYCLE:             "RECYCLE",
 }
 
 const DOC_TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
@@ -230,7 +230,7 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {[
                   { label: "Total Leads",      value: reportData.summary.totalLeads,      color: "#2563eb", sub: `${reportData.summary.activeLeads} aktif` },
-                  { label: "Won",              value: reportData.summary.wonLeads,         color: "#059669", sub: `Win rate ${reportData.summary.winRate}%` },
+                  { label: "DEAL",              value: reportData.summary.DEALLeads,         color: "#059669", sub: `Win rate ${reportData.summary.winRate}%` },
                   { label: "Total Revenue",    value: formatRupiah(reportData.summary.totalRevenue), color: "#7c3aed", sub: `Avg ${formatRupiah(reportData.summary.avgDealSize)}` },
                   { label: "Total Aktivitas",  value: reportData.summary.totalActivities, color: "#0891b2", sub: "Semua tipe" },
                 ].map((card) => (
@@ -261,8 +261,8 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
                       <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Line type="monotone" dataKey="created" name="Dibuat"  stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="won"     name="Won"     stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="lost"    name="Lost"    stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="DEAL"     name="DEAL"     stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="RECYCLE"    name="RECYCLE"    stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -295,7 +295,7 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "var(--bg-card)" }}>
-                        {["#", "Nama", "Total", "Won", "Lost", "Aktif", "Win Rate", "Revenue"].map((h) => (
+                        {["#", "Nama", "Total", "DEAL", "RECYCLE", "Aktif", "Win Rate", "Revenue"].map((h) => (
                           <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                             {h}
                           </th>
@@ -308,8 +308,8 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
                           <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{i + 1}</td>
                           <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{s.name}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{s.total}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#059669" }}>{s.won}</td>
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#ef4444" }}>{s.lost}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#059669" }}>{s.DEAL}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: "#ef4444" }}>{s.RECYCLE}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, color: "#f59e0b" }}>{s.active}</td>
                           <td style={{ padding: "12px 16px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -327,11 +327,11 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
                 </div>
               </div>
 
-              {/* Recent Won Leads */}
-              {reportData.recentWonLeads.length > 0 && (
+              {/* Recent DEAL Leads */}
+              {reportData.recentDEALLeads.length > 0 && (
                 <div style={{ background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
                   <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Leads Won Terbaru</h3>
+                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Leads DEAL Terbaru</h3>
                   </div>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -344,7 +344,7 @@ color:        activeTab === tab.key ? "var(--primary)" : "var(--text-muted)",
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.recentWonLeads.map((lead, i) => (
+                      {reportData.recentDEALLeads.map((lead, i) => (
                         <tr key={lead.id} style={{ borderTop: "1px solid var(--border)", background: i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-hover)" }}>
                           <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{lead.title}</td>
                           <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-muted)" }}>{lead.clientName}</td>

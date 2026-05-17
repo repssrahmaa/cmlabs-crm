@@ -23,14 +23,14 @@ function formatRupiah(v: number) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  LEAD_IN: "Lead Masuk", CONTACT_MADE: "Dihubungi",
-  NEEDS_IDENTIFIED: "Kebutuhan", PROPOSAL_MADE: "Proposal",
-  NEGOTIATION: "Negosiasi", CONTRACT_SENT: "Kontrak",
+  APPROACH: "Lead Masuk", COLD_LEAD: "Dihubungi",
+  NEEDS_IDENTIFIED: "Kebutuhan", DECK_REQUEST: "Proposal",
+  MEETING: "Negosiasi", CONTRACT_SENT: "Kontrak",
 }
 const STATUS_COLOR: Record<string, string> = {
-  LEAD_IN: "#6366f1", CONTACT_MADE: "#4B9EF3",
-  NEEDS_IDENTIFIED: "#0ea5e9", PROPOSAL_MADE: "#f59e0b",
-  NEGOTIATION: "#f97316", CONTRACT_SENT: "#8b5cf6",
+  APPROACH: "#6366f1", COLD_LEAD: "#4B9EF3",
+  NEEDS_IDENTIFIED: "#0ea5e9", DECK_REQUEST: "#f59e0b",
+  MEETING: "#f97316", CONTRACT_SENT: "#8b5cf6",
 }
 const ACTIVITY_LABEL: Record<string, string> = {
   INTERNAL_NOTE: "Catatan", EMAIL_SENT: "Email",
@@ -128,18 +128,18 @@ export default function PersonalPerformancePage() {
   )
 
   if (error || !data) return (
-    <div style={{ padding: 20, background: "#fef2f2", borderRadius: 12, color: "#dc2626" }}>
-      {error} <button onClick={fetchData} style={{ marginLeft: 10, padding: "5px 12px", background: "#fff", border: "1px solid #fca5a5", borderRadius: 6, cursor: "pointer", color: "#dc2626" }}>Coba lagi</button>
+    <div style={{ padding: 20, background: "var(--bg-destructive)", borderRadius: 12, color: "var(--text-destructive)" }}>
+      {error} <button onClick={fetchData} style={{ marginLeft: 10, padding: "5px 12px", background: "var(--bg-card)", border: "1px solid #fca5a5", borderRadius: 6, cursor: "pointer", color: "#dc2626" }}>Coba lagi</button>
     </div>
   )
 
-  const { kpi, charts, recentWon, activeLeadsDetail } = data
+  const { kpi, charts, recentDEAL, activeLeadsDetail } = data
   const role = session?.user?.role
 
   const activityChartData = Object.entries(charts.activityByType ?? {}).map(([type, count]) => ({
     name:  ACTIVITY_LABEL[type] ?? type,
     value: count as number,
-    color: ACTIVITY_COLOR[type] ?? "#94a3b8",
+    color: ACTIVITY_COLOR[type] ?? "var(--text-muted)",
   }))
 
   return (
@@ -174,7 +174,7 @@ export default function PersonalPerformancePage() {
                 background:   `linear-gradient(135deg, ${B.primary}, #1a6fd4)`,
                 display:      "flex", alignItems: "center",
                 justifyContent: "center",
-                fontSize:     26, fontWeight: 800, color: "#fff",
+                fontSize:     26, fontWeight: 800, color: "#f8fafc",
                 boxShadow:    `0 4px 16px ${B.primary}50`,
                 border:       "2px solid rgba(255,255,255,0.2)",
               }}>
@@ -224,7 +224,7 @@ export default function PersonalPerformancePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 24 }}>
             {[
               { label: "Total Leads",    value: kpi.totalLeads,                   color: B.primary  },
-              { label: "Won",            value: kpi.wonLeads,                     color: B.success  },
+              { label: "DEAL",            value: kpi.DEALLeads,                     color: B.success  },
               { label: "Win Rate",       value: `${kpi.winRate}%`,               color: "#a78bfa"  },
               { label: "Revenue",        value: formatRupiah(kpi.totalRevenue),   color: "#34d399"  },
               { label: "Task Done",      value: `${kpi.taskCompletionRate}%`,     color: B.warning  },
@@ -259,11 +259,11 @@ export default function PersonalPerformancePage() {
             onClick={() => setTab(t.key as any)}
             style={{
               flex:         1, padding:    "10px 16px",
-              background:   tab === t.key ? "#fff" : "transparent",
+              background:   tab === t.key ? "var(--bg-card)" : "transparent",
               border:       "none",
               borderRadius: 10,
               fontSize:     13, fontWeight: tab === t.key ? 700 : 500,
-              color:        tab === t.key ? B.primary : "#64748b",
+              color:        tab === t.key ? "var(--text)" : "var(--text-muted)",
               cursor:       "pointer", transition: "all 0.2s",
               boxShadow:    tab === t.key ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
               display:      "flex", alignItems: "center",
@@ -281,7 +281,7 @@ export default function PersonalPerformancePage() {
           {/* KPI Tiles */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
             <MetricTile icon="📋" label="Total Leads"    value={kpi.totalLeads}                  color={B.primary} />
-            <MetricTile icon="🏆" label="Leads Won"      value={kpi.wonLeads}                    color={B.success} sub={`Win rate ${kpi.winRate}%`} />
+            <MetricTile icon="🏆" label="Leads DEAL"      value={kpi.DEALLeads}                    color={B.success} sub={`Win rate ${kpi.winRate}%`} />
             <MetricTile icon="💰" label="Total Revenue"  value={formatRupiah(kpi.totalRevenue)}  color="#a78bfa"   sub={`Avg ${formatRupiah(kpi.avgDealSize)}`} />
             <MetricTile icon="🔥" label="Pipeline Value" value={formatRupiah(kpi.pipelineValue)} color={B.warning} sub={`${kpi.activeLeads} aktif`} />
           </div>
@@ -289,7 +289,7 @@ export default function PersonalPerformancePage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
             <MetricTile icon="🎯" label="Win Rate"       value={`${kpi.winRate}%`}                 color={B.success} />
             <MetricTile icon="✅" label="Tugas Selesai"  value={`${kpi.completedTasks}/${kpi.totalTasks}`} color={B.primary} sub={`${kpi.taskCompletionRate}% completion`} />
-            <MetricTile icon="📉" label="Leads Lost"     value={kpi.lostLeads}                    color={B.danger}  />
+            <MetricTile icon="📉" label="Leads RECYCLE"     value={kpi.RECYCLELeads}                    color={B.danger}  />
             <MetricTile icon="⚡" label="Total Aktivitas" value={kpi.totalActivities}              color="#0891b2"   />
           </div>
 
@@ -297,7 +297,7 @@ export default function PersonalPerformancePage() {
           <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
             <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
               <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Tren Bulanan Saya</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Leads dibuat dan won per bulan</p>
+              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Leads dibuat dan DEAL per bulan</p>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={charts.monthlyPersonal} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
                   <defs>
@@ -319,7 +319,7 @@ export default function PersonalPerformancePage() {
                     itemStyle={{ color: "var(--text)" }}
                   />
                   <Area type="monotone" dataKey="created" name="Dibuat" stroke={B.primary} strokeWidth={2.5} fill="url(#gC)" dot={{ r: 4, fill: B.primary }} />
-                  <Area type="monotone" dataKey="won"     name="Won"    stroke={B.success} strokeWidth={2.5} fill="url(#gW)" dot={{ r: 4, fill: B.success }} />
+                  <Area type="monotone" dataKey="DEAL"     name="DEAL"    stroke={B.success} strokeWidth={2.5} fill="url(#gW)" dot={{ r: 4, fill: B.success }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -333,9 +333,9 @@ export default function PersonalPerformancePage() {
                   <PieChart width={140} height={140}>
                     <Pie
                       data={[
-                        { name: "Won",   value: kpi.wonLeads,   fill: B.success },
+                        { name: "DEAL",   value: kpi.DEALLeads,   fill: B.success },
                         { name: "Aktif", value: kpi.activeLeads, fill: B.primary },
-                        { name: "Lost",  value: kpi.lostLeads,  fill: B.danger  },
+                        { name: "RECYCLE",  value: kpi.RECYCLELeads,  fill: B.danger  },
                       ]}
                       cx={65} cy={65}
                       innerRadius={42} outerRadius={60}
@@ -355,9 +355,9 @@ export default function PersonalPerformancePage() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
                 {[
-                  { label: "Won",   value: kpi.wonLeads,    color: B.success },
+                  { label: "DEAL",   value: kpi.DEALLeads,    color: B.success },
                   { label: "Aktif", value: kpi.activeLeads, color: B.primary },
-                  { label: "Lost",  value: kpi.lostLeads,   color: B.danger  },
+                  { label: "RECYCLE",  value: kpi.RECYCLELeads,   color: B.danger  },
                 ].map((s) => (
                   <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -371,28 +371,28 @@ export default function PersonalPerformancePage() {
             </div>
           </div>
 
-          {/* Recent Won Leads */}
-          {recentWon.length > 0 && (
-            <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          {/* Recent DEAL Leads */}
+          {recentDEAL.length > 0 && (
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, border: "1px solid var(--border)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
               <div style={{
                 padding:    "16px 24px",
                 background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-                borderBottom: "1px solid #bbf7d0",
+                borderBottom: "1px solid var(--border)",
                 display:    "flex", alignItems: "center", gap: 10,
               }}>
                 <span style={{ fontSize: 20 }}>🏆</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#065f46" }}>Leads Won Terakhir</h3>
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#065f46" }}>Leads DEAL Terakhir</h3>
                   <p style={{ margin: 0, fontSize: 11, color: "#059669" }}>Deal yang berhasil Anda closing</p>
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {recentWon.map((lead: any, i: number) => (
+                {recentDEAL.map((lead: any, i: number) => (
                   <div key={lead.id} style={{
                     display:      "flex", alignItems: "center",
                     gap:          16, padding:    "14px 24px",
-                    borderBottom: i < recentWon.length - 1 ? "1px solid #f1f5f9" : "none",
-                    background:   i % 2 === 0 ? "#fff" : "#fafafa",
+                    borderBottom: i < recentDEAL.length - 1 ? "1px solid var(--border)" : "none",
+                    background:   i % 2 === 0 ? "var(--bg-card)" : "var(--bg-card-alt)",
                   }}>
                     <div style={{
                       width:        36, height: 36, borderRadius: 10,
@@ -519,18 +519,18 @@ export default function PersonalPerformancePage() {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             {/* Activity by type chart */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Aktivitas per Tipe</h3>
-              <p style={{ margin: "0 0 20px", fontSize: 12, color: "#94a3b8" }}>Distribusi jenis aktivitas</p>
+            <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: "var(--text)" }}>Aktivitas per Tipe</h3>
+              <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--text-muted)" }}>Distribusi jenis aktivitas</p>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={activityChartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ background: "#1a2332", border: "none", borderRadius: 10, fontSize: 12 }}
-                    labelStyle={{ color: "#94a3b8" }}
-                    itemStyle={{ color: "#f8fafc" }}
+                    contentStyle={{ background: "var(--bg-card)", border: "none", borderRadius: 10, fontSize: 12 }}
+                    labelStyle={{ color: "var(--text-muted)" }}
+                    itemStyle={{ color: "var(--text)" }}
                   />
                   <Bar dataKey="value" name="Jumlah" radius={[6, 6, 0, 0]} maxBarSize={40}>
                     {activityChartData.map((entry, i) => (

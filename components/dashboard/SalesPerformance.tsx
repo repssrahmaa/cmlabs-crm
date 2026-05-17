@@ -2,7 +2,7 @@ interface SalesData {
   name:    string
   role:    string
   total:   number
-  won:     number
+  DEAL:     number
   winRate: number
   revenue: number
 }
@@ -33,7 +33,7 @@ overflow: "hidden",
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ background: "var(--bg-card2)" }}>
-            {["#", "Nama", "Role", "Total Leads", "Won", "Win Rate", "Revenue"].map((h) => (
+            {["#", "Nama", "Role", "Total Leads", "DEAL", "Win Rate", "Revenue"].map((h) => (
               <th key={h} style={{
                 padding: "10px 16px", textAlign: "left",
                 fontSize: 11, fontWeight: 600, color: "var(--text-muted)",
@@ -69,7 +69,7 @@ overflow: "hidden",
                 </span>
               </td>
               <td style={{ padding: "12px 16px", fontSize: 14, color: "var(--text-secondary)" }}>{s.total}</td>
-              <td style={{ padding: "12px 16px", fontSize: 14, color: "var(--success)", fontWeight: 600 }}>{s.won}</td>
+              <td style={{ padding: "12px 16px", fontSize: 14, color: "var(--success)", fontWeight: 600 }}>{s.DEAL}</td>
               <td style={{ padding: "12px 16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {/* Progress bar */}

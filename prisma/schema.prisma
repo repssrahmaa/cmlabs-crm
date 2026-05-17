@@ -16,15 +16,14 @@ enum Role {
 }
 
 enum LeadStatus {
-  LEAD_IN
-  CONTACT_MADE
-  NEEDS_IDENTIFIED
-  PROPOSAL_MADE
-  NEGOTIATION
-  CONTRACT_SENT
-  WON
-  LOST
+  APPROACH      
+  COLD_LEAD     
+  DECK_REQUEST 
+  MEETING      
+  DEAL         
+  RECYCLE      
 }
+
 
 enum LeadPriority {
   LOW
@@ -33,13 +32,13 @@ enum LeadPriority {
 }
 
 enum ActivityType {
-  NOTE
-  CALL
-  MEETING
-  TASK
   INTERNAL_NOTE
   EMAIL_SENT
   EMAIL_RECEIVED
+  CALL
+  MEETING        
+  TASK
+  NOTE
 }
 
 enum MailStatus {
@@ -79,39 +78,35 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assignedLeads Lead[]     @relation("AssignedTo")
-  createdLeads  Lead[]     @relation("CreatedBy")
+  assignedLeads Lead[]     @relation("AssignedLeads")
+  createdLeads  Lead[]     @relation("CreatedLeads")
   activities    Activity[]
-  sentMails     Mail[]     @relation("MailSender")
-  receivedMails Mail[]     @relation("MailReceiver")
 
   @@map("users")
 }
 
 model Lead {
-  id            String       @id @default(cuid())
-  title         String
-  clientName    String
-  clientEmail   String?
-  clientPhone   String?
-  clientCompany String?
-  status        LeadStatus   @default(LEAD_IN)
-  priority      LeadPriority @default(MEDIUM)
-  value         Decimal?     @db.Decimal(15, 2)
-  description   String?
-  source        String?
-  closedAt      DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id             String      @id @default(cuid())
+  title          String
+  clientName     String
+  clientEmail    String?
+  clientPhone    String?
+  clientCompany  String?
+  value          Decimal?
+  source         String?
+  description    String?
+  status         LeadStatus  @default(APPROACH)
+  priority       LeadPriority @default(MEDIUM)
+  assignedToId   String?
+  createdById    String
+  closedAt       DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  assignedToId String?
-  createdById  String
-
-  assignedTo User?      @relation("AssignedTo", fields: [assignedToId], references: [id])
-  createdBy  User       @relation("CreatedBy",  fields: [createdById],  references: [id])
-  activities Activity[]
-  mails      Mail[]
-  documents  Document[]
+  assignedTo  User?       @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  createdBy   User        @relation("CreatedLeads",  fields: [createdById],  references: [id])
+  activities  Activity[]
+  documents   Document[]
 
   @@map("leads")
 }
@@ -122,17 +117,21 @@ model Activity {
   title       String
   content     String?
   description String?
-  dueDate     DateTime?
   isDone      Boolean      @default(false)
+  dueDate     DateTime?
+  leadId      String
+  userId      String
   metadata    Json?
+  meetLink    String?      
+  meetEventId String?      
+  meetStart   DateTime?    
+  meetEnd     DateTime?    
+  meetInvites String[]     
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  leadId String
-  userId String
-
-  lead  Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user  User   @relation(fields: [userId], references: [id])
+  lead  Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId],  references: [id])
   email Email?
 
   @@map("activities")
@@ -156,24 +155,6 @@ model Email {
   @@map("emails")
 }
 
-model Mail {
-  id         String     @id @default(cuid())
-  subject    String
-  body       String
-  status     MailStatus @default(DRAFT)
-  sentAt     DateTime?
-  createdAt  DateTime   @default(now())
-
-  senderId   String
-  receiverId String
-  leadId     String?
-
-  sender   User  @relation("MailSender",   fields: [senderId],   references: [id])
-  receiver User  @relation("MailReceiver", fields: [receiverId], references: [id])
-  lead     Lead? @relation(fields: [leadId], references: [id])
-
-  @@map("mails")
-}
 
 model Document {
   id        String         @id @default(cuid())

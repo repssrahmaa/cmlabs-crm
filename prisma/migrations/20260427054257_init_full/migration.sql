@@ -2,7 +2,7 @@
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'MANAGER', 'SALES', 'MARKETING');
 
 -- CreateEnum
-CREATE TYPE "LeadStatus" AS ENUM ('LEAD_IN', 'CONTACT_MADE', 'NEEDS_IDENTIFIED', 'PROPOSAL_MADE', 'NEGOTIATION', 'CONTRACT_SENT', 'WON', 'LOST');
+CREATE TYPE "LeadStatus" AS ENUM ('APPROACH', 'COLD_LEAD', 'NEEDS_IDENTIFIED', 'DECK_REQUEST', 'MEETING', 'CONTRACT_SENT', 'DEAL', 'RECYCLE');
 
 -- CreateEnum
 CREATE TYPE "LeadPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH');
@@ -46,7 +46,7 @@ CREATE TABLE "leads" (
     "clientEmail" TEXT,
     "clientPhone" TEXT,
     "clientCompany" TEXT,
-    "status" "LeadStatus" NOT NULL DEFAULT 'LEAD_IN',
+    "status" "LeadStatus" NOT NULL DEFAULT 'APPROACH',
     "priority" "LeadPriority" NOT NULL DEFAULT 'MEDIUM',
     "value" DECIMAL(15,2),
     "description" TEXT,

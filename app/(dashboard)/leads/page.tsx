@@ -38,15 +38,15 @@ const totalValue = useMemo(() => {
   return leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0)
 }, [leads])
 
-const wonValue = useMemo(() => {
+const DEALValue = useMemo(() => {
   return leads
-    .filter((l) => l.status === "WON")
+    .filter((l) => l.status === "DEAL")
     .reduce((sum, l) => sum + (Number(l.value) || 0), 0)
 }, [leads])
 
 const pipelineValue = useMemo(() => {
   return leads
-    .filter((l) => !["WON","LOST"].includes(l.status))
+    .filter((l) => !["DEAL","RECYCLE"].includes(l.status))
     .reduce((sum, l) => sum + (Number(l.value) || 0), 0)
 }, [leads])
 
@@ -195,8 +195,8 @@ color: "var(--input-text)",
   {[
 { label: "Total Leads", value: leads.length, suffix: "leads", color: "var(--primary)", icon: "📋" },
 { label: "Pipeline Value", value: formatRupiah(pipelineValue), suffix: "", color: "var(--warning)", icon: "🔥" },
-{ label: "Revenue Won", value: formatRupiah(wonValue), suffix: "", color: "var(--success)", icon: "💰" },
-{ label: "Won", value: leads.filter(l => l.status === "WON").length, suffix: "leads", color: "var(--purple)", icon: "🏆" },
+{ label: "Revenue DEAL", value: formatRupiah(DEALValue), suffix: "", color: "var(--success)", icon: "💰" },
+{ label: "DEAL", value: leads.filter(l => l.status === "DEAL").length, suffix: "leads", color: "var(--purple)", icon: "🏆" },
 ].map((s) => (
 <div key={s.label} style={{
 background: "var(--bg-card)", // ← BUKAN #fff

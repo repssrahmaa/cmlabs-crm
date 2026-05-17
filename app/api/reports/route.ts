@@ -48,25 +48,25 @@ export async function GET(req: NextRequest) {
   const dateFilter = { createdAt: { gte: startDate, lte: endDate } }
 
   // ✅ Semua role yang punya akses lihat data SEMUA lead (no filter by user)
-  const [totalLeads, wonLeads, lostLeads, activeLeads, totalActivities] =
+  const [totalLeads, DEALLeads, RECYCLELeads, activeLeads, totalActivities] =
     await Promise.all([
       prisma.lead.count({ where: dateFilter }),
-      prisma.lead.count({ where: { ...dateFilter, status: "WON"  } }),
-      prisma.lead.count({ where: { ...dateFilter, status: "LOST" } }),
-      prisma.lead.count({ where: { ...dateFilter, status: { notIn: ["WON","LOST"] } } }),
+      prisma.lead.count({ where: { ...dateFilter, status: "DEAL"  } }),
+      prisma.lead.count({ where: { ...dateFilter, status: "RECYCLE" } }),
+      prisma.lead.count({ where: { ...dateFilter, status: { notIn: ["DEAL","RECYCLE"] } } }),
       prisma.activity.count({ where: { createdAt: { gte: startDate, lte: endDate } } }),
     ])
 
   const revenueResult = await prisma.lead.aggregate({
-    where: { ...dateFilter, status: "WON" },
+    where: { ...dateFilter, status: "DEAL" },
     _sum:  { value: true },
     _avg:  { value: true },
   })
 
   const totalRevenue = Number(revenueResult._sum.value ?? 0)
   const avgDealSize  = Number(revenueResult._avg.value ?? 0)
-  const winRate      = (wonLeads + lostLeads) > 0
-    ? Math.round((wonLeads / (wonLeads + lostLeads)) * 100)
+  const winRate      = (DEALLeads + RECYCLELeads) > 0
+    ? Math.round((DEALLeads / (DEALLeads + RECYCLELeads)) * 100)
     : 0
 
   // Leads per Status
@@ -101,20 +101,20 @@ export async function GET(req: NextRequest) {
     const start = startOfMonth(date)
     const end   = endOfMonth(date)
 
-    const [created, won, lost] = await Promise.all([
+    const [created, DEAL, RECYCLE] = await Promise.all([
       prisma.lead.count({ where: { createdAt: { gte: start, lte: end } } }),
-      prisma.lead.count({ where: { status: "WON",  closedAt: { gte: start, lte: end } } }),
-      prisma.lead.count({ where: { status: "LOST", closedAt: { gte: start, lte: end } } }),
+      prisma.lead.count({ where: { status: "DEAL",  closedAt: { gte: start, lte: end } } }),
+      prisma.lead.count({ where: { status: "RECYCLE", closedAt: { gte: start, lte: end } } }),
     ])
 
     const rev = await prisma.lead.aggregate({
-      where: { status: "WON", closedAt: { gte: start, lte: end } },
+      where: { status: "DEAL", closedAt: { gte: start, lte: end } },
       _sum:  { value: true },
     })
 
     monthlyBreakdown.push({
       month:   format(date, "MMM yyyy"),
-      created, won, lost,
+      created, DEAL, RECYCLE,
       revenue: Number(rev._sum.value ?? 0),
     })
   }
@@ -135,26 +135,26 @@ export async function GET(req: NextRequest) {
 
   const salesPerformance = salesUsers.map((u) => {
     const total   = u.assignedLeads.length
-    const won     = u.assignedLeads.filter((l) => l.status === "WON").length
-    const lost    = u.assignedLeads.filter((l) => l.status === "LOST").length
+    const DEAL     = u.assignedLeads.filter((l) => l.status === "DEAL").length
+    const RECYCLE    = u.assignedLeads.filter((l) => l.status === "RECYCLE").length
     const revenue = u.assignedLeads
-      .filter((l) => l.status === "WON")
+      .filter((l) => l.status === "DEAL")
       .reduce((s, l) => s + Number(l.value ?? 0), 0)
 
     return {
       name:    u.name,
       role:    u.role,
       total,
-      won,
-      lost,
-      active:  total - won - lost,
-      winRate: total > 0 ? Math.round((won / total) * 100) : 0,
+      DEAL,
+      RECYCLE,
+      active:  total - DEAL - RECYCLE,
+      winRate: total > 0 ? Math.round((DEAL / total) * 100) : 0,
       revenue,
     }
   }).sort((a, b) => b.revenue - a.revenue)
 
-  const recentWonLeads = await prisma.lead.findMany({
-    where:   { status: "WON", closedAt: { gte: startDate, lte: endDate } },
+  const recentDEALLeads = await prisma.lead.findMany({
+    where:   { status: "DEAL", closedAt: { gte: startDate, lte: endDate } },
     include: {
       assignedTo: { select: { name: true } },
       createdBy:  { select: { name: true } },
@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     period:  { label: period, startDate, endDate },
     summary: {
-      totalLeads, wonLeads, lostLeads, activeLeads,
+      totalLeads, DEALLeads, RECYCLELeads, activeLeads,
       totalRevenue, avgDealSize, winRate, totalActivities,
     },
     charts: {
@@ -176,6 +176,6 @@ export async function GET(req: NextRequest) {
       monthlyBreakdown,
     },
     salesPerformance,
-    recentWonLeads,
+    recentDEALLeads,
   })
 }

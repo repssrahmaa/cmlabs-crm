@@ -26,7 +26,7 @@ const [form, setForm] = useState({
   source:        lead?.source                   ?? "",
   description:   lead?.description              ?? "",
   priority:      lead?.priority                 ?? "MEDIUM",
-  status:        lead?.status                   ?? "LEAD_IN",
+  status:        lead?.status                   ?? "APPROACH",
 })
 
   if (!lead) return null
