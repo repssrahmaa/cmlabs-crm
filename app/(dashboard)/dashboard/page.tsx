@@ -1,64 +1,53 @@
 "use client"
 
-import { useDashboard }   from "@/hooks/useDashboard"
-import { useSession }     from "next-auth/react"
-import { useTheme }       from "@/hooks/useTheme"
-import { format }         from "date-fns"
-import { id as localeId } from "date-fns/locale"
-import { useState, useMemo } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useSession }       from "next-auth/react"
+import { useRealtimeDashboard } from "@/hooks/useRealtimeDashboard"
 import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  AreaChart, Area, BarChart, Bar, ComposedChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Cell, PieChart, Pie,
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  ComposedChart,
 } from "recharts"
+import { STATUS_LABEL, STATUS_COLOR, KANBAN_COLUMNS } from "@/types/lead"
+import { format } from "date-fns"
+import { id as localeId } from "date-fns/locale"
 
-// ── Helpers ────────────────────────────────────────────────────
-function formatRupiah(v: number, compact = true) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR",
-    notation: compact ? "compact" : "standard",
-    maximumFractionDigits: compact ? 1 : 0,
-  }).format(v)
+// ── Constants ──────────────────────────────────────────────────
+const CUR_YEAR = new Date().getFullYear()
+const YEARS    = Array.from({ length: 5 }, (_, i) => String(CUR_YEAR - i))
+const MONTHS   = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+
+function formatRp(v: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", notation: "compact", maximumFractionDigits: 1 }).format(v)
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  APPROACH: "Lead Masuk", COLD_LEAD: "Dihubungi",
-  NEEDS_IDENTIFIED: "Kebutuhan", DECK_REQUEST: "Proposal",
-  MEETING: "Negosiasi", CONTRACT_SENT: "Kontrak",
-  DEAL: "Berhasil", RECYCLE: "Gagal",
-}
-const STATUS_COLOR: Record<string, string> = {
-  APPROACH: "#6366f1", COLD_LEAD: "#4B9EF3",
-  NEEDS_IDENTIFIED: "#0ea5e9", DECK_REQUEST: "#f59e0b",
-  MEETING: "#f97316", CONTRACT_SENT: "#8b5cf6",
-  DEAL: "#10b981", RECYCLE: "#ef4444",
-}
+// ── SVG Icons ──────────────────────────────────────────────────
+const IconRefresh = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+    <path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+    <path d="M3 21v-5h5"/>
+  </svg>
+)
 
 // ── Custom Tooltip ─────────────────────────────────────────────
-function DarkTooltip({ active, payload, label, formatter }: any) {
+function ChartTooltip({ active, payload, label, fmt }: any) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background:   "var(--bg-card)",
-      border:       "1px solid var(--border)",
-      borderRadius: 12,
-      padding:      "12px 16px",
-      boxShadow:    "var(--shadow-lg)",
-      minWidth:     140,
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: 10, padding: "10px 14px", boxShadow: "var(--shadow-lg)", minWidth: 140,
     }}>
-      <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        {label}
-      </p>
+      <p style={{ margin: "0 0 7px", fontSize: 10, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
       {payload.map((p: any, i: number) => (
-        <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", marginBottom: 3 }}>
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3, alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color ?? p.fill, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{p.name}</span>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: p.color ?? p.fill, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{p.name}</span>
           </div>
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-            {formatter ? formatter(p.value) : p.value}
+            {fmt ? fmt(p.value) : p.value}
           </span>
         </div>
       ))}
@@ -66,96 +55,75 @@ function DarkTooltip({ active, payload, label, formatter }: any) {
   )
 }
 
+// ── Filter Bar Component ───────────────────────────────────────
+function FilterBar({
+  year, month, onYear, onMonth, showMonth = true, onRefresh,
+}: {
+  year: string; month: string;
+  onYear: (v: string) => void; onMonth: (v: string) => void;
+  showMonth?: boolean; onRefresh?: () => void;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <select value={year} onChange={(e) => onYear(e.target.value)} style={{
+        padding: "5px 10px", background: "var(--bg-card2)", color: "var(--text-secondary)",
+        border: "1px solid var(--border)", borderRadius: 7, fontSize: 11, cursor: "pointer",
+      }}>
+        {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+      </select>
+      {showMonth && (
+        <select value={month} onChange={(e) => onMonth(e.target.value)} style={{
+          padding: "5px 10px", background: "var(--bg-card2)", color: "var(--text-secondary)",
+          border: "1px solid var(--border)", borderRadius: 7, fontSize: 11, cursor: "pointer",
+        }}>
+          <option value="all">Semua Bulan</option>
+          {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
+        </select>
+      )}
+      {onRefresh && (
+        <button onClick={onRefresh} style={{
+          padding: "5px 10px", background: "var(--bg-card2)",
+          border: "1px solid var(--border)", borderRadius: 7,
+          fontSize: 11, color: "var(--text-muted)", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 4, fontWeight: 600,
+        }}>
+          <IconRefresh /> Refresh
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ── Stat Card ──────────────────────────────────────────────────
-function StatCard({ icon, label, value, sub, color, trend, sparkData }: {
-  icon:      string
-  label:     string
-  value:     string | number
-  sub?:      string
-  color:     string
-  trend?:    "up" | "down" | "neutral"
-  sparkData?: number[]
+function StatCard({ label, value, sub, color, sparkData }: {
+  label: string; value: string|number; sub?: string; color: string; sparkData?: number[]
 }) {
   const [hov, setHov] = useState(false)
-  const spark = (sparkData ?? [3,5,2,8,4,9,6]).map((v, i) => ({ i, v }))
-
+  const spark = (sparkData ?? [3,5,4,8,6,9,7]).map((v, i) => ({ i, v }))
   return (
     <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        background:   "var(--bg-card)",
-        borderRadius: 16,
-        padding:      "20px 20px 14px",
-        border:       `1px solid ${hov ? color + "50" : "var(--border)"}`,
-        position:     "relative",
-        overflow:     "hidden",
-        cursor:       "default",
-        transition:   "all 0.25s ease",
-        transform:    hov ? "translateY(-3px)" : "none",
-        boxShadow:    hov ? `var(--shadow-md), 0 0 0 1px ${color}20` : "var(--shadow-sm)",
+        background: "var(--bg-card)", borderRadius: 14, padding: "18px 18px 14px",
+        border: `1px solid ${hov ? color + "50" : "var(--border)"}`,
+        borderTop: `3px solid ${color}`,
+        boxShadow: hov ? `var(--shadow-md), 0 0 0 1px ${color}20` : "var(--shadow-xs)",
+        transform: hov ? "translateY(-2px)" : "none",
+        transition: "all 0.2s", cursor: "default", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Top gradient bar */}
       <div style={{
-        position:   "absolute", top: 0, left: 0, right: 0,
-        height:     3, borderRadius: "16px 16px 0 0",
-        background: `linear-gradient(90deg, ${color}, ${color}50)`,
+        position: "absolute", top: -20, right: -20, width: 70, height: 70, borderRadius: "50%",
+        background: color + (hov ? "15" : "08"), transition: "all 0.3s",
+        transform: hov ? "scale(1.5)" : "scale(1)",
       }} />
-
-      {/* Glow bg */}
-      <div style={{
-        position:   "absolute", top: -30, right: -30,
-        width:      90, height: 90,
-        borderRadius: "50%",
-        background: color + (hov ? "18" : "0c"),
-        transition: "all 0.3s",
-        transform:  hov ? "scale(1.4)" : "scale(1)",
-      }} />
-
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Icon + Trend */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 12,
-            background: color + "18",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20,
-          }}>
-            {icon}
-          </div>
-          {trend && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 4,
-              fontSize: 11, fontWeight: 700,
-              color: trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "var(--text-muted)",
-              background: (trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#94a3b8") + "15",
-              padding: "3px 8px", borderRadius: 999,
-            }}>
-              {trend === "up" ? "↑" : trend === "down" ? "↓" : "→"}
-              <span>{trend === "up" ? "Naik" : trend === "down" ? "Turun" : "Stabil"}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Value */}
-        <div style={{
-          fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em",
-          color: "var(--text-primary)", lineHeight: 1, marginBottom: 4,
-        }}>
-          {value}
-        </div>
-        <div style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 500, marginBottom: 2 }}>
-          {label}
-        </div>
-        {sub && (
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>{sub}</div>
-        )}
-
-        {/* Sparkline */}
-        <div style={{ height: 36, marginTop: 4 }}>
-          <ResponsiveContainer width="100%" height={36}>
-            <AreaChart data={spark} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+        <div style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>{value}</div>
+        {sub && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub}</div>}
+        <div style={{ marginTop: 10, height: 32 }}>
+          <ResponsiveContainer width="100%" height={32}>
+            <AreaChart data={spark} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={`sg-${label}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor={color} stopOpacity={0.25} />
@@ -173,528 +141,379 @@ function StatCard({ icon, label, value, sub, color, trend, sparkData }: {
 }
 
 // ── Chart Card ─────────────────────────────────────────────────
-function ChartCard({ title, sub, action, children, minH = 280 }: {
-  title: string; sub?: string; action?: React.ReactNode
-  children: React.ReactNode; minH?: number
+function ChartCard({ title, sub, children, action }: {
+  title: string; sub?: string; children: React.ReactNode; action?: React.ReactNode
 }) {
   return (
-    <div style={{
-      background:   "var(--bg-card)",
-      borderRadius: 16,
-      border:       "1px solid var(--border)",
-      boxShadow:    "var(--shadow-sm)",
-      overflow:     "hidden",
-    }}>
-      <div style={{
-        padding:        "18px 20px 14px",
-        display:        "flex",
-        justifyContent: "space-between",
-        alignItems:     "flex-start",
-        borderBottom:   "1px solid var(--border)",
-      }}>
+    <div style={{ background: "var(--bg-card)", borderRadius: 14, border: "1px solid var(--border)", boxShadow: "var(--shadow-xs)", overflow: "hidden" }}>
+      <div style={{ padding: "16px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap", borderBottom: "1px solid var(--border-light)" }}>
         <div>
-          <h3 style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
-            {title}
-          </h3>
+          <h3 style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{title}</h3>
           {sub && <p style={{ margin: 0, fontSize: 11, color: "var(--text-muted)" }}>{sub}</p>}
         </div>
         {action}
       </div>
-      <div style={{ padding: "16px 20px", minHeight: minH }}>
-        {children}
-      </div>
+      <div style={{ padding: "14px 20px 20px" }}>{children}</div>
     </div>
   )
 }
 
-// ── Pill Button ────────────────────────────────────────────────
-function PillBtn({ active, onClick, children }: {
-  active: boolean; onClick: () => void; children: React.ReactNode
+// ── Toggle Pills ───────────────────────────────────────────────
+function TogglePills({ options, value, onChange }: {
+  options: { v: string; l: string }[]; value: string; onChange: (v: string) => void
 }) {
   return (
-    <button onClick={onClick} style={{
-      padding:    "4px 12px",
-      background: active ? "var(--primary)" : "var(--bg-card2)",
-      color:      active ? "#fff" : "var(--text-secondary)",
-      border:     `1px solid ${active ? "var(--primary)" : "var(--border)"}`,
-      borderRadius: 999,
-      fontSize:   11, fontWeight: 600,
-      cursor:     "pointer", transition: "all 0.15s",
-    }}>
-      {children}
-    </button>
-  )
-}
-
-// ── Donut with label ───────────────────────────────────────────
-function DonutChart({ data, size = 140 }: {
-  data: { name: string; value: number; color: string }[]
-  size?: number
-}) {
-  const total = data.reduce((s, d) => s + d.value, 0)
-  return (
-    <div style={{ position: "relative", width: size, height: size }}>
-      <PieChart width={size} height={size}>
-        <Pie
-          data={data} cx={size/2 - 2} cy={size/2 - 2}
-          innerRadius={size * 0.28} outerRadius={size * 0.42}
-          dataKey="value" paddingAngle={3} strokeWidth={0}
-          startAngle={90} endAngle={-270}
-        >
-          {data.map((d, i) => <Cell key={i} fill={d.color} />)}
-        </Pie>
-      </PieChart>
-      <div style={{
-        position: "absolute", inset: 0,
-        display:  "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-      }}>
-        <span style={{ fontSize: size * 0.16, fontWeight: 800, color: "var(--text-primary)" }}>
-          {total}
-        </span>
-        <span style={{ fontSize: size * 0.075, color: "var(--text-muted)" }}>Total</span>
-      </div>
+    <div style={{ display: "flex", gap: 4, padding: 3, background: "var(--bg-card2)", borderRadius: 8, border: "1px solid var(--border)" }}>
+      {options.map((o) => (
+        <button key={o.v} onClick={() => onChange(o.v)} style={{
+          padding: "4px 12px",
+          background: value === o.v ? "var(--primary)" : "transparent",
+          color: value === o.v ? "#fff" : "var(--text-muted)",
+          border: "none", borderRadius: 5,
+          fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+        }}>{o.l}</button>
+      ))}
     </div>
   )
 }
 
-// ── Main ───────────────────────────────────────────────────────
+// ── Main Dashboard ─────────────────────────────────────────────
 export default function DashboardPage() {
-  const { data: session }  = useSession()
-  const { isDark }         = useTheme()
-  const { data, loading, error, lastUpdated, connected, refetch } = useDashboard()
+  const { data: session } = useSession()
 
-  const [chartMode, setChartMode]   = useState<"area"|"bar"|"composed">("area")
-  const [metric, setMetric]         = useState<"leads"|"revenue">("leads")
-  const [hoveredSales, setHoveredSales] = useState<number | null>(null)
+  const [data,     setData]     = useState<any>(null)
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState("")
+  const [year,     setYear]     = useState(String(CUR_YEAR))
+  const [month,    setMonth]    = useState("all")
+  const [chartMode,setChartMode]= useState<"area"|"bar"|"composed">("area")
+  const [metric,   setMetric]   = useState<"leads"|"revenue">("leads")
+  const [lastUpdated, setLastUpdated] = useState<Date|null>(null)
 
-  const statusDonutData = useMemo(() => {
-    if (!data) return []
-    return data.charts.leadsByStatus.map((d) => ({
-      name:  STATUS_LABEL[d.status] ?? d.status,
-      value: d._count,
-      color: STATUS_COLOR[d.status] ?? "#94a3b8",
-    }))
-  }, [data])
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ year, month })
+      const res = await fetch(`/api/dashboard/stats?${params}`, { cache: "no-store" })
+      if (!res.ok) throw new Error("Gagal memuat data")
+      setData(await res.json())
+      setLastUpdated(new Date())
+      setError("")
+    } catch (err: any) { setError(err.message) }
+    finally { setLoading(false) }
+  }, [year, month])
 
-  const radarData = useMemo(() => {
-    if (!data) return []
-    return data.charts.salesPerformance.slice(0, 5).map((s) => ({
-      name:    s.name.split(" ")[0],
-      DEAL:     s.DEAL,
-      total:   s.total,
-      winRate: s.winRate,
-    }))
-  }, [data])
+  useEffect(() => { fetchDashboard() }, [fetchDashboard])
+  const { connected } = useRealtimeDashboard({
+    onDashboardRefresh: fetchDashboard, onLeadChange: fetchDashboard,
+  })
 
   if (loading) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh", gap: 16 }}>
-      <div style={{
-        width: 52, height: 52, borderRadius: "50%",
-        border: "3px solid var(--border)",
-        borderTopColor: "var(--primary)",
-        animation: "spin 0.7s linear infinite",
-      }} />
-      <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Memuat dashboard...</p>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+      <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin .7s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   if (error || !data) return (
-    <div style={{
-      padding: 24, background: "var(--bg-card)", borderRadius: 16,
-      border: "1px solid var(--danger)", color: "var(--danger)",
-      display: "flex", alignItems: "center", gap: 12,
-    }}>
-      <span style={{ fontSize: 20 }}>⚠️</span>
-      <span style={{ flex: 1 }}>Gagal memuat: {error}</span>
-      <button onClick={refetch} style={{
-        padding: "8px 16px", background: "transparent",
-        border: "1px solid var(--danger)", borderRadius: 8,
-        cursor: "pointer", color: "var(--danger)", fontWeight: 500, fontSize: 13,
-      }}>Coba lagi</button>
+    <div style={{ padding: 24, background: "var(--danger-pale)", borderRadius: 12, color: "var(--danger)", display: "flex", gap: 12, alignItems: "center" }}>
+      {error}
+      <button onClick={fetchDashboard} style={{ padding: "6px 14px", background: "var(--bg-card)", border: "1px solid var(--danger)", borderRadius: 7, cursor: "pointer", color: "var(--danger)", fontSize: 12 }}>
+        Coba lagi
+      </button>
     </div>
   )
 
   const { kpi, charts } = data
+
+  // ── Status chart data — pakai label terbaru ────────────────
+  const statusChartData = charts.leadsByStatus
+    .map((d: any) => ({
+      name:  STATUS_LABEL[d.status as keyof typeof STATUS_LABEL] ?? d.status,
+      value: d._count,
+      color: STATUS_COLOR[d.status as keyof typeof STATUS_COLOR] ?? "#94a3b8",
+    }))
+    .sort((a: any, b: any) => {
+      const ORDER = ["APPROACH","COLD_LEAD","DECK_REQUEST","MEETING","DEAL","RECYCLE"]
+      return ORDER.indexOf(charts.leadsByStatus.find((x: any) => x._count === b.value)?.status ?? "") -
+             ORDER.indexOf(charts.leadsByStatus.find((x: any) => x._count === a.value)?.status ?? "")
+    })
+
+  const trendData = metric === "leads" ? charts.monthlyData : charts.monthlyRevenue
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
       {/* ── Hero ────────────────────────────────────────── */}
       <div style={{
-        background:   "var(--hero-bg)",
-        borderRadius: 20,
-        padding:      "24px 28px",
-        position:     "relative",
-        overflow:     "hidden",
-        boxShadow:    "var(--shadow-lg)",
+        background: `linear-gradient(135deg, var(--hero-a,#0c1220), var(--hero-b,#112140), var(--hero-c,#0c2d5e))`,
+        borderRadius: 18, padding: "22px 26px",
+        position: "relative", overflow: "hidden",
+        boxShadow: "var(--shadow-lg)",
       }}>
-        {/* Decorative */}
         {[
-          { s: 220, t: -60, r: -40, o: 0.07 },
-          { s: 100, t: 20,  r: 140, o: 0.06 },
-          { s: 60,  t: -10, r: 230, o: 0.09 },
+          { s:200, t:-60, r:-40, o:0.07 },
+          { s:90,  t:20,  r:130, o:0.05 },
+          { s:55,  t:-5,  r:230, o:0.09 },
         ].map((c, i) => (
           <div key={i} style={{
             position: "absolute", top: c.t, right: c.r,
             width: c.s, height: c.s, borderRadius: "50%",
-            background: "var(--primary)", opacity: c.o, pointerEvents: "none",
+            background: "#3b82f6", opacity: c.o, pointerEvents: "none",
           }} />
         ))}
-
-        {/* Grid pattern */}
         <div style={{
-          position: "absolute", inset: 0, opacity: 0.03,
-          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 28px, #4B9EF3 28px, #4B9EF3 29px), repeating-linear-gradient(90deg, transparent, transparent 28px, #4B9EF3 28px, #4B9EF3 29px)`,
+          position: "absolute", inset: 0, opacity: 0.025,
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 28px, #3b82f6 28px, #3b82f6 29px), repeating-linear-gradient(90deg, transparent, transparent 28px, #3b82f6 28px, #3b82f6 29px)",
           pointerEvents: "none",
         }} />
 
         <div style={{ position: "relative", zIndex: 1 }}>
           {/* Top row */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 18 }}>
             <div>
-              <p style={{ margin: "0 0 2px", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <p style={{ margin: "0 0 2px", fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 {format(new Date(), "EEEE, d MMMM yyyy", { locale: localeId })}
               </p>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>
-                Halo, {session?.user?.name?.split(" ")[0]} 👋
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#f0f6fc", letterSpacing: "-0.02em" }}>
+                Selamat datang, {session?.user?.name?.split(" ")[0]}
               </h1>
             </div>
-
-            {/* Realtime badge */}
-            <div style={{
-              display:      "flex", alignItems: "center", gap: 8,
-              padding:      "8px 14px",
-              background:   "var(--hero-glass)",
-              border:       "1px solid var(--hero-border)",
-              borderRadius: 999,
-              backdropFilter: "blur(12px)",
-            }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: connected ? "#10b981" : "#f59e0b",
-                animation:  connected ? "pulse 2s infinite" : "none",
-                boxShadow:  connected ? "0 0 0 3px rgba(16,185,129,0.3)" : "none",
-              }} />
-              <span style={{ fontSize: 12, color: connected ? "#6ee7b7" : "#fcd34d", fontWeight: 600 }}>
-                {connected ? "Live" : "Offline"}
-              </span>
-              {lastUpdated && (
-                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
-                  {format(lastUpdated, "HH:mm:ss")}
+            {/* Realtime + Filter */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px", background: "var(--hero-glass)", border: "1px solid var(--hero-line)", borderRadius: 999, backdropFilter: "blur(10px)" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: connected ? "#10b981" : "#f59e0b", animation: connected ? "pulse 2s infinite" : "none" }} />
+                <span style={{ fontSize: 11, color: connected ? "#6ee7b7" : "#fcd34d", fontWeight: 600 }}>
+                  {connected ? "Live" : "Offline"}
                 </span>
-              )}
-              <button onClick={refetch} style={{
-                padding: "3px 10px",
-                background: "rgba(75,158,243,0.2)",
-                border: "1px solid rgba(75,158,243,0.3)",
-                borderRadius: 6, color: "#93c5fd",
-                fontSize: 11, cursor: "pointer", fontWeight: 600,
-              }}>
-                ↻
-              </button>
-              <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
+                {lastUpdated && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{format(lastUpdated, "HH:mm:ss")}</span>}
+              </div>
+              <FilterBar year={year} month={month} onYear={setYear} onMonth={setMonth} onRefresh={fetchDashboard} />
             </div>
           </div>
 
-          {/* Quick stat strip */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {/* Quick stats strip */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }} className="grid-4">
             {[
-              { l: "Total Leads",   v: kpi.totalLeads,              c: "#4B9EF3", i: "📋" },
-              { l: "Leads Aktif",   v: kpi.activeLeads,             c: "#f59e0b", i: "🔥" },
-              { l: "DEAL",           v: kpi.DEALLeads,                c: "#10b981", i: "🏆" },
-              { l: "Revenue",       v: formatRupiah(kpi.totalRevenue), c: "#a78bfa", i: "💰" },
+              { l: "Total Lead",   v: kpi.totalLeads,    c: "#3b82f6" },
+              { l: "Aktif",        v: kpi.activeLeads,   c: "#f59e0b" },
+              { l: "Deal",         v: kpi.dealLeads,     c: "#10b981" },
+              { l: "Revenue",      v: formatRp(kpi.totalRevenue), c: "#a78bfa" },
             ].map((s) => (
-              <div key={s.l} style={{
-                background:   "var(--hero-glass)",
-                border:       "1px solid var(--hero-border)",
-                borderRadius: 12,
-                padding:      "14px 16px",
-                backdropFilter: "blur(10px)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <span style={{ fontSize: 14 }}>{s.i}</span>
-                  <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    {s.l}
-                  </span>
-                </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: s.c }}>{s.v}</div>
+              <div key={s.l} style={{ background: "var(--hero-glass)", border: "1px solid var(--hero-line)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 4, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.l}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: s.c }}>{s.v}</div>
               </div>
             ))}
           </div>
         </div>
+        <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
       </div>
 
       {/* ── KPI Cards ───────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-        <StatCard icon="📊" label="Pipeline Value"  value={formatRupiah(kpi.pipelineValue)} color="#8b5cf6" sub="Potensi aktif"    trend="up"      sparkData={[5,8,3,9,6,11,8]}        />
-        <StatCard icon="🎯" label="Win Rate"        value={`${kpi.winRate}%`}               color="#10b981" sub={`${kpi.DEALLeads} DEAL / ${kpi.DEALLeads + kpi.RECYCLELeads} closed`} trend="up" sparkData={[40,45,38,52,48,55,kpi.winRate]} />
-        <StatCard icon="💵" label="Total Revenue"   value={formatRupiah(kpi.totalRevenue)}  color="#4B9EF3" sub="Dari leads DEAL"   trend="up"      sparkData={[2,5,3,8,5,9,7]}        />
-        <StatCard icon="📉" label="Leads RECYCLE"      value={kpi.RECYCLELeads}                   color="#ef4444" sub="Perlu evaluasi"  trend="down"    sparkData={[3,2,4,1,3,2,kpi.RECYCLELeads]} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }} className="grid-4">
+        <StatCard label="Pipeline Value" value={formatRp(kpi.pipelineValue)} color="#7c3aed" sub="Estimasi aktif" />
+        <StatCard label="Win Rate"       value={`${kpi.winRate}%`}           color="#059669" sub={`${kpi.dealLeads} deal / ${kpi.dealLeads + kpi.recycleLeads} closed`} />
+        <StatCard label="Total Revenue"  value={formatRp(kpi.totalRevenue)}  color="#3b82f6" sub="Dari deal confirmed" />
+        <StatCard label="Recycle"        value={kpi.recycleLeads}            color="#dc2626" sub="Lead yang gagal" />
       </div>
 
-      {/* ── Main Chart ──────────────────────────────────── */}
+      {/* ── Trend Chart ─────────────────────────────────── */}
       <ChartCard
         title="Tren Performa Tim"
-        sub="Analisis leads dan revenue bulanan secara komprehensif"
-        minH={320}
+        sub="Perbandingan lead, deal, dan revenue per periode"
         action={
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: 4 }}>
-              <PillBtn active={metric === "leads"}   onClick={() => setMetric("leads")}>Leads</PillBtn>
-              <PillBtn active={metric === "revenue"} onClick={() => setMetric("revenue")}>Revenue</PillBtn>
-            </div>
-            <div style={{ display: "flex", gap: 4 }}>
-              <PillBtn active={chartMode === "area"}     onClick={() => setChartMode("area")}>Area</PillBtn>
-              <PillBtn active={chartMode === "bar"}      onClick={() => setChartMode("bar")}>Bar</PillBtn>
-              <PillBtn active={chartMode === "composed"} onClick={() => setChartMode("composed")}>Combo</PillBtn>
-            </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <FilterBar year={year} month={month} onYear={setYear} onMonth={setMonth} showMonth={false} />
+            <TogglePills options={[{ v:"leads",l:"Lead"},{v:"revenue",l:"Revenue"}]} value={metric} onChange={(v) => setMetric(v as any)} />
+            <TogglePills options={[{v:"area",l:"Area"},{v:"bar",l:"Bar"},{v:"composed",l:"Combo"}]} value={chartMode} onChange={(v) => setChartMode(v as any)} />
           </div>
         }
       >
-        <ResponsiveContainer width="100%" height={280}>
-          {chartMode === "composed" ? (
-            <ComposedChart data={
-    (metric === "leads"
-      ? charts.monthlyData
-      : charts.monthlyRevenue) as any
-  } margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#4B9EF3" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#4B9EF3" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+        <ResponsiveContainer width="100%" height={240} className="chart-height-lg">
+          {chartMode === "bar" ? (
+            <BarChart data={trendData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false}
-                tickFormatter={metric === "revenue" ? (v) => formatRupiah(v) : undefined}
-              />
-              <Tooltip content={<DarkTooltip formatter={metric === "revenue" ? formatRupiah : undefined} />} />
-              <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)", paddingTop: 12 }} />
-              <Bar dataKey={metric === "leads" ? "created" : "revenue"} name={metric === "leads" ? "Dibuat" : "Revenue"}
-                fill="#4B9EF3" radius={[4, 4, 0, 0]} fillOpacity={0.8} maxBarSize={32} />
-              {metric === "leads" && (
-                <Line type="monotone" dataKey="DEAL" name="DEAL" stroke="#10b981" strokeWidth={2.5}
-                  dot={{ r: 4, fill: "#10b981" }} />
-              )}
-            </ComposedChart>
-          ) : chartMode === "bar" ? (
-            <BarChart data={(metric === "leads" ? charts.monthlyData : charts.monthlyRevenue) as any } margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false}
-                tickFormatter={metric === "revenue" ? (v) => formatRupiah(v) : undefined}
-              />
-              <Tooltip content={<DarkTooltip formatter={metric === "revenue" ? formatRupiah : undefined} />} />
-              <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)", paddingTop: 12 }} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} tickFormatter={metric === "revenue" ? formatRp : undefined} />
+              <Tooltip content={<ChartTooltip fmt={metric === "revenue" ? formatRp : undefined} />} />
+              <Legend wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }} />
               {metric === "leads" ? (
                 <>
-                  <Bar dataKey="created" name="Dibuat" fill="#4B9EF3" radius={[4,4,0,0]} maxBarSize={28} />
-                  <Bar dataKey="DEAL"     name="DEAL"    fill="#10b981" radius={[4,4,0,0]} maxBarSize={28} />
+                  <Bar dataKey="created" name="Lead Masuk" fill="#3b82f6" radius={[4,4,0,0]} maxBarSize={28} />
+                  <Bar dataKey="won"     name="Deal"       fill="#10b981" radius={[4,4,0,0]} maxBarSize={28} />
+                  <Bar dataKey="lost"    name="Recycle"    fill="#ef4444" radius={[4,4,0,0]} maxBarSize={28} />
                 </>
               ) : (
                 <Bar dataKey="revenue" name="Revenue" radius={[4,4,0,0]} maxBarSize={32}>
-                  {charts.monthlyRevenue.map((_, i) => (
-                    <Cell key={i} fill={`hsl(${210 + i * 8}, 80%, ${50 + i * 3}%)`} />
+                  {(trendData ?? []).map((_: any, i: number) => (
+                    <Cell key={i} fill={`hsl(${210 + i * 10}, 70%, 56%)`} />
                   ))}
                 </Bar>
               )}
             </BarChart>
-          ) : (
-            // Area chart
-            <AreaChart data={(metric === "leads" ? charts.monthlyData : charts.monthlyRevenue) as any} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
+          ) : chartMode === "composed" ? (
+            <ComposedChart data={charts.monthlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="ag1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#4B9EF3" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#4B9EF3" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="agr" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                <linearGradient id="cmpGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--chart-text)" }} axisLine={false} tickLine={false}
-                tickFormatter={metric === "revenue" ? (v) => formatRupiah(v) : undefined}
-              />
-              <Tooltip content={<DarkTooltip formatter={metric === "revenue" ? formatRupiah : undefined} />} />
-              <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)", paddingTop: 12 }} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }} />
+              <Area type="monotone" dataKey="created" name="Lead Masuk" stroke="#3b82f6" strokeWidth={2.5} fill="url(#cmpGrad)" dot={{ r: 3, fill: "#3b82f6", strokeWidth: 0 }} />
+              <Bar dataKey="won" name="Deal" fill="#10b981" radius={[3,3,0,0]} maxBarSize={24} />
+              <Line type="monotone" dataKey="lost" name="Recycle" stroke="#ef4444" strokeWidth={2} strokeDasharray="4 3" dot={{ r: 3, fill: "#ef4444", strokeWidth: 0 }} />
+            </ComposedChart>
+          ) : (
+            // Area chart (default)
+            <AreaChart data={metric === "leads" ? charts.monthlyData : charts.monthlyRevenue} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <defs>
+                {metric === "leads" ? (
+                  <>
+                    <linearGradient id="ag1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </>
+                ) : (
+                  <linearGradient id="agr" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                  </linearGradient>
+                )}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} tickFormatter={metric === "revenue" ? formatRp : undefined} />
+              <Tooltip content={<ChartTooltip fmt={metric === "revenue" ? formatRp : undefined} />} />
+              <Legend wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }} />
               {metric === "leads" ? (
                 <>
-                  <Area type="monotone" dataKey="created" name="Dibuat" stroke="#4B9EF3" strokeWidth={2.5} fill="url(#ag1)" dot={{ r: 4, fill: "#4B9EF3", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
-                  <Area type="monotone" dataKey="DEAL"     name="DEAL"    stroke="#10b981" strokeWidth={2.5} fill="url(#ag2)" dot={{ r: 4, fill: "#10b981", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="created" name="Lead Masuk" stroke="#3b82f6" strokeWidth={2.5} fill="url(#ag1)" dot={{ r: 3, fill: "#3b82f6", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="won"     name="Deal"       stroke="#10b981" strokeWidth={2.5} fill="url(#ag2)" dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} />
+                  <Area type="monotone" dataKey="lost"    name="Recycle"    stroke="#ef4444" strokeWidth={2}   fill="url(#ag3)" dot={{ r: 3, fill: "#ef4444", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} />
                 </>
               ) : (
-                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#agr)" dot={{ r: 4, fill: "#8b5cf6", strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#7c3aed" strokeWidth={2.5} fill="url(#agr)" dot={{ r: 3, fill: "#7c3aed", strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 0 }} />
               )}
             </AreaChart>
           )}
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* ── Second Row ──────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+      {/* ── Status + Win/Loss ────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }} className="grid-2">
 
-        {/* Status Donut */}
-        <ChartCard title="Status Leads" sub="Distribusi per tahap pipeline" minH={240}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <DonutChart data={statusDonutData} size={150} />
-            <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
-              {statusDonutData.map((d) => (
-                <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: "var(--text-secondary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {d.name}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: d.color }}>{d.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Status Bar — sinkron dengan enum terbaru */}
+        <ChartCard title="Distribusi Status Lead" sub="Jumlah lead di setiap tahap pipeline saat ini">
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={statusChartData} margin={{ top: 4, right: 4, left: -10, bottom: 24 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+              <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--chart-text)" }} angle={-20} textAnchor="end" interval={0} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Bar dataKey="value" name="Lead" radius={[5,5,0,0]} maxBarSize={40}>
+                {statusChartData.map((d: any, i: number) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
 
-        {/* Win/Loss breakdown */}
-        <ChartCard title="Win vs Loss" sub="Rasio keberhasilan closing" minH={240}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Donut Win/Loss */}
+        <ChartCard title="Deal vs Recycle" sub="Rasio keberhasilan">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <div style={{ position: "relative", width: 130, height: 130 }}>
+              <PieChart width={130} height={130}>
+                <Pie data={[
+                  { name: "Deal",    value: kpi.dealLeads,    fill: "#10b981" },
+                  { name: "Aktif",   value: kpi.activeLeads,  fill: "#3b82f6" },
+                  { name: "Recycle", value: kpi.recycleLeads, fill: "#ef4444" },
+                ]} cx={60} cy={60} innerRadius={38} outerRadius={54}
+                  dataKey="value" paddingAngle={3} strokeWidth={0}
+                  startAngle={90} endAngle={-270}
+                >
+                  <Cell fill="#10b981" />
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#ef4444" />
+                </Pie>
+              </PieChart>
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)" }}>{kpi.winRate}%</div>
+                <div style={{ fontSize: 9, color: "var(--text-muted)" }}>Win Rate</div>
+              </div>
+            </div>
             {[
-              { l: "DEAL",    v: kpi.DEALLeads,    c: "#10b981", pct: kpi.totalLeads > 0 ? Math.round(kpi.DEALLeads / kpi.totalLeads * 100) : 0 },
-              { l: "Aktif",  v: kpi.activeLeads, c: "#4B9EF3", pct: kpi.totalLeads > 0 ? Math.round(kpi.activeLeads / kpi.totalLeads * 100) : 0 },
-              { l: "RECYCLE",   v: kpi.RECYCLELeads,   c: "#ef4444", pct: kpi.totalLeads > 0 ? Math.round(kpi.RECYCLELeads / kpi.totalLeads * 100) : 0 },
+              { l: "Deal",    v: kpi.dealLeads,    c: "#10b981" },
+              { l: "Aktif",   v: kpi.activeLeads,  c: "#3b82f6" },
+              { l: "Recycle", v: kpi.recycleLeads, c: "#ef4444" },
             ].map((s) => (
-              <div key={s.l}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: s.c }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{s.l}</span>
+              <div key={s.l} style={{ width: "100%" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: s.c }} />
+                    <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{s.l}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: s.c }}>{s.v}</span>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", background: "var(--bg-card2)", padding: "1px 6px", borderRadius: 999 }}>
-                      {s.pct}%
-                    </span>
-                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: s.c }}>{s.v}</span>
                 </div>
-                <div style={{ height: 8, background: "var(--bg-card2)", borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ height: 5, background: "var(--bg-card2)", borderRadius: 999, overflow: "hidden" }}>
                   <div style={{
-                    height: "100%", borderRadius: 999,
-                    width:  `${s.pct}%`, background: s.c,
-                    transition: "width 1s ease",
-                    boxShadow: `0 0 8px ${s.c}60`,
+                    height: "100%", borderRadius: 999, width: kpi.totalLeads > 0 ? `${Math.round(s.v / kpi.totalLeads * 100)}%` : "0%",
+                    background: s.c, transition: "width 0.8s ease",
                   }} />
                 </div>
               </div>
             ))}
-
-            <div style={{
-              marginTop:    8, padding:      "12px 14px",
-              background:   "var(--bg-card2)",
-              borderRadius: 10,
-              border:       "1px solid var(--border)",
-            }}>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Win Rate Keseluruhan</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: kpi.winRate >= 50 ? "#10b981" : "#f59e0b" }}>
-                {kpi.winRate}%
-              </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                {kpi.DEALLeads} DEAL dari {kpi.DEALLeads + kpi.RECYCLELeads} closed
-              </div>
-            </div>
           </div>
-        </ChartCard>
-
-        {/* Radar Chart */}
-        <ChartCard title="Radar Performa" sub="Top 5 sales comparison" minH={240}>
-          {radarData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={radarData} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
-                <PolarGrid stroke="var(--chart-grid)" />
-                <PolarAngleAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--chart-text)" }} />
-                <Radar name="DEAL"   dataKey="DEAL"     stroke="#10b981" fill="#10b981" fillOpacity={0.2} strokeWidth={2} />
-                <Radar name="Total" dataKey="total"   stroke="#4B9EF3" fill="#4B9EF3" fillOpacity={0.15} strokeWidth={2} />
-                <Tooltip content={<DarkTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }} />
-              </RadarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "var(--text-muted)", fontSize: 13 }}>
-              Belum ada data performa
-            </div>
-          )}
         </ChartCard>
       </div>
 
-      {/* ── Sales Performance ────────────────────────────── */}
-      <ChartCard title="Leaderboard Sales" sub="Ranking performa tim berdasarkan revenue" minH={200}>
+      {/* ── Sales Leaderboard ────────────────────────────── */}
+      <ChartCard title="Leaderboard Sales" sub="Ranking berdasarkan revenue — klik untuk detail lead">
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {charts.salesPerformance.slice(0, 5).map((s, i) => {
-            const isHov = hoveredSales === i
-            const maxRev = Math.max(...charts.salesPerformance.map((x) => x.revenue), 1)
+          {(charts.salesPerformance ?? []).slice(0, 5).map((s: any, i: number) => {
+            const ranks = ["1st","2nd","3rd","4th","5th"]
+            const rankColors = ["#d97706","#9ca3af","#b45309","#6366f1","#3b82f6"]
+            const maxRev = Math.max(...(charts.salesPerformance ?? []).map((x: any) => x.revenue), 1)
             const barW   = Math.round((s.revenue / maxRev) * 100)
-            const medal  = ["🥇","🥈","🥉","4️⃣","5️⃣"][i]
 
             return (
-              <div
-                key={s.name}
-                onMouseEnter={() => setHoveredSales(i)}
-                onMouseLeave={() => setHoveredSales(null)}
-                style={{
-                  display:      "flex", alignItems: "center",
-                  gap:          14, padding:    "12px 16px",
-                  background:   isHov ? "var(--bg-hover)" : "var(--bg-card2)",
-                  borderRadius: 12,
-                  border:       `1px solid ${isHov ? "var(--primary)" : "var(--border)"}`,
-                  cursor:       "default",
-                  transition:   "all 0.2s",
-                }}
-              >
-                {/* Medal */}
-                <span style={{ fontSize: 20, flexShrink: 0 }}>{medal}</span>
-
-                {/* Name */}
+              <div key={s.name} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "11px 14px",
+                background: i === 0 ? "rgba(217,119,6,0.06)" : "var(--bg-card2)",
+                borderRadius: 10,
+                border: `1px solid ${i === 0 ? "rgba(217,119,6,0.2)" : "var(--border)"}`,
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: rankColors[i], width: 28, flexShrink: 0 }}>{ranks[i]}</span>
                 <div style={{ width: 110, flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {s.name}
-                  </div>
-                  <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                    {s.DEAL} DEAL · {s.total} total
-                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{s.won} deal · {s.winRate}%</div>
                 </div>
-
-                {/* Progress bar */}
                 <div style={{ flex: 1, position: "relative" }}>
-                  <div style={{ height: 8, background: "var(--bg-card)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: 6, background: "var(--bg-card)", borderRadius: 999, overflow: "hidden" }}>
                     <div style={{
-                      height: "100%", borderRadius: 999,
-                      width: `${barW}%`,
-                      background: i === 0
-                        ? "linear-gradient(90deg, #f59e0b, #f97316)"
-                        : i === 1
-                        ? "linear-gradient(90deg, #94a3b8, #64748b)"
-                        : i === 2
-                        ? "linear-gradient(90deg, #b45309, #92400e)"
-                        : "linear-gradient(90deg, #4B9EF3, #1a6fd4)",
+                      height: "100%", borderRadius: 999, width: `${barW}%`,
+                      background: `linear-gradient(90deg, ${rankColors[i]}, ${rankColors[i]}aa)`,
                       transition: "width 0.8s ease",
-                      boxShadow: i === 0 ? "0 0 8px rgba(245,158,11,0.5)" : "none",
                     }} />
                   </div>
-                  {/* Win rate dot */}
-                  <div style={{ position: "absolute", right: 0, top: -18, fontSize: 10, color: "var(--text-muted)" }}>
-                    {s.winRate}% win
-                  </div>
                 </div>
-
-                {/* Revenue */}
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#10b981" }}>
-                    {formatRupiah(s.revenue)}
-                  </div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#10b981", flexShrink: 0 }}>
+                  {formatRp(s.revenue)}
                 </div>
               </div>
             )

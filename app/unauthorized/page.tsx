@@ -1,36 +1,9 @@
 "use client"
 
-import { Suspense } from "react"
-import { useSession } from "next-auth/react"
-import { useSearchParams, useRouter } from "next/navigation"
-import type { RoleType } from "@/lib/permissions"
+import { useRouter } from "next/navigation"
 
-const ROLE_LABEL: Record<RoleType, string> = {
-  SUPER_ADMIN: "Super Admin",
-  EXECUTIVE: "Executive",
-  SALES_MANAGER: "Sales Manager",
-  ACCOUNT_EXECUTIVE: "Account Executive",
-  VIEWER: "Viewer",
-}
-
-const ROLE_COLOR: Record<RoleType, { color: string; bg: string }> = {
-  SUPER_ADMIN: { color: "#dc2626", bg: "#fef2f2" },
-  EXECUTIVE: { color: "#7c3aed", bg: "#f5f3ff" },
-  SALES_MANAGER: { color: "#2563eb", bg: "#eff6ff" },
-  ACCOUNT_EXECUTIVE: { color: "#059669", bg: "#ecfdf5" },
-  VIEWER: { color: "#64748b", bg: "#f8fafc" },
-}
-
-function UnauthorizedContent() {
-  const { data: session } = useSession()
-  const searchParams = useSearchParams()
+export default function UnauthorizedPage() {
   const router = useRouter()
-
-  const from = searchParams.get("from") ?? "halaman tersebut"
-  const requiredRole = searchParams.get("required") as RoleType | null
-  const userRole = session?.user?.role as RoleType | undefined
-
-  const roleCfg = userRole ? ROLE_COLOR[userRole] : null
 
   return (
     <div
@@ -77,7 +50,7 @@ function UnauthorizedContent() {
             fontSize: 22,
             fontWeight: 700,
             color: "#0f172a",
-            margin: "0 0 8px",
+            marginBottom: 10,
           }}
         >
           Akses Ditolak
@@ -87,83 +60,11 @@ function UnauthorizedContent() {
           style={{
             fontSize: 14,
             color: "#64748b",
-            margin: "0 0 28px",
-            lineHeight: 1.6,
+            marginBottom: 28,
           }}
         >
-          Anda tidak memiliki akses ke halaman{" "}
-          <strong style={{ color: "#0f172a" }}>{from}</strong>.
+          Kamu tidak memiliki izin untuk membuka halaman ini.
         </p>
-
-        {userRole && roleCfg && (
-          <div
-            style={{
-              background: "#f8fafc",
-              borderRadius: 10,
-              padding: "16px 20px",
-              marginBottom: 20,
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                color: "#94a3b8",
-                marginBottom: 8,
-              }}
-            >
-              Role Anda saat ini
-            </div>
-
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: "4px 14px",
-                borderRadius: 999,
-                background: roleCfg.bg,
-                color: roleCfg.color,
-              }}
-            >
-              {ROLE_LABEL[userRole]}
-            </span>
-          </div>
-        )}
-
-        {requiredRole && (
-          <div
-            style={{
-              background: "#fffbeb",
-              borderRadius: 10,
-              padding: "16px 20px",
-              marginBottom: 28,
-              border: "1px solid #fde68a",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                color: "#92400e",
-                marginBottom: 8,
-              }}
-            >
-              Minimal role yang dibutuhkan
-            </div>
-
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: "4px 14px",
-                borderRadius: 999,
-                background: "#fef3c7",
-                color: "#d97706",
-              }}
-            >
-              {ROLE_LABEL[requiredRole] ?? requiredRole}
-            </span>
-          </div>
-        )}
 
         <div
           style={{
@@ -180,9 +81,7 @@ function UnauthorizedContent() {
               color: "#475569",
               border: "none",
               borderRadius: 8,
-              fontSize: 14,
               cursor: "pointer",
-              fontWeight: 500,
             }}
           >
             Kembali
@@ -196,23 +95,13 @@ function UnauthorizedContent() {
               color: "#fff",
               border: "none",
               borderRadius: 8,
-              fontSize: 14,
               cursor: "pointer",
-              fontWeight: 500,
             }}
           >
-            Ke Dashboard
+            Dashboard
           </button>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function UnauthorizedPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <UnauthorizedContent />
-    </Suspense>
   )
 }

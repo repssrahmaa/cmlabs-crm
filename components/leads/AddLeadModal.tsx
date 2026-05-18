@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRoleGuard }        from "@/hooks/useRoleGuard"
+import { FormField, inputStyle, selectStyle } from "@/components/ui/FormField"
+import RichTextEditor          from "@/components/ui/RichTextEditor"
 
-interface User {
-  id:   string
-  name: string
-  role: string
-}
+interface User { id: string; name: string; role: string }
 
 interface Props {
   onClose:  () => void
@@ -15,176 +13,140 @@ interface Props {
 }
 
 export default function AddLeadModal({ onClose, onCreate }: Props) {
-  const [loading, setLoading]   = useState(false)
-  const [users, setUsers]       = useState<User[]>([])
-  const [errorMsg, setErrorMsg] = useState("")
+  const [loading,   setLoading]   = useState(false)
+  const [users,     setUsers]     = useState<User[]>([])
+  const [errorMsg,  setErrorMsg]  = useState("")
   const { role, userId, canAssignLead } = useRoleGuard()
 
   const [form, setForm] = useState({
-    title: "", clientName: "", clientEmail: "",
-    clientPhone: "", clientCompany: "", value: "",
-    source: "", description: "", priority: "MEDIUM",
-    assignedToId: "",
+    title: "", clientName: "", clientEmail: "", clientPhone: "",
+    clientCompany: "", clientPosition: "", value: "",
+    source: "", description: "", priority: "MEDIUM", assignedToId: "",
   })
 
-  // Fetch users untuk dropdown PIC
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+
   useEffect(() => {
     if (!canAssignLead) return
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setUsers(data.filter((u: User) => u.role !== "VIEWER"))
-        }
-      })
-      .catch(() => {})
+    fetch("/api/users").then((r) => r.json()).then((d) => {
+      if (Array.isArray(d)) setUsers(d.filter((u: User) => u.role !== "VIEWER"))
+    }).catch(() => {})
   }, [canAssignLead])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.title || !form.clientName) return
-    setLoading(true)
-    setErrorMsg("")
-
+    setLoading(true); setErrorMsg("")
     try {
-      await onCreate({
-        ...form,
-        value:        form.value ? Number(form.value) : undefined,
-        assignedToId: form.assignedToId || undefined,
-      })
+      await onCreate({ ...form, value: form.value ? Number(form.value) : undefined, assignedToId: form.assignedToId || undefined })
       onClose()
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Gagal membuat lead")
-    } finally {
-      setLoading(false)
-    }
+    } catch (err: any) { setErrorMsg(err.message ?? "Gagal membuat lead")
+    } finally { setLoading(false) }
   }
 
   return (
     <div
       onClick={onClose}
-      style={{
-        position: "fixed", inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        zIndex: 100,
-        display: "flex", alignItems: "center",
-        justifyContent: "center", padding: 24,
-      }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 12,
-          width: "100%", maxWidth: 540,
-          maxHeight: "90vh", overflowY: "auto", padding: 28,
+          background:   "var(--bg-card)",     // ← CSS var
+          borderRadius: 16, padding: 26,
+          width: "100%", maxWidth: 560,
+          maxHeight: "90vh", overflowY: "auto",
+          border: "1px solid var(--border)",  // ← CSS var
+          boxShadow: "var(--shadow-xl)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Tambah Lead Baru</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>✕</button>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+          <div>
+            <h2 style={{ margin: "0 0 3px", fontSize: 17, fontWeight: 700, color: "var(--text-primary)" }}>Tambah Lead Baru</h2>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Isi informasi lead dan detail klien</p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 20, padding: 4 }}>&times;</button>
         </div>
 
         {errorMsg && (
-          <div style={{ marginBottom: 16, padding: "10px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 6, color: "#dc2626", fontSize: 13 }}>
+          <div style={{ marginBottom: 16, padding: "10px 14px", background: "var(--danger-pale)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--danger)" }}>
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Fields */}
-          {[
-            { label: "Judul Lead *",  key: "title",         type: "text",   required: true  },
-            { label: "Nama Klien *",  key: "clientName",    type: "text",   required: true  },
-            { label: "Email Klien",   key: "clientEmail",   type: "email",  required: false },
-            { label: "No. Telepon",   key: "clientPhone",   type: "text",   required: false },
-            { label: "Perusahaan",    key: "clientCompany", type: "text",   required: false },
-            { label: "Nilai (Rp)",    key: "value",         type: "number", required: false },
-            { label: "Sumber Lead",   key: "source",        type: "text",   required: false },
-          ].map(({ label, key, type, required }) => (
-            <div key={key}>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-                {label}
-              </label>
-              <input
-                type={type}
-                required={required}
-                value={(form as any)[key]}
-                onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                style={{
-                  width: "100%", padding: "8px 12px",
-                  border: "1px solid #d1d5db", borderRadius: 6,
-                  fontSize: 14, boxSizing: "border-box",
-                }}
-              />
-            </div>
-          ))}
 
-          {/* Prioritas */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-              Prioritas
-            </label>
-            <select
-              value={form.priority}
-              onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
-              style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 }}
-            >
-              <option value="LOW">Rendah</option>
-              <option value="MEDIUM">Sedang</option>
-              <option value="HIGH">Tinggi</option>
-            </select>
+          <FormField label="Judul Lead" required>
+            <input type="text" required value={form.title} onChange={set("title")} placeholder="Contoh: SEO Package — PT Maju Bersama" style={inputStyle} />
+          </FormField>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <FormField label="Nama Klien" required>
+              <input type="text" required value={form.clientName} onChange={set("clientName")} placeholder="Nama lengkap" style={inputStyle} />
+            </FormField>
+            <FormField label="Jabatan Klien">
+              <input type="text" value={form.clientPosition} onChange={set("clientPosition")} placeholder="Jabatan / posisi" style={inputStyle} />
+            </FormField>
           </div>
 
-          {/* PIC / Assigned To — hanya untuk SUPER_ADMIN & SALES_MANAGER */}
-          {canAssignLead ? (
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-                PIC (Person in Charge)
-              </label>
-              <select
-                value={form.assignedToId}
-                onChange={(e) => setForm((f) => ({ ...f, assignedToId: e.target.value }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 }}
-              >
-                <option value="">-- Pilih PIC --</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <FormField label="Email Klien">
+              <input type="email" value={form.clientEmail} onChange={set("clientEmail")} placeholder="email@company.com" style={inputStyle} />
+            </FormField>
+            <FormField label="Telepon Klien">
+              <input type="text" value={form.clientPhone} onChange={set("clientPhone")} placeholder="08xx-xxxx-xxxx" style={inputStyle} />
+            </FormField>
+          </div>
+
+          <FormField label="Perusahaan Klien">
+            <input type="text" value={form.clientCompany} onChange={set("clientCompany")} placeholder="Nama perusahaan" style={inputStyle} />
+          </FormField>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <FormField label="Nilai Deal (Rp)">
+              <input type="number" value={form.value} onChange={set("value")} placeholder="0" min={0} style={inputStyle} />
+            </FormField>
+            <FormField label="Prioritas">
+              <select value={form.priority} onChange={set("priority")} style={selectStyle}>
+                <option value="LOW">Rendah</option>
+                <option value="MEDIUM">Sedang</option>
+                <option value="HIGH">Tinggi</option>
               </select>
-            </div>
+            </FormField>
+          </div>
+
+          <FormField label="Sumber Lead">
+            <input type="text" value={form.source} onChange={set("source")} placeholder="Website, Referral, Cold Call..." style={inputStyle} />
+          </FormField>
+
+          {/* PIC */}
+          {canAssignLead ? (
+            <FormField label="PIC (Person in Charge)">
+              <select value={form.assignedToId} onChange={set("assignedToId")} style={selectStyle}>
+                <option value="">-- Pilih PIC --</option>
+                {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+              </select>
+            </FormField>
           ) : (
-            // AE — PIC otomatis diri sendiri, tampilkan info saja
-            <div style={{
-              padding: "10px 14px", background: "#f0fdf4",
-              border: "1px solid #bbf7d0", borderRadius: 6, fontSize: 13,
-            }}>
-              <span style={{ color: "#059669", fontWeight: 500 }}>📌 PIC:</span>
-              <span style={{ color: "#374151", marginLeft: 6 }}>Ditugaskan ke Anda secara otomatis</span>
+            <div style={{ padding: "10px 14px", background: "var(--success-pale)", border: "1px solid rgba(5,150,105,0.2)", borderRadius: 8, fontSize: 13, color: "var(--success)" }}>
+              <strong>PIC:</strong> Ditugaskan ke Anda secara otomatis
             </div>
           )}
 
-          {/* Deskripsi */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-              Deskripsi
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, boxSizing: "border-box", resize: "vertical" }}
-            />
-          </div>
+          {/* Deskripsi (Rich Text) */}
+          <RichTextEditor label="Deskripsi" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Tambahkan catatan, konteks, atau informasi penting tentang lead ini..." minHeight={90} />
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "11px", background: loading ? "#93c5fd" : "#2563eb",
-              color: "#fff", border: "none", borderRadius: 6,
-              fontSize: 14, fontWeight: 500, cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
+          <button type="submit" disabled={loading} style={{
+            marginTop: 4, padding: "11px",
+            background: loading ? "var(--border)" : "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+            color: loading ? "var(--text-muted)" : "#fff",
+            border: "none", borderRadius: 10,
+            fontSize: 13, fontWeight: 600,
+            cursor: loading ? "not-allowed" : "pointer",
+            boxShadow: loading ? "none" : "var(--shadow-primary)",
+          }}>
             {loading ? "Menyimpan..." : "Tambah Lead"}
           </button>
         </form>

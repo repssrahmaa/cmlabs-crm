@@ -4,27 +4,40 @@ import { useState, useEffect, useCallback } from "react"
 
 export type Theme = "light" | "dark"
 
+// Apply theme ke <html> LANGSUNG tanpa React cycle
+function applyTheme(theme: Theme) {
+  document.documentElement.setAttribute("data-theme", theme)
+  document.documentElement.style.colorScheme = theme
+}
+
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("light")
-  const [mounted, setMounted] = useState(false)
+  const [theme,   setThemeState] = useState<Theme>("light")
+  const [mounted, setMounted]    = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    const saved = localStorage.getItem("crm-theme") as Theme | null
-    const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const saved    = localStorage.getItem("crm-theme") as Theme | null
+    const preferred: Theme = window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark" : "light"
-    setTheme(saved ?? preferred)
+    const initial  = saved ?? preferred
+    setThemeState(initial)
+    applyTheme(initial)
+    setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!mounted) return
-    document.documentElement.setAttribute("data-theme", theme)
-    localStorage.setItem("crm-theme", theme)
-  }, [theme, mounted])
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t)
+    applyTheme(t)        // ← langsung ke DOM, tidak tunggu re-render
+    localStorage.setItem("crm-theme", t)
+  }, [])
 
   const toggle = useCallback(() => {
-    setTheme((t) => (t === "light" ? "dark" : "light"))
+    setThemeState((prev) => {
+      const next = prev === "light" ? "dark" : "light"
+      applyTheme(next)
+      localStorage.setItem("crm-theme", next)
+      return next
+    })
   }, [])
 
-  return { theme, toggle, mounted, isDark: theme === "dark" }
+  return { theme, toggle, setTheme, mounted, isDark: theme === "dark" }
 }

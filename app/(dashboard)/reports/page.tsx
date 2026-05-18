@@ -513,85 +513,97 @@ export default function ReportsPage() {
   )
 }
 
-// ── Document Tab ───────────────────────────────────────────────
+// Di DocumentTab component, tambahkan state dan modal
 function DocumentTab({ canGenerate }: { canGenerate: boolean }) {
   const [docs, setDocs]         = useState<any[]>([])
   const [loading, setLoading]   = useState(true)
+  const [showForm, setShowForm] = useState(false)   // ← tambah ini
+  const [leads, setLeads]       = useState<any[]>([])
 
   useEffect(() => {
-    fetch("/api/documents")
-      .then((r) => r.json())
-      .then((d) => { setDocs(Array.isArray(d) ? d : []); setLoading(false) })
-      .catch(() => setLoading(false))
+    Promise.all([
+      fetch("/api/documents").then((r) => r.json()),
+      fetch("/api/leads").then((r) => r.json()),
+    ]).then(([docsData, leadsData]) => {
+      setDocs(Array.isArray(docsData) ? docsData : [])
+      setLeads(Array.isArray(leadsData) ? leadsData : [])
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
-async function handleDownload(doc: any) {
-  try {
-   const { generateDocumentNumber } =
-  await import("@/lib/services/documentGenerator")
-
-    await generateDocxDocument({
-      type:    doc.type,
-      title:   doc.title,
-      number:  doc.content?.documentNumber
-        ?? generateDocumentNumber(doc.type),
-
-      date:    doc.content?.date
-        ?? new Date().toLocaleDateString("id-ID"),
-
-      lead:    doc.lead,
-      content: doc.content ?? {},
-    })
-
-  } catch (err: any) {
-    alert("Gagal generate dokumen: " + err.message)
-  }
-}
-
-  const STATUS_DOC_COLOR: Record<string, string> = {
-    DRAFT:     "#f59e0b",
-    FINALIZED: "#4B9EF3",
-    SENT:      "#10b981",
+  async function createDocument(formData: any) {
+    const res  = await fetch("/api/documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    setDocs((prev) => [data, ...prev])
+    setShowForm(false)
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Header + Tambah button */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Dokumen ({docs.length})</h3>
+        {canGenerate && (
+          <button onClick={() => setShowForm(true)} style={{
+            padding: "9px 18px",
+            background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+            color: "#fff", border: "none", borderRadius: 9,
+            fontSize: 12, fontWeight: 600, cursor: "pointer",
+            boxShadow: "var(--shadow-primary)",
+          }}>
+            + Buat Dokumen
+          </button>
+        )}
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <CreateDocumentModal
+          leads={leads}
+          onSubmit={createDocument}
+          onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {/* Document list */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 48, color: "var(--text-muted)" }}>Memuat dokumen...</div>
+        <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>Memuat dokumen...</div>
       ) : docs.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 48, color: "var(--text-muted)", background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)" }}>
-          Belum ada dokumen
+        <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)", background: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)" }}>
+          Belum ada dokumen. Klik "Buat Dokumen" untuk memulai.
         </div>
-      ) : docs.map((doc, i) => {
-        const sc = STATUS_DOC_COLOR[doc.status] ?? "#94a3b8"
+      ) : docs.map((doc) => {
+        const SC: Record<string, string> = { DRAFT: "#f59e0b", FINALIZED: "#3b82f6", SENT: "#10b981" }
+        const sc = SC[doc.status] ?? "#94a3b8"
         return (
           <div key={doc.id} style={{
-            background: "var(--bg-card)", borderRadius: 12, padding: "16px 20px",
-            border: "1px solid var(--border)", display: "flex", alignItems: "center",
-            gap: 16, flexWrap: "wrap",
+            background: "var(--bg-card)", borderRadius: 12, padding: "14px 18px",
+            border: "1px solid var(--border)", display: "flex",
+            alignItems: "center", gap: 14, flexWrap: "wrap",
           }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{doc.title}</span>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
-                  background: sc + "18", color: sc,
-                }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: sc + "18", color: sc }}>
                   {doc.status}
+                </span>
+                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "var(--bg-card2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                  {doc.type}
                 </span>
               </div>
               <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                {doc.lead?.clientName}{doc.lead?.clientCompany ? ` — ${doc.lead.clientCompany}` : ""} · {doc.type}
+                {doc.lead?.clientName}{doc.lead?.clientCompany ? ` — ${doc.lead.clientCompany}` : ""}
               </div>
             </div>
             <button
               onClick={() => handleDownload(doc)}
               style={{
-                padding: "8px 16px",
-                background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
-                color: "#fff", border: "none", borderRadius: 8,
-                fontSize: 12, fontWeight: 600, cursor: "pointer",
-                boxShadow: "var(--shadow-primary)",
+                padding: "7px 16px",
+                background: "var(--primary-pale)",
+                color: "var(--primary)",
+                border: "1px solid var(--primary-glow)",
+                borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
                 whiteSpace: "nowrap",
               }}
             >
@@ -600,6 +612,81 @@ async function handleDownload(doc: any) {
           </div>
         )
       })}
+    </div>
+  )
+
+  async function handleDownload(doc: any) {
+    const { generateDocxDocument, generateDocumentNumber, buildDefaultContent } = await import("@/lib/services/documentGenerator")
+    const number  = doc.content?.documentNumber ?? generateDocumentNumber(doc.type)
+    const content = doc.content ?? buildDefaultContent(doc.type, doc.lead, number)
+    await generateDocxDocument({ type: doc.type, title: doc.title, number, date: content.date ?? new Date().toLocaleDateString("id-ID"), lead: doc.lead, content })
+  }
+}
+
+// ── Create Document Modal ──────────────────────────────────────
+function CreateDocumentModal({ leads, onSubmit, onClose }: {
+  leads: any[]; onSubmit: (d: any) => Promise<void>; onClose: () => void
+}) {
+  const [leadId,  setLeadId]  = useState("")
+  const [type,    setType]    = useState("INVOICE")
+  const [title,   setTitle]   = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState("")
+  const { generateDocumentNumber, buildDefaultContent } = require("@/lib/services/documentGenerator")
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!leadId || !title) return
+    setLoading(true); setError("")
+    const selectedLead = leads.find((l) => l.id === leadId)
+    const number  = generateDocumentNumber(type)
+    const content = buildDefaultContent(type, selectedLead ?? {}, number)
+    try {
+      await onSubmit({ leadId, type, title, content })
+    } catch (err: any) { setError(err.message)
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--bg-card)", borderRadius: 16, padding: 26, width: "100%", maxWidth: 460, border: "1px solid var(--border)", boxShadow: "var(--shadow-xl)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Buat Dokumen Baru</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 20 }}>&times;</button>
+        </div>
+        {error && <div style={{ marginBottom: 14, padding: "10px 14px", background: "var(--danger-pale)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--danger)" }}>{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Lead *</label>
+            <select value={leadId} onChange={(e) => setLeadId(e.target.value)} required style={{ width: "100%", padding: "9px 12px", background: "var(--input-bg)", color: "var(--input-text)", border: "1px solid var(--input-border)", borderRadius: 9, fontSize: 13 }}>
+              <option value="">-- Pilih Lead --</option>
+              {leads.map((l) => <option key={l.id} value={l.id}>{l.title} — {l.clientName}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Tipe Dokumen *</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} style={{ width: "100%", padding: "9px 12px", background: "var(--input-bg)", color: "var(--input-text)", border: "1px solid var(--input-border)", borderRadius: 9, fontSize: 13 }}>
+              <option value="INVOICE">Invoice</option>
+              <option value="SPK">Surat Perintah Kerja (SPK)</option>
+              <option value="MOU">Memorandum of Understanding (MOU)</option>
+              <option value="OTHER">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Judul Dokumen *</label>
+            <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder={`Contoh: ${type} — Q1 2025`} style={{ width: "100%", padding: "9px 12px", background: "var(--input-bg)", color: "var(--input-text)", border: "1px solid var(--input-border)", borderRadius: 9, fontSize: 13, boxSizing: "border-box" }} />
+          </div>
+          <button type="submit" disabled={loading} style={{
+            padding: "11px",
+            background: loading ? "var(--border)" : "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+            color: loading ? "var(--text-muted)" : "#fff",
+            border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}>
+            {loading ? "Membuat..." : "Buat Dokumen"}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
