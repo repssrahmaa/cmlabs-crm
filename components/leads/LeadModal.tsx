@@ -6,6 +6,7 @@ import { useAccessNotice, AccessToast } from "@/components/ui/AccessNotice"
 import RichTextEditor     from "@/components/ui/RichTextEditor"
 import { FormField, inputStyle, selectStyle } from "@/components/ui/FormField"
 import { Lead, KANBAN_COLUMNS, STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from "@/types/lead"
+import LeadTimeline from "@/components/leads/LeadTimeline"
 
 interface Props {
   lead:     Lead
@@ -243,6 +244,52 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                   />
                 </div>
               )}
+              {/* Timeline Aktivitas */}
+<div
+  style={{
+    background: "var(--bg-card2)",
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    padding: "14px 16px",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 14,
+    }}
+  >
+    <p
+      style={{
+        margin: 0,
+        fontSize: 10,
+        fontWeight: 700,
+        color: "var(--text-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+      }}
+    >
+      Timeline Komunikasi
+    </p>
+
+    <span
+      style={{
+        fontSize: 11,
+        color: "var(--text-muted)",
+        fontWeight: 500,
+      }}
+    >
+      {lead._count.activities} aktivitas
+    </span>
+  </div>
+
+  <LeadTimeline
+    leadId={lead.id}
+    clientEmail={lead.clientEmail}
+  />
+</div>
             </div>
           )}
 

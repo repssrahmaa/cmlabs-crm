@@ -421,7 +421,7 @@ export default function LoginPage() {
                     Memverifikasi...
                   </>
                 ) : status === "success" ? (
-                  <><IconCheck /> Loading... </>
+                  <><IconCheck /> Berhasil! </>
                 ) : (
                   <>
                     Masuk ke Dashboard
