@@ -1,301 +1,341 @@
 "use client"
 
-import LeadTimeline from "./LeadTimeline"
-import { useState } from "react"
-import { Lead, PRIORITY_COLOR, PRIORITY_LABEL, KANBAN_COLUMNS } from "@/types/lead"
+import { useState }       from "react"
+import { useRoleGuard }   from "@/hooks/useRoleGuard"
+import { useAccessNotice, AccessToast } from "@/components/ui/AccessNotice"
+import RichTextEditor     from "@/components/ui/RichTextEditor"
+import { FormField, inputStyle, selectStyle } from "@/components/ui/FormField"
+import { Lead, KANBAN_COLUMNS, STATUS_COLOR, STATUS_LABEL, PRIORITY_COLOR, PRIORITY_LABEL } from "@/types/lead"
 
 interface Props {
-  lead:    Lead | null
-  onClose: () => void
+  lead:     Lead
+  onClose:  () => void
   onUpdate: (id: string, data: Partial<Lead>) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }
 
+// ── SVG Icons ──────────────────────────────────────────────────
+const IconEdit = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+)
+const IconTrash = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+)
+const IconX = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
 export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) {
-  const [editing, setEditing] = useState(false)
-  const [loading, setLoading] = useState(false)
-const [form, setForm] = useState({
-  title:         lead?.title                    ?? "",
-  clientName:    lead?.clientName               ?? "",
-  clientEmail:   lead?.clientEmail              ?? "",
-  clientPhone:   lead?.clientPhone              ?? "",
-  clientCompany: lead?.clientCompany            ?? "",
-  value:         lead?.value != null
-                   ? String(lead.value)         // ← konversi ke string untuk input
-                   : "",
-  source:        lead?.source                   ?? "",
-  description:   lead?.description              ?? "",
-  priority:      lead?.priority                 ?? "MEDIUM",
-  status:        lead?.status                   ?? "APPROACH",
-})
+  const { role, userId, can, canDeleteLead, is } = useRoleGuard()
+  const { notice, showNotice, hideNotice }        = useAccessNotice()
 
-  if (!lead) return null
+  const [mode,    setMode]    = useState<"view"|"edit">("view")
+  const [saving,  setSaving]  = useState(false)
+  const [deleting,setDeleting]= useState(false)
+  const [error,   setError]   = useState("")
 
-async function handleUpdate() {
-  setLoading(true)
-  try {
-    // Bersihkan data form sebelum dikirim
-    const payload: Record<string, any> = {
-      title:         form.title         || undefined,
-      clientName:    form.clientName    || undefined,
-      clientEmail:   form.clientEmail   || null,
-      clientPhone:   form.clientPhone   || null,
-      clientCompany: form.clientCompany || null,
-      source:        form.source        || null,
-      description:   form.description  || null,
-      priority:      form.priority,
-      status:        form.status,
-      // Konversi value ke number, null kalau kosong
-      value: form.value !== "" && form.value !== undefined
-        ? Number(form.value)
-        : null,
+  const [form, setForm] = useState({
+    title:          lead.title,
+    clientName:     lead.clientName,
+    clientEmail:    lead.clientEmail    ?? "",
+    clientPhone:    lead.clientPhone    ?? "",
+    clientCompany:  lead.clientCompany  ?? "",
+    clientPosition: lead.clientPosition ?? "",
+    value:          lead.value ? String(lead.value) : "",
+    source:         lead.source         ?? "",
+    description:    lead.description    ?? "",
+    status:         lead.status,
+    priority:       lead.priority,
+  })
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement|HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const canEdit = can("update", "lead", lead.assignedTo?.id ?? lead.assignedToId)
+
+  function handleEditClick() {
+    if (!canEdit) {
+      showNotice(
+        is("ACCOUNT_EXECUTIVE") ? "own_only" : "readonly",
+        is("ACCOUNT_EXECUTIVE")
+          ? "Anda hanya dapat mengubah lead yang ditugaskan kepada Anda."
+          : "Anda tidak memiliki akses untuk mengubah lead ini."
+      )
+      return
     }
-
-    // Hapus key yang undefined
-    const cleanPayload = Object.fromEntries(
-      Object.entries(payload).filter(([, v]) => v !== undefined)
-    )
-
-    const res = await fetch(`/api/leads/${lead!.id}`, {
-      method:  "PUT",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(cleanPayload),
-    })
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}))
-      console.error("Error detail:", errData)
-      throw new Error(errData.error ?? "Gagal update")
-    }
-
-    const updated: Lead = await res.json()
-    await onUpdate(lead!.id, updated)
-    setEditing(false)
-  } catch (err: any) {
-    alert(err.message ?? "Terjadi kesalahan")
-  } finally {
-    setLoading(false)
+    setMode("edit")
   }
-}
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true); setError("")
+    try {
+      await onUpdate(lead.id, {
+        ...form,
+        value: form.value ? Number(form.value) : undefined,
+      })
+      setMode("view")
+    } catch (err: any) { setError(err.message ?? "Gagal menyimpan")
+    } finally { setSaving(false) }
+  }
 
   async function handleDelete() {
-    if (!confirm("Yakin hapus lead ini?")) return
-    setLoading(true)
-    await onDelete(lead!.id)
-    setLoading(false)
-    onClose()
+    if (!confirm("Hapus lead ini secara permanen?")) return
+    setDeleting(true)
+    try { await onDelete(lead.id); onClose()
+    } catch (err: any) { setError(err.message ?? "Gagal menghapus")
+    } finally { setDeleting(false) }
   }
 
+  const sc = STATUS_COLOR[lead.status] ?? "#94a3b8"
+  const sl = STATUS_LABEL[lead.status] ?? lead.status
+
   return (
-    <div
-      onClick={onClose}
-      style={{
-  position: "fixed", inset: 0,
-  background: "rgba(0,0,0,0.6)",
-  zIndex: 100,
-  display: "flex", alignItems: "center",
-  justifyContent: "center", padding: 24,
-}}
-    >
+    <>
       <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "var(--bg-card)",
-color: "var(--text-primary)",
-border: "1px solid var(--border)",
-          width:        "100%",
-          maxWidth:     560,
-          maxHeight:    "90vh",
-          overflowY:    "auto",
-          padding:      28,
-        }}
+        onClick={onClose}
+        style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
       >
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
-            {editing ? "Edit Lead" : "Detail Lead"}
-          </h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>
-            ✕
-          </button>
-        </div>
-
-        {editing ? (
-          /* ── Form Edit ── */
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[
-              { label: "Judul Lead *", key: "title",         type: "text"  },
-              { label: "Nama Klien *", key: "clientName",    type: "text"  },
-              { label: "Email Klien",  key: "clientEmail",   type: "email" },
-              { label: "No. Telepon",  key: "clientPhone",   type: "text"  },
-              { label: "Perusahaan",   key: "clientCompany", type: "text"  },
-              { label: "Nilai (Rp)",   key: "value",         type: "number"},
-              { label: "Sumber",       key: "source",        type: "text"  },
-            ].map(({ label, key, type }) => (
-              <div key={key}>
-                <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4, color: "var(--text-secondary)" }}>
-                  {label}
-                </label>
-                <input
-                  type={type}
-                  value={(form as any)[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  style={{
-width: "100%", padding: "8px 12px",
-border: "1px solid var(--input-border)",
-borderRadius: 6, fontSize: 14,
-background: "var(--input-bg)",
-color: "var(--input-text)",
-boxSizing: "border-box",
-}}
-                />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background:   "var(--bg-card)",          // ← CSS var
+            color:        "var(--text-primary)",      // ← CSS var
+            border:       "1px solid var(--border)",  // ← CSS var
+            borderRadius: 16,
+            boxShadow:    "var(--shadow-xl)",
+            width:        "100%", maxWidth: 580,
+            maxHeight:    "92vh", overflowY: "auto",
+            padding:      26,
+          }}
+        >
+          {/* Header */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+            <div style={{ flex:1, minWidth:0, marginRight:12 }}>
+              {/* Status + Priority badges */}
+              <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" }}>
+                <span style={{
+                  fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999,
+                  background:sc+"20", color:sc,
+                }}>
+                  {sl}
+                </span>
+                <span style={{
+                  fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999,
+                  background:(PRIORITY_COLOR[lead.priority]??"")+20,
+                  color: PRIORITY_COLOR[lead.priority] ?? "var(--text-muted)",
+                }}>
+                  {PRIORITY_LABEL[lead.priority] ?? lead.priority}
+                </span>
               </div>
-            ))}
-
-            {/* Priority Select */}
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-                Prioritas
-              </label>
-              <select
-                value={form.priority}
-                onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as any }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 }}
-              >
-                <option value="LOW">Rendah</option>
-                <option value="MEDIUM">Sedang</option>
-                <option value="HIGH">Tinggi</option>
-              </select>
-            </div>
-
-            {/* Status Select */}
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-                Status
-              </label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}
-                style={{
-width: "100%", padding: "8px 12px",
-border: "1px solid var(--input-border)",
-borderRadius: 6, fontSize: 14,
-background: "var(--input-bg)",
-color: "var(--input-text)",
-}}
-              >
-                {KANBAN_COLUMNS.map((col) => (
-                  <option key={col.id} value={col.id}>{col.label}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, display: "block", marginBottom: 4 }}>
-                Deskripsi
-              </label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, boxSizing: "border-box", resize: "vertical" }}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-              <button
-                onClick={handleUpdate}
-                disabled={loading}
-                style={{ flex: 1, padding: "10px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
-              >
-                {loading ? "Menyimpan..." : "Simpan"}
-              </button>
-              <button
-                onClick={() => setEditing(false)}
-                style={{ flex: 1, padding: "10px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: 6, fontSize: 14, cursor: "pointer" }}
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* ── Detail View ── */
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>
+              <h2 style={{ margin:0, fontSize:17, fontWeight:700, color:"var(--text-primary)", lineHeight:1.3 }}>
                 {lead.title}
-              </div>
-              <span style={{
-                fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
-                background: PRIORITY_COLOR[lead.priority] + "20",
-                color: PRIORITY_COLOR[lead.priority],
-              }}>
-                {PRIORITY_LABEL[lead.priority]}
-              </span>
+              </h2>
             </div>
-
-            {[
-              { label: "Klien",      value: lead.clientName    },
-              { label: "Email",      value: lead.clientEmail   },
-              { label: "Telepon",    value: lead.clientPhone   },
-              { label: "Perusahaan", value: lead.clientCompany },
-              { label: "Sumber",     value: lead.source        },
-              { label: "PIC",        value: lead.assignedTo?.name },
-              { label: "Nilai",      value: lead.value
-                ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(lead.value)
-                : null },
-            ].map(({ label, value }) =>
-              value ? (
-                <div key={label} style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: "var(--text-muted)", width: 90, flexShrink: 0 }}>{label}</span>
-                  <span style={{ fontSize: 13, color: "#0f172a", fontWeight: 500 }}>{value}</span>
-                </div>
-              ) : null
-            )}
-
-            {lead.description && (
-              <div style={{
-marginTop: 12, padding: 12,
-background: "var(--bg-card2)",
-borderRadius: 8, fontSize: 13,
-color: "var(--text-secondary)",
-lineHeight: 1.6,
-}}
->
-                {lead.description}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+            <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+              {canDeleteLead && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  title="Hapus lead"
+                  style={{
+                    width:32, height:32, borderRadius:8,
+                    background:"var(--danger-pale)",
+                    border:"1px solid rgba(239,68,68,0.2)",
+                    color:"var(--danger)", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}
+                >
+                  <IconTrash />
+                </button>
+              )}
               <button
-                onClick={() => setEditing(true)}
-                style={{ flex: 1, padding: "10px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+                onClick={handleEditClick}
+                title="Edit lead"
+                style={{
+                  width:32, height:32, borderRadius:8,
+                  background: mode==="edit" ? "var(--primary)" : "var(--bg-card2)",
+                  border:`1px solid ${mode==="edit" ? "var(--primary)" : "var(--border)"}`,
+                  color: mode==="edit" ? "#fff" : "var(--text-secondary)",
+                  cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}
               >
-                Edit
+                <IconEdit />
               </button>
               <button
-                onClick={handleDelete}
-                disabled={loading}
-                style={{ padding: "10px 20px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", borderRadius: 6, fontSize: 14, cursor: "pointer" }}
+                onClick={onClose}
+                style={{
+                  width:32, height:32, borderRadius:8,
+                  background:"var(--bg-card2)", border:"1px solid var(--border)",
+                  color:"var(--text-muted)", cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}
               >
-                Hapus
+                <IconX />
               </button>
             </div>
-            <div style={{ borderTop: "1px solid #f1f5f9", marginTop: 20, paddingTop: 20 }}>
-  <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
-    Timeline Komunikasi
-  </h3>
-  <LeadTimeline
-    leadId={lead.id}
-    clientEmail={lead.clientEmail}
-  />
-</div>
           </div>
-        )}
+
+          {error && (
+            <div style={{ marginBottom:16, padding:"10px 14px", background:"var(--danger-pale)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, fontSize:13, color:"var(--danger)" }}>
+              {error}
+            </div>
+          )}
+
+          {/* ── VIEW MODE ─────────────────────────────────── */}
+          {mode === "view" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              {/* Client Info */}
+              <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+                <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Klien</p>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
+                  {[
+                    { l:"Nama",       v:lead.clientName },
+                    { l:"Jabatan",    v:lead.clientPosition ?? "-" },
+                    { l:"Email",      v:lead.clientEmail    ?? "-" },
+                    { l:"Telepon",    v:lead.clientPhone    ?? "-" },
+                    { l:"Perusahaan", v:lead.clientCompany  ?? "-" },
+                    { l:"Sumber",     v:lead.source         ?? "-" },
+                  ].map((r) => (
+                    <div key={r.l}>
+                      <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:2, fontWeight:600 }}>{r.l}</div>
+                      <div style={{ fontSize:13, color:"var(--text-primary)", fontWeight:500 }}>{r.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Deal Info */}
+              <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+                <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Deal</p>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
+                  {[
+                    { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
+                    { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
+                    { l:"Dibuat",   v: lead.createdBy?.name  ?? "-" },
+                    { l:"Aktivitas",v: String(lead._count.activities) },
+                  ].map((r) => (
+                    <div key={r.l}>
+                      <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:2, fontWeight:600 }}>{r.l}</div>
+                      <div style={{ fontSize:13, color:"var(--text-primary)", fontWeight:500 }}>{r.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              {lead.description && (
+                <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+                  <p style={{ margin:"0 0 8px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Deskripsi</p>
+                  <div
+                    style={{ fontSize:13, color:"var(--text-secondary)", lineHeight:1.7 }}
+                    dangerouslySetInnerHTML={{ __html: lead.description }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── EDIT MODE ─────────────────────────────────── */}
+          {mode === "edit" && (
+            <form onSubmit={handleSave} style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              <FormField label="Judul" required>
+                <input type="text" required value={form.title} onChange={set("title")} style={inputStyle} />
+              </FormField>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FormField label="Nama Klien" required>
+                  <input type="text" required value={form.clientName} onChange={set("clientName")} style={inputStyle} />
+                </FormField>
+                <FormField label="Jabatan Klien">
+                  <input type="text" value={form.clientPosition} onChange={set("clientPosition")} style={inputStyle} />
+                </FormField>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FormField label="Email Klien">
+                  <input type="email" value={form.clientEmail} onChange={set("clientEmail")} style={inputStyle} />
+                </FormField>
+                <FormField label="Telepon">
+                  <input type="text" value={form.clientPhone} onChange={set("clientPhone")} style={inputStyle} />
+                </FormField>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FormField label="Perusahaan">
+                  <input type="text" value={form.clientCompany} onChange={set("clientCompany")} style={inputStyle} />
+                </FormField>
+                <FormField label="Sumber Lead">
+                  <input type="text" value={form.source} onChange={set("source")} style={inputStyle} />
+                </FormField>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
+                <FormField label="Nilai (Rp)">
+                  <input type="number" min={0} value={form.value} onChange={set("value")} style={inputStyle} />
+                </FormField>
+                <FormField label="Status">
+                  <select value={form.status} onChange={set("status")} style={selectStyle}>
+                    {KANBAN_COLUMNS.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Prioritas">
+                  <select value={form.priority} onChange={set("priority")} style={selectStyle}>
+                    <option value="LOW">Rendah</option>
+                    <option value="MEDIUM">Sedang</option>
+                    <option value="HIGH">Tinggi</option>
+                  </select>
+                </FormField>
+              </div>
+
+              <RichTextEditor
+                label="Deskripsi"
+                value={form.description}
+                onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+                placeholder="Catatan, konteks, atau informasi penting..."
+                minHeight={80}
+              />
+
+              <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+                <button type="button" onClick={() => setMode("view")} style={{
+                  padding:"9px 18px", background:"var(--bg-card2)",
+                  border:"1px solid var(--border)", borderRadius:9,
+                  fontSize:13, fontWeight:600, color:"var(--text-secondary)", cursor:"pointer",
+                }}>
+                  Batal
+                </button>
+                <button type="submit" disabled={saving} style={{
+                  padding:"9px 22px",
+                  background: saving ? "var(--border)" : "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+                  color: saving ? "var(--text-muted)" : "#fff",
+                  border:"none", borderRadius:9,
+                  fontSize:13, fontWeight:600,
+                  cursor: saving ? "not-allowed" : "pointer",
+                }}>
+                  {saving ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
-    </div>
+
+      <AccessToast
+        type={notice.type} message={notice.message}
+        show={notice.show} onClose={hideNotice}
+      />
+    </>
   )
 }

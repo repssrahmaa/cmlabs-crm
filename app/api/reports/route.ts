@@ -2,180 +2,137 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { hasPermission } from "@/lib/permissions"
-import { startOfMonth, endOfMonth, subMonths, format } from "date-fns"
+import { subMonths, startOfMonth, endOfMonth, format } from "date-fns"
 import type { RoleType } from "@/lib/permissions"
+
+// Enum status yang benar
+const DEAL_STATUS    = "DEAL"
+const RECYCLE_STATUS = "RECYCLE"
+const ACTIVE_STATUSES = ["APPROACH", "COLD_LEAD", "DECK_REQUEST", "MEETING"] as const
 
 export async function GET(req: NextRequest) {
   const session = await auth()
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const role = session.user.role as RoleType
-
   if (!hasPermission(role, "read", "report")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
   const { searchParams } = new URL(req.url)
-  const period = searchParams.get("period") ?? "this_month"
+  const year  = searchParams.get("year")  ?? String(new Date().getFullYear())
+  const month = searchParams.get("month") ?? "all"
 
-  let startDate: Date
-  let endDate:   Date
-
-  switch (period) {
-    case "last_month":
-      startDate = startOfMonth(subMonths(new Date(), 1))
-      endDate   = endOfMonth(subMonths(new Date(), 1))
-      break
-    case "last_3_months":
-      startDate = startOfMonth(subMonths(new Date(), 3))
-      endDate   = endOfMonth(new Date())
-      break
-    case "last_6_months":
-      startDate = startOfMonth(subMonths(new Date(), 6))
-      endDate   = endOfMonth(new Date())
-      break
-    case "this_year":
-      startDate = new Date(new Date().getFullYear(), 0, 1)
-      endDate   = new Date(new Date().getFullYear(), 11, 31)
-      break
-    default:
-      startDate = startOfMonth(new Date())
-      endDate   = endOfMonth(new Date())
+  // Build date filter
+  let dateFilter: any = {}
+  if (month !== "all") {
+    const d = new Date(Number(year), Number(month) - 1, 1)
+    dateFilter = { createdAt: { gte: startOfMonth(d), lte: endOfMonth(d) } }
+  } else {
+    dateFilter = {
+      createdAt: {
+        gte: new Date(Number(year), 0, 1),
+        lte: new Date(Number(year), 11, 31),
+      },
+    }
   }
 
-  const dateFilter = { createdAt: { gte: startDate, lte: endDate } }
+  // KPI — pakai status enum terbaru
+  const [totalLeads, wonLeads, lostLeads, activeLeads] = await Promise.all([
+    prisma.lead.count({ where: dateFilter }),
+    prisma.lead.count({ where: { ...dateFilter, status: DEAL_STATUS    } }),
+    prisma.lead.count({ where: { ...dateFilter, status: RECYCLE_STATUS } }),
+    prisma.lead.count({ where: { ...dateFilter, status: { in: [...ACTIVE_STATUSES] } } }),
+  ])
 
-  // ✅ Semua role yang punya akses lihat data SEMUA lead (no filter by user)
-  const [totalLeads, DEALLeads, RECYCLELeads, activeLeads, totalActivities] =
-    await Promise.all([
-      prisma.lead.count({ where: dateFilter }),
-      prisma.lead.count({ where: { ...dateFilter, status: "DEAL"  } }),
-      prisma.lead.count({ where: { ...dateFilter, status: "RECYCLE" } }),
-      prisma.lead.count({ where: { ...dateFilter, status: { notIn: ["DEAL","RECYCLE"] } } }),
-      prisma.activity.count({ where: { createdAt: { gte: startDate, lte: endDate } } }),
-    ])
-
-  const revenueResult = await prisma.lead.aggregate({
-    where: { ...dateFilter, status: "DEAL" },
+  const revenueAgg = await prisma.lead.aggregate({
+    where: { ...dateFilter, status: DEAL_STATUS },
     _sum:  { value: true },
     _avg:  { value: true },
   })
+  const totalRevenue = Number(revenueAgg._sum.value ?? 0)
+  const avgDealSize  = Number(revenueAgg._avg.value ?? 0)
+  const winRate      = (wonLeads + lostLeads) > 0
+    ? Math.round((wonLeads / (wonLeads + lostLeads)) * 100) : 0
 
-  const totalRevenue = Number(revenueResult._sum.value ?? 0)
-  const avgDealSize  = Number(revenueResult._avg.value ?? 0)
-  const winRate      = (DEALLeads + RECYCLELeads) > 0
-    ? Math.round((DEALLeads / (DEALLeads + RECYCLELeads)) * 100)
-    : 0
-
-  // Leads per Status
-  const leadsByStatusRaw = await prisma.lead.groupBy({
-    by:     ["status"],
-    where:  dateFilter,
-    _count: true,
+  // Leads per status
+  const byStatusRaw = await prisma.lead.groupBy({
+    by: ["status"], where: dateFilter, _count: true,
   })
-
-  // Leads per Priority
-  const leadsByPriorityRaw = await prisma.lead.groupBy({
-    by:     ["priority"],
-    where:  dateFilter,
-    _count: true,
-  })
-
-  // Leads per Source
-  const leadsBySourceRaw = await prisma.lead.groupBy({
-    by:     ["source"],
-    where:  { ...dateFilter, source: { not: null } },
-    _count: true,
-  })
+  const leadsByStatus = byStatusRaw.map((d) => ({ status: d.status, count: d._count }))
 
   // Monthly breakdown
-  const months = period === "this_month" || period === "last_month" ? 1
-    : period === "last_3_months" ? 3
-    : period === "last_6_months" ? 6 : 12
-
   const monthlyBreakdown = []
+  const months = month === "all" ? 12 : 1
+  const baseDate = month === "all"
+    ? new Date(Number(year), 11, 1)
+    : new Date(Number(year), Number(month) - 1, 1)
+
   for (let i = months - 1; i >= 0; i--) {
-    const date  = subMonths(endDate, i)
-    const start = startOfMonth(date)
-    const end   = endOfMonth(date)
-
-    const [created, DEAL, RECYCLE] = await Promise.all([
-      prisma.lead.count({ where: { createdAt: { gte: start, lte: end } } }),
-      prisma.lead.count({ where: { status: "DEAL",  closedAt: { gte: start, lte: end } } }),
-      prisma.lead.count({ where: { status: "RECYCLE", closedAt: { gte: start, lte: end } } }),
+    const d    = subMonths(baseDate, i)
+    const s    = startOfMonth(d)
+    const e    = endOfMonth(d)
+    const [created, won, lost] = await Promise.all([
+      prisma.lead.count({ where: { createdAt: { gte: s, lte: e } } }),
+      prisma.lead.count({ where: { status: DEAL_STATUS,    createdAt: { gte: s, lte: e } } }),
+      prisma.lead.count({ where: { status: RECYCLE_STATUS, createdAt: { gte: s, lte: e } } }),
     ])
-
     const rev = await prisma.lead.aggregate({
-      where: { status: "DEAL", closedAt: { gte: start, lte: end } },
+      where: { status: DEAL_STATUS, createdAt: { gte: s, lte: e } },
       _sum:  { value: true },
     })
-
     monthlyBreakdown.push({
-      month:   format(date, "MMM yyyy"),
-      created, DEAL, RECYCLE,
+      month:   format(d, "MMM yyyy"),
+      created, won, lost,
       revenue: Number(rev._sum.value ?? 0),
     })
   }
 
-  // ✅ Sales Performance — SEMUA sales & AE
+  // Sales performance — lengkap dengan leads detail
   const salesUsers = await prisma.user.findMany({
     where:  { role: { in: ["SALES_MANAGER", "ACCOUNT_EXECUTIVE"] }, isActive: true },
     select: {
-      id:   true,
-      name: true,
-      role: true,
+      id: true, name: true, role: true,
       assignedLeads: {
         where:  dateFilter,
-        select: { status: true, value: true },
+        select: {
+          id: true, title: true, status: true, value: true,
+          clientName: true, clientCompany: true, createdAt: true,
+        },
       },
     },
   })
 
   const salesPerformance = salesUsers.map((u) => {
-    const total   = u.assignedLeads.length
-    const DEAL     = u.assignedLeads.filter((l) => l.status === "DEAL").length
-    const RECYCLE    = u.assignedLeads.filter((l) => l.status === "RECYCLE").length
-    const revenue = u.assignedLeads
-      .filter((l) => l.status === "DEAL")
+    const leads   = u.assignedLeads
+    const total   = leads.length
+    const won     = leads.filter((l) => l.status === DEAL_STATUS).length
+    const lost    = leads.filter((l) => l.status === RECYCLE_STATUS).length
+    const active  = leads.filter((l) => (ACTIVE_STATUSES as readonly string[]).includes(l.status)).length
+    const revenue = leads
+      .filter((l) => l.status === DEAL_STATUS)
       .reduce((s, l) => s + Number(l.value ?? 0), 0)
 
     return {
-      name:    u.name,
-      role:    u.role,
-      total,
-      DEAL,
-      RECYCLE,
-      active:  total - DEAL - RECYCLE,
-      winRate: total > 0 ? Math.round((DEAL / total) * 100) : 0,
+      id: u.id, name: u.name, role: u.role,
+      total, won, lost, active,
+      winRate: (won + lost) > 0 ? Math.round((won / (won + lost)) * 100) : 0,
       revenue,
+      leads,   // untuk detail modal
     }
   }).sort((a, b) => b.revenue - a.revenue)
 
-  const recentDEALLeads = await prisma.lead.findMany({
-    where:   { status: "DEAL", closedAt: { gte: startDate, lte: endDate } },
-    include: {
-      assignedTo: { select: { name: true } },
-      createdBy:  { select: { name: true } },
-    },
-    orderBy: { closedAt: "desc" },
-    take:    10,
-  })
-
   return NextResponse.json({
-    period:  { label: period, startDate, endDate },
     summary: {
-      totalLeads, DEALLeads, RECYCLELeads, activeLeads,
-      totalRevenue, avgDealSize, winRate, totalActivities,
+      totalLeads, wonLeads, lostLeads, activeLeads,
+      totalRevenue, avgDealSize, winRate,
+      // backward compat
+      dealLeads: wonLeads, recycleLeads: lostLeads,
     },
     charts: {
-      leadsByStatus:   leadsByStatusRaw.map((d) => ({ status:   d.status,   count: d._count })),
-      leadsByPriority: leadsByPriorityRaw.map((d) => ({ priority: d.priority, count: d._count })),
-      leadsBySource:   leadsBySourceRaw.map((d) => ({ source:   d.source ?? "Tidak diketahui", count: d._count })),
+      leadsByStatus,
       monthlyBreakdown,
     },
     salesPerformance,
-    recentDEALLeads,
   })
 }

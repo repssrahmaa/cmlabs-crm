@@ -270,3 +270,42 @@ boxShadow: "var(--shadow-xs)",
     </div>
   )
 }
+
+// Di komponen LeadModal dan form lead, ganti semua style inline hardcoded
+// Cari-ganti pattern berikut di LeadModal.tsx:
+
+// ── Fix warna modal overlay ────────────────────────────────────
+// style modal container
+const modalStyle: React.CSSProperties = {
+  background:   "var(--bg-card)",
+  color:        "var(--text-primary)",
+  border:       "1px solid var(--border)",
+  borderRadius: 16,
+  boxShadow:    "var(--shadow-xl)",
+}
+
+// ── Fix warna section dalam modal ─────────────────────────────
+const sectionStyle: React.CSSProperties = {
+  background:   "var(--bg-card2)",
+  border:       "1px solid var(--border)",
+  borderRadius: 10,
+  padding:      "14px 16px",
+}
+
+// ── Fix warna label ────────────────────────────────────────────
+const labelStyle: React.CSSProperties = {
+  fontSize:  11, fontWeight: 700,
+  color:     "var(--text-muted)",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+}
+
+// ── Fix warna value text ───────────────────────────────────────
+const valueStyle: React.CSSProperties = {
+  fontSize: 13, color: "var(--text-primary)", fontWeight: 500,
+}
+
+// ── Fix warna secondary text ───────────────────────────────────
+const secondaryStyle: React.CSSProperties = {
+  fontSize: 12, color: "var(--text-secondary)",
+}
