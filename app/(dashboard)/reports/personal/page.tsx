@@ -20,17 +20,7 @@ function formatRp(v: number) {
   }).format(v)
 }
 
-function formatRpFull(v: number) {
-  return `Rp ${v.toLocaleString("id-ID")}`
-}
-
 // ── SVG Icons ──────────────────────────────────────────────────
-const IconTrend = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-    <polyline points="17 6 23 6 23 12"/>
-  </svg>
-)
 const IconFilter = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
@@ -138,46 +128,55 @@ function MetricTile({ label, value, sub, color }: {
 
 // ── Main Page ──────────────────────────────────────────────────
 export default function PersonalPerformancePage() {
-  const { data: session }     = useSession()
+  const { data: session } = useSession()
 
-  // Tiap section punya filter sendiri
-// Verifikasi semua state filter sudah independen:
-const [leadYear,  setLeadYear]  = useState(String(CUR_YEAR))  // untuk KPI dan pipeline
-const [leadMonth, setLeadMonth] = useState("all")
-const [revYear,   setRevYear]   = useState(String(CUR_YEAR))  // untuk grafik revenue
-const [revMonth,  setRevMonth]  = useState("all")
-const [actYear,   setActYear]   = useState(String(CUR_YEAR))  // untuk grafik aktivitas
-const [actMonth,  setActMonth]  = useState("all")
-
-// API dipanggil dengan parameter masing-masing:
-const fetchData = useCallback(async () => {
-  const p = new URLSearchParams({
-    year:     leadYear,   // lead filter
-    month:    leadMonth,
-    actYear,              // activity filter sendiri
-    actMonth,
-  })
-  const res = await fetch(`/api/reports/personal?${p}`)
-  setData(await res.json())
-}, [leadYear, leadMonth, actYear, actMonth])
-
-// PENTING: revData di-filter client-side berdasarkan revYear/revMonth
-// dari monthlyPersonal yang sudah di-fetch
+  // ── 1. Semua useState dideklarasi di atas ─────────────────────
   const [data,    setData]    = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [tab,     setTab]     = useState<"overview"|"pipeline"|"activity">("overview")
+  const [revData, setRevData] = useState<any[]>([])
 
+  // Filter state — tiap section independen
+  const [leadYear,  setLeadYear]  = useState(String(CUR_YEAR))
+  const [leadMonth, setLeadMonth] = useState("all")
+  const [revYear,   setRevYear]   = useState(String(CUR_YEAR))
+  const [revMonth,  setRevMonth]  = useState("all")
+  const [actYear,   setActYear]   = useState(String(CUR_YEAR))
+  const [actMonth,  setActMonth]  = useState("all")
 
+  // ── 2. useCallback setelah semua useState ─────────────────────
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const p = new URLSearchParams({
+        year:     leadYear,
+        month:    leadMonth,
+        actYear,
+        actMonth,
+      })
+      const res = await fetch(`/api/reports/personal?${p}`)
+      if (!res.ok) throw new Error("Gagal mengambil data")
+      const json = await res.json()
+      setData(json)
+    } catch (err) {
+      console.error("Personal fetch error:", err)
+      setData(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [leadYear, leadMonth, actYear, actMonth])
+
+  // ── 3. useEffect setelah useCallback ──────────────────────────
   useEffect(() => { fetchData() }, [fetchData])
+
   useRealtimeDashboard({ onDashboardRefresh: fetchData, onLeadChange: fetchData })
 
-  // Revenue chart data — filter berdasarkan revYear/revMonth
-  const [revData, setRevData] = useState<any[]>([])
+  // Revenue chart data — filter client-side dari monthlyPersonal
   useEffect(() => {
     if (!data) return
-    const monthly = data.charts.monthlyPersonal ?? []
+    const monthly: any[] = data.charts?.monthlyPersonal ?? []
     if (revMonth === "all") {
-      setRevData(monthly)
+      setRevData(monthly.filter((d: any) => String(d.year) === revYear))
     } else {
       const filtered = monthly.filter((d: any) =>
         String(d.year) === revYear &&
@@ -189,13 +188,22 @@ const fetchData = useCallback(async () => {
 
   const role = session?.user?.role
 
+  // ── Loading state ──────────────────────────────────────────────
   if (loading) return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin .7s linear infinite" }} />
+      <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>Memuat performa...</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
-  if (!data) return null
+
+  // ── Error / no data ────────────────────────────────────────────
+  if (!data) return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh", flexDirection: "column", gap: 12 }}>
+      <div style={{ fontSize: 32 }}>⚠️</div>
+      <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>Gagal memuat data. Coba refresh halaman.</p>
+    </div>
+  )
 
   const { kpi, charts, recentWon } = data
 
@@ -203,11 +211,15 @@ const fetchData = useCallback(async () => {
   const actTypeData = Object.entries(charts.activityByType ?? {}).map(([type, count]) => ({
     name:  type.replace(/_/g, " "),
     value: count as number,
-    color: {
-      INTERNAL_NOTE: "#6366f1", EMAIL_SENT: "#3b82f6",
-      EMAIL_RECEIVED: "#0891b2", CALL: "#10b981",
-      MEETING: "#8b5cf6", TASK: "#f59e0b", NOTE: "#94a3b8",
-    }[type] ?? "#94a3b8",
+    color: ({
+      INTERNAL_NOTE:  "#6366f1",
+      EMAIL_SENT:     "#3b82f6",
+      EMAIL_RECEIVED: "#0891b2",
+      CALL:           "#10b981",
+      MEETING:        "#8b5cf6",
+      TASK:           "#f59e0b",
+      NOTE:           "#94a3b8",
+    } as Record<string, string>)[type] ?? "#94a3b8",
   }))
 
   return (
@@ -244,7 +256,6 @@ const fetchData = useCallback(async () => {
                 </p>
               </div>
             </div>
-            {/* Lead filter di hero */}
             <SectionFilter
               year={leadYear} month={leadMonth}
               onYear={setLeadYear} onMonth={setLeadMonth}
@@ -255,11 +266,11 @@ const fetchData = useCallback(async () => {
           {/* Quick KPI strip */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:10 }} className="grid-4">
             {[
-              { l:"Total Lead",  v:kpi.totalLeads,             c:"#60a5fa" },
-              { l:"Deal",        v:kpi.wonLeads,               c:"#34d399" },
-              { l:"Win Rate",    v:`${kpi.winRate}%`,          c:"#a78bfa" },
-              { l:"Revenue",     v:formatRp(kpi.totalRevenue), c:"#fbbf24" },
-              { l:"Task Selesai",v:`${kpi.taskCompletionRate}%`,c:"#fb923c" },
+              { l:"Total Lead",   v:kpi.totalLeads,              c:"#60a5fa" },
+              { l:"Deal",         v:kpi.wonLeads,                c:"#34d399" },
+              { l:"Win Rate",     v:`${kpi.winRate}%`,           c:"#a78bfa" },
+              { l:"Revenue",      v:formatRp(kpi.totalRevenue),  c:"#fbbf24" },
+              { l:"Task Selesai", v:`${kpi.taskCompletionRate}%`,c:"#fb923c" },
             ].map((s) => (
               <div key={s.l} style={{
                 background:"rgba(255,255,255,0.05)",
@@ -281,9 +292,9 @@ const fetchData = useCallback(async () => {
         border:"1px solid var(--border)",
       }}>
         {[
-          { k:"overview",  l:"Overview"     },
-          { k:"pipeline",  l:"Pipeline"     },
-          { k:"activity",  l:"Aktivitas"    },
+          { k:"overview", l:"Overview"  },
+          { k:"pipeline", l:"Pipeline"  },
+          { k:"activity", l:"Aktivitas" },
         ].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k as any)} style={{
             flex:1, padding:"9px 12px",
@@ -306,13 +317,13 @@ const fetchData = useCallback(async () => {
         <>
           {/* KPI Tiles */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:12 }} className="grid-4">
-            <MetricTile label="Total Lead"    value={kpi.totalLeads}             color="var(--primary)" sub={`${kpi.activeLeads} aktif`} />
-            <MetricTile label="Deal"          value={kpi.wonLeads}               color="var(--success)" sub={`Win rate ${kpi.winRate}%`} />
-            <MetricTile label="Total Revenue" value={formatRp(kpi.totalRevenue)} color="var(--purple)"  sub={`Avg ${formatRp(kpi.avgDealSize)}`} />
-            <MetricTile label="Pipeline"      value={formatRp(kpi.pipelineValue)}color="var(--warning)" sub={`${kpi.activeLeads} lead aktif`} />
+            <MetricTile label="Total Lead"    value={kpi.totalLeads}              color="var(--primary)" sub={`${kpi.activeLeads} aktif`} />
+            <MetricTile label="Deal"          value={kpi.wonLeads}                color="var(--success)" sub={`Win rate ${kpi.winRate}%`} />
+            <MetricTile label="Total Revenue" value={formatRp(kpi.totalRevenue)}  color="var(--purple)"  sub={`Avg ${formatRp(kpi.avgDealSize ?? 0)}`} />
+            <MetricTile label="Pipeline"      value={formatRp(kpi.pipelineValue)} color="var(--warning)" sub={`${kpi.activeLeads} lead aktif`} />
           </div>
 
-          {/* Revenue Chart — filter sendiri */}
+          {/* Revenue Chart */}
           <ChartCard
             title="Revenue & Lead Trend"
             sub="Performa lead dan revenue berdasarkan periode yang dipilih"
@@ -335,10 +346,6 @@ const fetchData = useCallback(async () => {
                     <stop offset="5%"  stopColor="#10b981" stopOpacity={0.22} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="rpR" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#7c3aed" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
-                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                 <XAxis dataKey="month" tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
@@ -350,7 +357,6 @@ const fetchData = useCallback(async () => {
               </AreaChart>
             </ResponsiveContainer>
 
-            {/* Revenue bar chart terpisah */}
             <div style={{ marginTop:16, paddingTop:16, borderTop:"1px solid var(--border-light)" }}>
               <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Revenue per Bulan</p>
               <ResponsiveContainer width="100%" height={160}>
@@ -369,7 +375,7 @@ const fetchData = useCallback(async () => {
             </div>
           </ChartCard>
 
-          {/* Donut status breakdown */}
+          {/* Donut + Recent Won */}
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }} className="grid-2">
             <ChartCard title="Komposisi Lead" sub="Distribusi semua lead berdasarkan status">
               <div style={{ display:"flex", alignItems:"center", gap:20, flexWrap:"wrap" }}>
@@ -412,12 +418,11 @@ const fetchData = useCallback(async () => {
               </div>
             </ChartCard>
 
-            {/* Recent Won */}
             <ChartCard title="Deal Terbaru" sub="Lead yang berhasil closing">
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {recentWon.length === 0 ? (
+                {(recentWon ?? []).length === 0 ? (
                   <p style={{ textAlign:"center", color:"var(--text-muted)", fontSize:13, padding:"20px 0" }}>Belum ada deal</p>
-                ) : recentWon.map((lead: any) => (
+                ) : (recentWon ?? []).map((lead: any) => (
                   <div key={lead.id} style={{ display:"flex", alignItems:"center", gap:10 }}>
                     <div style={{ width:8, height:8, borderRadius:"50%", background:"var(--success)", flexShrink:0 }} />
                     <div style={{ flex:1, minWidth:0 }}>
@@ -442,17 +447,15 @@ const fetchData = useCallback(async () => {
       {/* ──────────────────────────────────────────────────── */}
       {tab === "pipeline" && (
         <>
-          {/* KPI row */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:12 }} className="grid-3">
-            <MetricTile label="Deal (Berhasil)" value={kpi.wonLeads}                color="var(--success)" sub={`Win rate ${kpi.winRate}%`} />
-            <MetricTile label="Recycle (Gagal)" value={kpi.lostLeads}              color="var(--danger)"  sub="Bisa di-approach ulang" />
-            <MetricTile label="Pipeline Value"  value={formatRp(kpi.pipelineValue)}color="var(--warning)" sub={`${kpi.activeLeads} lead aktif`} />
+            <MetricTile label="Deal (Berhasil)" value={kpi.wonLeads}                 color="var(--success)" sub={`Win rate ${kpi.winRate}%`} />
+            <MetricTile label="Recycle (Gagal)" value={kpi.lostLeads ?? kpi.recycleLeads ?? 0} color="var(--danger)"  sub="Bisa di-approach ulang" />
+            <MetricTile label="Pipeline Value"  value={formatRp(kpi.pipelineValue)}  color="var(--warning)" sub={`${kpi.activeLeads} lead aktif`} />
           </div>
 
-          {/* Pipeline per stage — SEMUA status termasuk history */}
           <ChartCard
-            title="Pipeline per Stage — Semua History"
-            sub="Distribusi nilai dan jumlah lead di setiap tahap (termasuk Deal dan Recycle)"
+            title="Pipeline per Stage"
+            sub="Distribusi nilai dan jumlah lead di setiap tahap"
             action={
               <SectionFilter
                 year={leadYear} month={leadMonth}
@@ -461,7 +464,6 @@ const fetchData = useCallback(async () => {
               />
             }
           >
-            {/* Bar chart */}
             <ResponsiveContainer width="100%" height={200}>
               <BarChart
                 data={(charts.pipelineByStatus ?? []).map((s: any) => ({
@@ -484,7 +486,6 @@ const fetchData = useCallback(async () => {
               </BarChart>
             </ResponsiveContainer>
 
-            {/* Detail rows */}
             <div style={{ marginTop:16, display:"flex", flexDirection:"column", gap:10 }}>
               {(charts.pipelineByStatus ?? []).map((stage: any) => {
                 const c      = STATUS_COLOR[stage.status as keyof typeof STATUS_COLOR] ?? "#94a3b8"
@@ -498,23 +499,14 @@ const fetchData = useCallback(async () => {
                       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                         <div style={{ width:8, height:8, borderRadius:2, background:c }} />
                         <span style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)" }}>{label}</span>
-                        <span style={{
-                          fontSize:10, padding:"1px 7px", borderRadius:999,
-                          background:c+"18", color:c,
-                        }}>
+                        <span style={{ fontSize:10, padding:"1px 7px", borderRadius:999, background:c+"18", color:c }}>
                           {stage.count} lead
                         </span>
                       </div>
-                      <span style={{ fontSize:12, fontWeight:700, color:c }}>
-                        {formatRp(stage.value)}
-                      </span>
+                      <span style={{ fontSize:12, fontWeight:700, color:c }}>{formatRp(stage.value)}</span>
                     </div>
                     <div style={{ height:7, background:"var(--bg-card2)", borderRadius:999, overflow:"hidden" }}>
-                      <div style={{
-                        height:"100%", borderRadius:999,
-                        width:`${pct}%`, background:c,
-                        transition:"width .8s ease",
-                      }} />
+                      <div style={{ height:"100%", borderRadius:999, width:`${pct}%`, background:c, transition:"width .8s ease" }} />
                     </div>
                   </div>
                 )
@@ -529,15 +521,13 @@ const fetchData = useCallback(async () => {
       {/* ──────────────────────────────────────────────────── */}
       {tab === "activity" && (
         <>
-          {/* Task KPI */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:12 }} className="grid-4">
-            <MetricTile label="Total Aktivitas"  value={kpi.totalActivities}           color="var(--primary)" />
-            <MetricTile label="Total Tugas"      value={kpi.totalTasks}                color="var(--warning)" />
-            <MetricTile label="Tugas Selesai"    value={kpi.completedTasks}            color="var(--success)" />
-            <MetricTile label="Completion Rate"  value={`${kpi.taskCompletionRate}%`}  color="var(--purple)"  />
+            <MetricTile label="Total Aktivitas" value={kpi.totalActivities}           color="var(--primary)" />
+            <MetricTile label="Total Tugas"     value={kpi.totalTasks}                color="var(--warning)" />
+            <MetricTile label="Tugas Selesai"   value={kpi.completedTasks}            color="var(--success)" />
+            <MetricTile label="Completion Rate" value={`${kpi.taskCompletionRate}%`}  color="var(--purple)"  />
           </div>
 
-          {/* Activity per Type — filter sendiri */}
           <ChartCard
             title="Aktivitas per Tipe"
             sub="Distribusi jenis aktivitas yang telah dilakukan"
@@ -550,7 +540,6 @@ const fetchData = useCallback(async () => {
             }
           >
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
-              {/* Bar chart */}
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={actTypeData} margin={{ top:4, right:4, left:-10, bottom:0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
@@ -563,7 +552,6 @@ const fetchData = useCallback(async () => {
                 </BarChart>
               </ResponsiveContainer>
 
-              {/* Legend detail */}
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                 {actTypeData.map((d) => {
                   const total = actTypeData.reduce((s, x) => s + x.value, 0)
@@ -590,11 +578,7 @@ const fetchData = useCallback(async () => {
             </div>
           </ChartCard>
 
-          {/* Activity Monthly Trend */}
-          <ChartCard
-            title="Tren Aktivitas Bulanan"
-            sub="Jumlah aktivitas yang dilakukan per bulan"
-          >
+          <ChartCard title="Tren Aktivitas Bulanan" sub="Jumlah aktivitas yang dilakukan per bulan">
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={charts.activityMonthly ?? []} margin={{ top:4, right:4, left:0, bottom:0 }}>
                 <defs>

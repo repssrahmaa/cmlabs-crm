@@ -173,10 +173,12 @@ color: "var(--input-text)",
             <button
               onClick={handleAddClick}
               style={{
-                padding: "9px 18px", background: "#2563eb",
-                color: "#fff", border: "none", borderRadius: 8,
-                fontSize: 14, fontWeight: 500, cursor: "pointer",
-              }}
+              padding:"9px 18px",
+              background:"linear-gradient(135deg, var(--primary), var(--primary-dark))",
+              color:"#fff", border:"none", borderRadius:9,
+              fontSize:12, fontWeight:600, cursor:"pointer",
+              boxShadow:"var(--shadow-primary)",
+            }}
             >
               + Tambah Lead
             </button>
