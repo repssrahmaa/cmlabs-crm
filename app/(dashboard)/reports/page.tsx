@@ -90,6 +90,160 @@ function CTooltip({ active, payload, label, fmt }: any) {
   )
 }
 
+function SalesDetailModal({ sales, onClose }: { sales: any; onClose: () => void }) {
+  const [tab, setTab] = useState<"deal"|"recycle"|"all">("all")
+
+  const leads = sales.leads ?? []
+  const filtered = tab === "all"    ? leads
+    : tab === "deal"   ? leads.filter((l: any) => l.status === "DEAL")
+    : leads.filter((l: any) => l.status === "RECYCLE")
+
+  const byStatus = leads.reduce((acc: any, l: any) => {
+    acc[l.status] = (acc[l.status] ?? 0) + 1
+    return acc
+  }, {})
+
+  const pieData = Object.entries(byStatus).map(([status, count]) => ({
+    name: STATUS_LABEL[status as keyof typeof STATUS_LABEL] ?? status,
+    value: count as number,
+    color: STATUS_COLOR[status as keyof typeof STATUS_COLOR] ?? "#94a3b8",
+  }))
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: "var(--bg-card)", borderRadius: 16,
+        width: "100%", maxWidth: 680, maxHeight: "90vh",
+        overflowY: "auto", border: "1px solid var(--border)",
+        boxShadow: "var(--shadow-xl)", animation: "scaleIn .2s ease",
+      }}>
+        {/* Header */}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+              Detail Performa — {sales.name}
+            </h3>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
+              {sales.total} total lead · Win rate {sales.winRate}%
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 20 }}>&times;</button>
+        </div>
+
+        <div style={{ padding: "20px 24px" }}>
+          {/* KPI strip */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+            {[
+              { l: "Total Lead",  v: sales.total,           c: "var(--primary)"  },
+              { l: "Deal",        v: sales.won,             c: "var(--success)"  },
+              { l: "Recycle",     v: sales.lost,            c: "var(--danger)"   },
+              { l: "Revenue",     v: formatRp(sales.revenue), c: "var(--purple)" },
+            ].map((s) => (
+              <div key={s.l} style={{ background: "var(--bg-card2)", borderRadius: 10, padding: "12px 14px", border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.l}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: s.c }}>{s.v}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Donut chart distribusi status */}
+          {pieData.length > 0 && (
+            <div style={{ background: "var(--bg-card2)", borderRadius: 12, padding: 16, marginBottom: 20, border: "1px solid var(--border)" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)" }}>Distribusi Lead per Status</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                <PieChart width={120} height={120}>
+                  <Pie data={pieData} cx={55} cy={55} innerRadius={32} outerRadius={50} dataKey="value" paddingAngle={3} strokeWidth={0}>
+                    {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                </PieChart>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                  {pieData.map((d) => (
+                    <div key={d.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.color }} />
+                        <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{d.name}</span>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: d.color }}>{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab filter */}
+          <div style={{ display: "flex", gap: 4, padding: 4, background: "var(--bg-card2)", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 14 }}>
+            {([
+              { k: "all",    l: `Semua (${leads.length})`               },
+              { k: "deal",   l: `Deal (${sales.won})`                   },
+              { k: "recycle",l: `Recycle / Gagal (${sales.lost})`       },
+            ] as const).map((t) => (
+              <button key={t.k} onClick={() => setTab(t.k)} style={{
+                flex: 1, padding: "7px 10px",
+                background: tab === t.k ? "var(--bg-card)" : "transparent",
+                border: "none", borderRadius: 7,
+                fontSize: 12, fontWeight: tab === t.k ? 700 : 500,
+                color: tab === t.k
+                  ? t.k === "deal" ? "var(--success)" : t.k === "recycle" ? "var(--danger)" : "var(--primary)"
+                  : "var(--text-muted)",
+                cursor: "pointer", transition: "all 0.15s",
+                boxShadow: tab === t.k ? "var(--shadow-xs)" : "none",
+              }}>
+                {t.l}
+              </button>
+            ))}
+          </div>
+
+          {/* Lead list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {filtered.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-muted)", fontSize: 13 }}>
+                Tidak ada data
+              </div>
+            ) : filtered.map((lead: any) => {
+              const sc    = STATUS_COLOR[lead.status as keyof typeof STATUS_COLOR] ?? "#94a3b8"
+              const isDeal    = lead.status === "DEAL"
+              const isRecycle = lead.status === "RECYCLE"
+
+              return (
+                <div key={lead.id} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "11px 14px",
+                  background: isDeal ? "rgba(16,185,129,0.05)" : isRecycle ? "rgba(248,113,113,0.05)" : "var(--bg-card2)",
+                  borderRadius: 10,
+                  border: `1px solid ${isDeal ? "rgba(16,185,129,0.2)" : isRecycle ? "rgba(248,113,113,0.2)" : "var(--border)"}`,
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: sc, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {lead.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      {lead.clientName}{lead.clientCompany ? ` — ${lead.clientCompany}` : ""}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
+                    background: sc + "18", color: sc, flexShrink: 0, whiteSpace: "nowrap",
+                  }}>
+                    {STATUS_LABEL[lead.status as keyof typeof STATUS_LABEL] ?? lead.status}
+                  </span>
+                  {lead.value ? (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: isDeal ? "var(--success)" : "var(--text-muted)", flexShrink: 0 }}>
+                      {formatRp(Number(lead.value))}
+                    </span>
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
+    </div>
+  )
+}
+
 // ── Section Filter ─────────────────────────────────────────────
 function SectionFilter({ year, month, onYear, onMonth }: {
   year: string; month: string;
