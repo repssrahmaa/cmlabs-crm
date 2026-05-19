@@ -3,6 +3,15 @@
 import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import { id as localeId } from "date-fns/locale"
+import {
+  LayoutGrid,
+  StickyNote,
+  Mail,
+  Phone,
+  Users,
+  CheckSquare,
+} from "lucide-react"
+
 
 interface EmailRecord {
   id:          string
@@ -157,14 +166,14 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
     ? timeline
     : timeline.filter((a) => a.type === activeTab)
 
-  const tabs: { key: TabType; label: string; icon: string }[] = [
-    { key: "all",           label: "Semua",   icon: "◎" },
-    { key: "INTERNAL_NOTE", label: "Catatan", icon: "📝" },
-    { key: "EMAIL_SENT",    label: "Email",   icon: "📤" },
-    { key: "CALL",          label: "Telepon", icon: "📞" },
-    { key: "MEETING",       label: "Meeting", icon: "🤝" },
-    { key: "TASK",          label: "Tugas",   icon: "✅" },
-  ]
+const tabs = [
+  { key: "all",           label: "Semua",   icon: LayoutGrid },
+  { key: "INTERNAL_NOTE", label: "Catatan", icon: StickyNote },
+  { key: "EMAIL_SENT",    label: "Email",   icon: Mail },
+  { key: "CALL",          label: "Telepon", icon: Phone },
+  { key: "MEETING",       label: "Meeting", icon: Users },
+  { key: "TASK",          label: "Tugas",   icon: CheckSquare },
+]
 
   const composeButtons: { type: ComposeType; label: string; color: string }[] = [
     { type: "INTERNAL_NOTE", label: "+ Catatan", color: "#6366f1" },
@@ -372,43 +381,55 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
         paddingBottom: 8,
         flexWrap:      "wrap",
       }}>
-        {tabs.map((tab) => {
-          const count = tab.key === "all"
-            ? timeline.length
-            : timeline.filter((a) => a.type === tab.key).length
-          const isActive = activeTab === tab.key
+{tabs.map((tab) => {
+  const count = tab.key === "all"
+    ? timeline.length
+    : timeline.filter((a) => a.type === tab.key).length
 
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              style={{
-                padding:      "4px 12px",
-                background:   isActive ? "#2563eb" : "transparent",
-                color:        isActive ? "#fff" : "var(--text-muted)",
-                border:       "none",
-                borderRadius: 999,
-                fontSize:     12,
-                fontWeight:   isActive ? 600 : 400,
-                cursor:       "pointer",
-              }}
-            >
-              {tab.icon} {tab.label}
-              {count > 0 && (
-                <span style={{
-                  marginLeft:   4,
-                  fontSize:     10,
-                  background:   isActive ? "rgba(255,255,255,0.25)" : "var(--bg-card2)",
-                  color:        isActive ? "#fff" : "var(--text-muted)",
-                  padding:      "1px 5px",
-                  borderRadius: 999,
-                }}>
-                  {count}
-                </span>
-              )}
-            </button>
-          )
-        })}
+  const isActive = activeTab === tab.key
+  const Icon = tab.icon
+
+  return (
+    <button
+      key={tab.key}
+      onClick={() => setActiveTab(tab.key as TabType)}
+      style={{
+        display:      "flex",
+        alignItems:   "center",
+        gap:          6,
+        padding:      "4px 12px",
+        background:   isActive ? "#2563eb" : "transparent",
+        color:        isActive ? "#fff" : "var(--text-muted)",
+        border:       "none",
+        borderRadius: 999,
+        fontSize:     12,
+        fontWeight:   isActive ? 600 : 400,
+        cursor:       "pointer",
+      }}
+    >
+      <Icon size={14} />
+
+      <span>{tab.label}</span>
+
+      {count > 0 && (
+        <span
+          style={{
+            marginLeft:   2,
+            fontSize:     10,
+            background:   isActive
+              ? "rgba(255,255,255,0.25)"
+              : "var(--bg-card2)",
+            color:        isActive ? "#fff" : "var(--text-muted)",
+            padding:      "1px 5px",
+            borderRadius: 999,
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </button>
+  )
+})}
       </div>
 
       {/* ── Timeline Items ────────────────────────────── */}

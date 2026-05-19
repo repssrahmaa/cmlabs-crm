@@ -669,13 +669,19 @@ const kpi = kpiData ?? {
               color: "#3b82f6",
             },
             {
-              label: "Avg per Deal",
-              value: (kpi.dealLeads ?? kpi.wonLeads ?? 0) > 0
-                ? Math.round(kpi.totalRevenue / (kpi.dealLeads ?? kpi.wonLeads ?? 1))
-                : 0,
-              total: kpi.totalRevenue || 1,
-              color: "#60a5fa",
-            },
+  label: "Avg per Deal",
+  value:
+    (kpi.dealLeads ?? kpi.wonLeads ?? 0) > 0
+      ? formatRp(
+          Math.round(
+            kpi.totalRevenue /
+            (kpi.dealLeads ?? kpi.wonLeads ?? 1)
+          )
+        )
+      : formatRp(0),
+  total: kpi.totalRevenue || 1,
+  color: "#60a5fa",
+},
           ]}
         />
 

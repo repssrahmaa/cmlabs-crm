@@ -946,7 +946,7 @@ export default function ReportsPage() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody>
+                     <tbody>
                       {salesPerf.map((s: any, i: number) => (
                         <tr key={s.name} style={{ borderTop: "1px solid var(--table-border)", background: i % 2 === 0 ? "var(--table-odd)" : "var(--table-even)", cursor: "pointer", transition: "background .1s" }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "var(--table-hover)"}
