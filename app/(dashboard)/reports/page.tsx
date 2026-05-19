@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRoleGuard }       from "@/hooks/useRoleGuard"
 import { useRealtimeDashboard }from "@/hooks/useRealtimeDashboard"
 import {
@@ -115,29 +115,83 @@ function SectionFilter({ year, month, onYear, onMonth }: {
 }
 
 // ── Document Detail Page ───────────────────────────────────────
-function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
-  doc:      any
-  onBack:   () => void
+function DocumentDetail({
+  doc,
+  onBack,
+  onUpdate,
+  onDelete,
+}: {
+  doc: any
+  onBack: () => void
   onUpdate: (id: string, data: any) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }) {
+
   const [updating, setUpdating] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [error,    setError]    = useState("")
+  const [error, setError] = useState("")
+
+  // ── Resolved document content ─────────────────────────────
+// ── Resolved document content ─────────────────────────────
+const [resolvedContent, setResolvedContent] = useState<any>(
+  doc.content ?? {}
+)
+
+useEffect(() => {
+  async function loadContent() {
+    if (!resolvedContent || Object.keys(resolvedContent).length === 0) {
+      const {
+        generateDocumentNumber,
+        buildDefaultContent,
+      } = await import("@/lib/services/documentGenerator")
+
+      const number = generateDocumentNumber(doc.type)
+
+      const content = buildDefaultContent(
+        doc.type,
+        doc.lead ?? {},
+        number
+      )
+
+      setResolvedContent(content)
+    } else {
+      setResolvedContent(resolvedContent)
+    }
+  }
+
+  loadContent()
+}, [doc])
 
   const STATUS_CONFIG = {
-    DRAFT:     { label: "Draft",     color: "#f59e0b", bg: "var(--warning-pale)" },
-    FINALIZED: { label: "Finalized", color: "#3b82f6", bg: "var(--primary-pale)" },
-    SENT:      { label: "Terkirim",  color: "#10b981", bg: "var(--success-pale)" },
-  } as Record<string, { label: string; color: string; bg: string }>
+    DRAFT: {
+      label: "Draft",
+      color: "#f59e0b",
+      bg: "var(--warning-pale)",
+    },
+    FINALIZED: {
+      label: "Finalized",
+      color: "#3b82f6",
+      bg: "var(--primary-pale)",
+    },
+    SENT: {
+      label: "Terkirim",
+      color: "#10b981",
+      bg: "var(--success-pale)",
+    },
+  } as Record<
+    string,
+    { label: string; color: string; bg: string }
+  >
 
   const TYPE_LABEL: Record<string, string> = {
-    INVOICE: "Invoice", SPK: "Surat Perintah Kerja",
-    MOU: "Memorandum of Understanding", OTHER: "Dokumen",
+    INVOICE: "Invoice",
+    SPK: "Surat Perintah Kerja",
+    MOU: "Memorandum of Understanding",
+    OTHER: "Dokumen",
   }
 
   const cfg = STATUS_CONFIG[doc.status] ?? STATUS_CONFIG.DRAFT
-
+  
   async function handleFinalize() {
     if (doc.status !== "DRAFT") return
     setUpdating(true); setError("")
@@ -165,8 +219,8 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
     try {
       const { generateDocxDocument, generateDocumentNumber, buildDefaultContent } =
         await import("@/lib/services/documentGenerator")
-      const number  = doc.content?.documentNumber ?? generateDocumentNumber(doc.type)
-      const content = doc.content ?? buildDefaultContent(doc.type, doc.lead ?? {}, number)
+      const number  = resolvedContent?.documentNumber ?? generateDocumentNumber(doc.type)
+      const content = resolvedContent ?? buildDefaultContent(doc.type, doc.lead ?? {}, number)
       await generateDocxDocument({
         type: doc.type, title: doc.title, number,
         date: content.date ?? new Date().toLocaleDateString("id-ID"),
@@ -219,7 +273,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
           </div>
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>
             {TYPE_LABEL[doc.type] ?? doc.type}
-            {doc.content?.documentNumber ? ` — No. ${doc.content.documentNumber}` : ""}
+            {resolvedContent?.documentNumber ? ` — No. ${resolvedContent.documentNumber}` : ""}
           </p>
         </div>
       </div>
@@ -275,7 +329,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
           </div>
 
           {/* Document Content Preview */}
-          {doc.content && (
+          {resolvedContent && (
             <div style={{
               background: "var(--bg-card)", borderRadius: 14, padding: "20px",
               border: "1px solid var(--border)", boxShadow: "var(--shadow-xs)",
@@ -285,7 +339,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
               </h3>
 
               {/* Invoice Items */}
-              {doc.type === "INVOICE" && doc.content.items && (
+              {doc.type === "INVOICE" && resolvedContent.items && (
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                     <thead>
@@ -303,7 +357,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
                       </tr>
                     </thead>
                     <tbody>
-                      {doc.content.items.map((item: any, i: number) => (
+                      {resolvedContent?.items.map((item: any, i: number) => (
                         <tr key={i} style={{ borderTop: "1px solid var(--table-border)" }}>
                           <td style={{ padding: "8px 10px", color: "var(--text-secondary)" }}>{item.no}</td>
                           <td style={{ padding: "8px 10px", color: "var(--text-primary)", fontWeight: 500 }}>{item.description}</td>
@@ -318,9 +372,9 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
                   {/* Summary */}
                   <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
                     {[
-                      { l: "Subtotal",   v: doc.content.subtotal   ?? 0, bold: false },
-                      { l: "PPN (11%)",  v: doc.content.tax        ?? 0, bold: false },
-                      { l: "Total",      v: doc.content.grandTotal ?? 0, bold: true  },
+                      { l: "Subtotal",   v: resolvedContent.subtotal   ?? 0, bold: false },
+                      { l: "PPN (11%)",  v: resolvedContent.tax        ?? 0, bold: false },
+                      { l: "Total",      v: resolvedContent.grandTotal ?? 0, bold: true  },
                     ].map((r) => (
                       <div key={r.l} style={{ display: "flex", gap: 24, fontSize: 12 }}>
                         <span style={{ color: "var(--text-muted)", width: 80, textAlign: "right" }}>{r.l}</span>
@@ -338,14 +392,14 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
               )}
 
               {/* SPK Scope */}
-              {doc.type === "SPK" && doc.content.scope && (
+              {doc.type === "SPK" && resolvedContent?.scope && (
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", marginBottom: 12 }}>
                     {[
-                      { l: "Tanggal Mulai",   v: doc.content.startDate ?? "-" },
-                      { l: "Tanggal Selesai", v: doc.content.endDate   ?? "-" },
-                      { l: "Nilai",           v: formatRp(doc.content.value ?? 0) },
-                      { l: "Pembayaran",      v: doc.content.payment   ?? "-" },
+                      { l: "Tanggal Mulai",   v: resolvedContent.startDate ?? "-" },
+                      { l: "Tanggal Selesai", v: resolvedContent.endDate   ?? "-" },
+                      { l: "Nilai",           v: formatRp(resolvedContent.value ?? 0) },
+                      { l: "Pembayaran",      v: resolvedContent.payment   ?? "-" },
                     ].map((r) => (
                       <div key={r.l}>
                         <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>{r.l}</div>
@@ -355,7 +409,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Ruang Lingkup</div>
                   <ul style={{ margin: 0, paddingLeft: 16 }}>
-                    {doc.content.scope.map((s: string, i: number) => (
+                    {resolvedContent.scope.map((s: string, i: number) => (
                       <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, lineHeight: 1.6 }}>{s}</li>
                     ))}
                   </ul>
@@ -366,7 +420,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
               {doc.type === "MOU" && (
                 <div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    {[doc.content.party1, doc.content.party2].map((party: any, i: number) => (
+                    {[resolvedContent.party1, resolvedContent.party2].map((party: any, i: number) => (
                       <div key={i} style={{
                         padding: "12px 14px", borderRadius: 10,
                         background: "var(--bg-card2)", border: "1px solid var(--border)",
@@ -380,7 +434,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
                     ))}
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Berlaku Hingga</div>
-                  <div style={{ fontSize: 13, color: "var(--text-primary)" }}>{doc.content.validUntil ?? "-"}</div>
+                  <div style={{ fontSize: 13, color: "var(--text-primary)" }}>{resolvedContent.validUntil ?? "-"}</div>
                 </div>
               )}
             </div>
@@ -596,7 +650,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                { l: "No. Dokumen", v: doc.content?.documentNumber ?? "-" },
+                { l: "No. Dokumen", v: resolvedContent?.documentNumber ?? "-" },
                 { l: "Tipe",        v: doc.type },
                 { l: "Lead",        v: doc.lead?.title ?? "-" },
                 { l: "Dibuat",      v: new Date(doc.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) },
@@ -620,6 +674,7 @@ function DocumentDetail({ doc, onBack, onUpdate, onDelete }: {
     </div>
   )
 }
+
 
 // ── Document List Item ─────────────────────────────────────────
 function DocListItem({ doc, onClick }: { doc: any; onClick: () => void }) {
@@ -1111,3 +1166,4 @@ export default function ReportsPage() {
     </div>
   )
 }
+

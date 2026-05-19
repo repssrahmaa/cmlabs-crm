@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { useRoleGuard }                     from "@/hooks/useRoleGuard"
 import { useAccessNotice, AccessToast, AccessBanner } from "@/components/ui/AccessNotice"
 import {
-  BarChart, Bar, PieChart, Pie, Cell, RadarChart, Radar,
-  PolarGrid, PolarAngleAxis, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
 import { STATUS_LABEL, STATUS_COLOR }       from "@/types/lead"
@@ -19,12 +19,6 @@ function formatRp(v: number) {
 }
 
 // ── SVG Icons ──────────────────────────────────────────────────
-const IconUser = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
-  </svg>
-)
 const IconChevronRight = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6"/>
@@ -256,7 +250,6 @@ export default function TeamPage() {
   useEffect(() => { fetchUsers() }, [])
 
   // Build chart data
-  const salesUsers = users.filter((u) => ["SALES_MANAGER","ACCOUNT_EXECUTIVE"].includes(u.role))
   const roleDistrib = Object.entries(
     users.reduce((acc: any, u) => { acc[u.role]=(acc[u.role]??0)+1; return acc }, {})
   ).map(([role, count]) => ({
@@ -265,11 +258,33 @@ export default function TeamPage() {
     color: { SUPER_ADMIN:"#dc2626", EXECUTIVE:"#7c3aed", SALES_MANAGER:"#3b82f6", ACCOUNT_EXECUTIVE:"#10b981", VIEWER:"#94a3b8" }[role] ?? "#94a3b8",
   }))
 
-  const salesChartData = salesUsers.map((u) => ({
+  const [salesChartData, setSalesChartData] = useState<any[]>([])
+  const [chartLoading,   setChartLoading]   = useState(false)
+
+  const salesBarData = salesChartData.map((u: any) => ({
     name:    u.name.split(" ")[0],
-    total:   u._count?.assignedLeads ?? 0,
-    revenue: 0,   // diisi dari summary nanti
+    leads:   u.total,
+    deal:    u.won,
+    recycle: u.lost,
   }))
+
+  const fetchSalesChart = useCallback(async () => {
+    setChartLoading(true)
+    try {
+      const res = await fetch(
+        `/api/dashboard/stats?year=${year}&month=${month}&section=sales`,
+        { cache: "no-store" }
+      )
+      const d = await res.json()
+      setSalesChartData(d.charts?.salesPerformance ?? [])
+    } catch {}
+    finally { setChartLoading(false) }
+  }, [year, month])
+
+  // Fetch saat filter berubah
+  useEffect(() => {
+    fetchSalesChart()
+  }, [year, month, fetchSalesChart])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -375,18 +390,20 @@ export default function TeamPage() {
               </select>
             </div>
           </div>
+
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={salesUsers.map((u) => ({
-              name:  u.name.split(" ")[0],
-              leads: u._count?.assignedLeads ?? 0,
-            }))} margin={{ top:2, right:4, left:-10, bottom:0 }}>
+            <BarChart
+              data={chartLoading ? [] : salesBarData}
+              margin={{ top:2, right:4, left:-10, bottom:0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
               <XAxis dataKey="name" tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip content={<CTooltip />} />
-              <Bar dataKey="leads" name="Total Lead" radius={[5,5,0,0]} maxBarSize={36}>
-                {salesUsers.map((_,i) => <Cell key={i} fill={["#3b82f6","#10b981","#8b5cf6","#f59e0b","#ef4444"][i%5]} />)}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize:11, color:"var(--text-secondary)" }} />
+              <Bar dataKey="leads"   name="Total Lead" fill="#3b82f6" radius={[4,4,0,0]} maxBarSize={26} />
+              <Bar dataKey="deal"    name="Deal"       fill="#10b981" radius={[4,4,0,0]} maxBarSize={26} />
+              <Bar dataKey="recycle" name="Recycle"    fill="#ef4444" radius={[4,4,0,0]} maxBarSize={26} />
             </BarChart>
           </ResponsiveContainer>
         </div>

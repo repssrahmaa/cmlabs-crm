@@ -41,13 +41,13 @@ const TYPE_CONFIG: Record<string, {
   color:  string
   bg:     string
 }> = {
-  INTERNAL_NOTE:  { label: "Catatan Internal", icon: "📝", color: "#6366f1", bg: "#eef2ff" },
-  EMAIL_SENT:     { label: "Email Terkirim",   icon: "📤", color: "#2563eb", bg: "#eff6ff" },
-  EMAIL_RECEIVED: { label: "Email Diterima",   icon: "📥", color: "#0891b2", bg: "#ecfeff" },
-  CALL:           { label: "Telepon",          icon: "📞", color: "#7c3aed", bg: "#f5f3ff" },
-  MEETING:        { label: "Meeting",          icon: "🤝", color: "#059669", bg: "#ecfdf5" },
-  TASK:           { label: "Tugas",            icon: "✅", color: "#f59e0b", bg: "#fffbeb" },
-  NOTE:           { label: "Catatan",          icon: "📋", color: "#64748b", bg: "#f8fafc" },
+  INTERNAL_NOTE:  { label: "Catatan Internal", icon: "📝", color: "#6366f1", bg:"var(--bg-primary)" },
+  EMAIL_SENT:     { label: "Email Terkirim",   icon: "📤", color: "#2563eb", bg: "var(--bg-primary)" },
+  EMAIL_RECEIVED: { label: "Email Diterima",   icon: "📥", color: "#0891b2", bg: "var(--bg-primary)" },
+  CALL:           { label: "Telepon",          icon: "📞", color: "#7c3aed", bg: "var(--bg-primary)" },
+  MEETING:        { label: "Meeting",          icon: "🤝", color: "#059669", bg: "var(--bg-primary)" },
+  TASK:           { label: "Tugas",            icon: "✅", color: "#f59e0b", bg: "var(--bg-primary)" },
+  NOTE:           { label: "Catatan",          icon: "📋", color: "#64748b", bg: "var(--bg-primary)" },
 }
 
 const EMAIL_STATUS_CONFIG = {

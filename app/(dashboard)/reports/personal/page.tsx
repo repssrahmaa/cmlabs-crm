@@ -141,31 +141,32 @@ export default function PersonalPerformancePage() {
   const { data: session }     = useSession()
 
   // Tiap section punya filter sendiri
-  const [leadYear,  setLeadYear]  = useState(String(CUR_YEAR))
-  const [leadMonth, setLeadMonth] = useState("all")
-  const [revYear,   setRevYear]   = useState(String(CUR_YEAR))
-  const [revMonth,  setRevMonth]  = useState("all")
-  const [actYear,   setActYear]   = useState(String(CUR_YEAR))
-  const [actMonth,  setActMonth]  = useState("all")
+// Verifikasi semua state filter sudah independen:
+const [leadYear,  setLeadYear]  = useState(String(CUR_YEAR))  // untuk KPI dan pipeline
+const [leadMonth, setLeadMonth] = useState("all")
+const [revYear,   setRevYear]   = useState(String(CUR_YEAR))  // untuk grafik revenue
+const [revMonth,  setRevMonth]  = useState("all")
+const [actYear,   setActYear]   = useState(String(CUR_YEAR))  // untuk grafik aktivitas
+const [actMonth,  setActMonth]  = useState("all")
 
+// API dipanggil dengan parameter masing-masing:
+const fetchData = useCallback(async () => {
+  const p = new URLSearchParams({
+    year:     leadYear,   // lead filter
+    month:    leadMonth,
+    actYear,              // activity filter sendiri
+    actMonth,
+  })
+  const res = await fetch(`/api/reports/personal?${p}`)
+  setData(await res.json())
+}, [leadYear, leadMonth, actYear, actMonth])
+
+// PENTING: revData di-filter client-side berdasarkan revYear/revMonth
+// dari monthlyPersonal yang sudah di-fetch
   const [data,    setData]    = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [tab,     setTab]     = useState<"overview"|"pipeline"|"activity">("overview")
 
-  const fetchData = useCallback(async () => {
-    try {
-      const p = new URLSearchParams({
-        year:     leadYear,
-        month:    leadMonth,
-        actYear,
-        actMonth,
-      })
-      const res = await fetch(`/api/reports/personal?${p}`, { cache: "no-store" })
-      if (!res.ok) throw new Error("Gagal memuat data")
-      setData(await res.json())
-    } catch {}
-    finally { setLoading(false) }
-  }, [leadYear, leadMonth, actYear, actMonth])
 
   useEffect(() => { fetchData() }, [fetchData])
   useRealtimeDashboard({ onDashboardRefresh: fetchData, onLeadChange: fetchData })

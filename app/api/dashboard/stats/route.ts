@@ -133,3 +133,5 @@ export async function GET(req: Request) {
     charts: { leadsByStatus, monthlyData, monthlyRevenue, salesPerformance },
   })
 }
+
+
