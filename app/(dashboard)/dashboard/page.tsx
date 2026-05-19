@@ -499,12 +499,20 @@ export default function DashboardPage() {
       status: d.status,
     }))
 
-  const kpi = kpiData ?? {
-    totalLeads: 0, dealLeads: 0, recycleLeads: 0, activeLeads: 0,
-    totalRevenue: 0, pipelineValue: 0, winRate: 0,
-    approachCount: 0, coldLeadCount: 0, deckCount: 0, meetingCount: 0,
+const kpi = kpiData ?? {
+    totalLeads:    0,
+    dealLeads:     0,
+    recycleLeads:  0,
+    activeLeads:   0,
+    totalRevenue:  0,
+    pipelineValue: 0,
+    winRate:       0,
+    approachCount: 0,
+    coldLeadCount: 0,
+    deckCount:     0,
+    meetingCount:  0,
   }
-
+ 
   if (loading && !kpiData) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "70vh", flexDirection: "column", gap: 14 }}>
       <div style={{ width: 44, height: 44, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin .7s linear infinite" }} />
@@ -630,10 +638,10 @@ export default function DashboardPage() {
           color="#7c3aed"
           icon={<IconPipeline />}
           breakdown={[
-            { label: "Approach",     value: kpi.approachCount  ?? 0, total: kpi.activeLeads, color: "#6366f1" },
-            { label: "Cold Lead",    value: kpi.coldLeadCount  ?? 0, total: kpi.activeLeads, color: "#3b82f6" },
-            { label: "Deck Request", value: kpi.deckCount      ?? 0, total: kpi.activeLeads, color: "#f59e0b" },
-            { label: "Meeting",      value: kpi.meetingCount   ?? 0, total: kpi.activeLeads, color: "#8b5cf6" },
+            { label: "Approach",      value: kpi.approachCount  ?? 0, total: kpi.activeLeads, color: "#6366f1" },
+            { label: "Cold Lead",     value: kpi.coldLeadCount  ?? 0, total: kpi.activeLeads, color: "#3b82f6" },
+            { label: "Deck Request",  value: kpi.deckCount      ?? 0, total: kpi.activeLeads, color: "#f59e0b" },
+            { label: "Meeting",       value: kpi.meetingCount   ?? 0, total: kpi.activeLeads, color: "#8b5cf6" },
           ]}
         />
 

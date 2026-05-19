@@ -39,24 +39,23 @@ const TYPE_CONFIG: Record<string, {
   label:  string
   icon:   string
   color:  string
-  bg:     string
 }> = {
-  INTERNAL_NOTE:  { label: "Catatan Internal", icon: "📝", color: "#6366f1", bg:"var(--bg-primary)" },
-  EMAIL_SENT:     { label: "Email Terkirim",   icon: "📤", color: "#2563eb", bg: "var(--bg-primary)" },
-  EMAIL_RECEIVED: { label: "Email Diterima",   icon: "📥", color: "#0891b2", bg: "var(--bg-primary)" },
-  CALL:           { label: "Telepon",          icon: "📞", color: "#7c3aed", bg: "var(--bg-primary)" },
-  MEETING:        { label: "Meeting",          icon: "🤝", color: "#059669", bg: "var(--bg-primary)" },
-  TASK:           { label: "Tugas",            icon: "✅", color: "#f59e0b", bg: "var(--bg-primary)" },
-  NOTE:           { label: "Catatan",          icon: "📋", color: "#64748b", bg: "var(--bg-primary)" },
+  INTERNAL_NOTE:  { label: "Catatan Internal", icon: "📝", color: "#6366f1" },
+  EMAIL_SENT:     { label: "Email Terkirim",   icon: "📤", color: "#2563eb" },
+  EMAIL_RECEIVED: { label: "Email Diterima",   icon: "📥", color: "#0891b2" },
+  CALL:           { label: "Telepon",          icon: "📞", color: "#7c3aed" },
+  MEETING:        { label: "Meeting",          icon: "🤝", color: "#059669" },
+  TASK:           { label: "Tugas",            icon: "✅", color: "#f59e0b" },
+  NOTE:           { label: "Catatan",          icon: "📋", color: "#64748b" },
 }
 
 const EMAIL_STATUS_CONFIG = {
-  PENDING: { label: "Mengirim...", color: "#f59e0b", bg: "#fffbeb" },
-  SENT:    { label: "Terkirim",   color: "#059669", bg: "#ecfdf5" },
-  FAILED:  { label: "Gagal",      color: "#ef4444", bg: "#fef2f2" },
+  PENDING: { label: "Mengirim...", color: "#f59e0b", varBg: "rgba(245,158,11,0.12)" },
+  SENT:    { label: "Terkirim",   color: "#059669", varBg: "rgba(5,150,105,0.12)"  },
+  FAILED:  { label: "Gagal",      color: "#ef4444", varBg: "rgba(239,68,68,0.12)"  },
 }
 
-type TabType = "all" | "INTERNAL_NOTE" | "EMAIL_SENT" | "CALL" | "MEETING" | "TASK"
+type TabType     = "all" | "INTERNAL_NOTE" | "EMAIL_SENT" | "CALL" | "MEETING" | "TASK"
 type ComposeType = "INTERNAL_NOTE" | "EMAIL_SENT" | "CALL" | "MEETING" | "TASK" | null
 
 export default function LeadTimeline({ leadId, clientEmail }: Props) {
@@ -124,7 +123,6 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
         throw new Error(err.error ?? "Gagal menyimpan")
       }
 
-      // Reset form
       setNoteForm({ title: "", content: "" })
       setEmailForm({ toAddress: clientEmail ?? "", subject: "", body: "" })
       setActivityForm({ title: "", description: "", dueDate: "" })
@@ -160,35 +158,34 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
     : timeline.filter((a) => a.type === activeTab)
 
   const tabs: { key: TabType; label: string; icon: string }[] = [
-    { key: "all",           label: "Semua",    icon: "◎" },
-    { key: "INTERNAL_NOTE", label: "Catatan",  icon: "📝" },
-    { key: "EMAIL_SENT",    label: "Email",    icon: "📤" },
-    { key: "CALL",          label: "Telepon",  icon: "📞" },
-    { key: "MEETING",       label: "Meeting",  icon: "🤝" },
-    { key: "TASK",          label: "Tugas",    icon: "✅" },
+    { key: "all",           label: "Semua",   icon: "◎" },
+    { key: "INTERNAL_NOTE", label: "Catatan", icon: "📝" },
+    { key: "EMAIL_SENT",    label: "Email",   icon: "📤" },
+    { key: "CALL",          label: "Telepon", icon: "📞" },
+    { key: "MEETING",       label: "Meeting", icon: "🤝" },
+    { key: "TASK",          label: "Tugas",   icon: "✅" },
   ]
 
   const composeButtons: { type: ComposeType; label: string; color: string }[] = [
-    { type: "INTERNAL_NOTE", label: "+ Catatan",  color: "#6366f1" },
-    { type: "EMAIL_SENT",    label: "+ Email",    color: "#2563eb" },
-    { type: "CALL",          label: "+ Telepon",  color: "#7c3aed" },
-    { type: "MEETING",       label: "+ Meeting",  color: "#059669" },
-    { type: "TASK",          label: "+ Tugas",    color: "#f59e0b" },
+    { type: "INTERNAL_NOTE", label: "+ Catatan", color: "#6366f1" },
+    { type: "EMAIL_SENT",    label: "+ Email",   color: "#2563eb" },
+    { type: "CALL",          label: "+ Telepon", color: "#7c3aed" },
+    { type: "MEETING",       label: "+ Meeting", color: "#059669" },
+    { type: "TASK",          label: "+ Tugas",   color: "#f59e0b" },
   ]
 
   return (
     <div style={{ marginTop: 0 }}>
+
       {/* ── Compose Buttons ──────────────────────────── */}
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {composeButtons.map((btn) => (
           <button
             key={btn.type}
-            onClick={() => setComposeType(
-              composeType === btn.type ? null : btn.type
-            )}
+            onClick={() => setComposeType(composeType === btn.type ? null : btn.type)}
             style={{
               padding:      "6px 12px",
-              background:   composeType === btn.type ? btn.color : "#f8fafc",
+              background:   composeType === btn.type ? btn.color : "var(--bg-card2)",
               color:        composeType === btn.type ? "#fff" : btn.color,
               border:       `1px solid ${btn.color}40`,
               borderRadius: 6,
@@ -208,27 +205,24 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
         <form
           onSubmit={handleSubmit}
           style={{
-            background:   "#f8fafc",
+            background:   "var(--bg-card2)",
             border:       `1px solid ${TYPE_CONFIG[composeType]?.color}30`,
-            borderRadius: 8,
+            borderRadius: 10,
             padding:      16,
             marginBottom: 16,
           }}
         >
+          {/* Form header */}
           <div style={{
-            display:      "flex",
-            alignItems:   "center",
-            gap:          8,
-            marginBottom: 12,
+            display:       "flex",
+            alignItems:    "center",
+            gap:           8,
+            marginBottom:  12,
             paddingBottom: 10,
-            borderBottom: "1px solid #e2e8f0",
+            borderBottom:  "1px solid var(--border)",
           }}>
             <span style={{ fontSize: 16 }}>{TYPE_CONFIG[composeType]?.icon}</span>
-            <span style={{
-              fontSize:   13,
-              fontWeight: 600,
-              color:      TYPE_CONFIG[composeType]?.color,
-            }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TYPE_CONFIG[composeType]?.color }}>
               {TYPE_CONFIG[composeType]?.label}
             </span>
           </div>
@@ -286,7 +280,8 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                 />
                 <div style={{
                   padding:      "8px 12px",
-                  background:   "#eff6ff",
+                  background:   "rgba(37,99,235,0.08)",
+                  border:       "1px solid rgba(37,99,235,0.2)",
                   borderRadius: 6,
                   fontSize:     12,
                   color:        "#2563eb",
@@ -317,7 +312,7 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                   style={{ ...inputStyle, resize: "vertical" }}
                 />
                 <div>
-                  <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>
                     Due Date (opsional)
                   </label>
                   <input
@@ -330,16 +325,16 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
               </>
             )}
 
-            {/* Submit */}
+            {/* Submit row */}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => setComposeType(null)}
                 style={{
                   padding:      "8px 16px",
-                  background:   "#f1f5f9",
-                  color:        "#475569",
-                  border:       "none",
+                  background:   "var(--bg-card)",
+                  color:        "var(--text-secondary)",
+                  border:       "1px solid var(--border)",
                   borderRadius: 6,
                   fontSize:     13,
                   cursor:       "pointer",
@@ -351,11 +346,9 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                 type="submit"
                 disabled={submitting}
                 style={{
-                  padding:    "8px 20px",
-                  background: submitting
-                    ? "#93c5fd"
-                    : (TYPE_CONFIG[composeType]?.color ?? "#2563eb"),
-                  color:        "#fff",
+                  padding:      "8px 20px",
+                  background:   submitting ? "var(--border)" : (TYPE_CONFIG[composeType]?.color ?? "#2563eb"),
+                  color:        submitting ? "var(--text-muted)" : "#fff",
                   border:       "none",
                   borderRadius: 6,
                   fontSize:     13,
@@ -372,17 +365,18 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
 
       {/* ── Filter Tabs ───────────────────────────────── */}
       <div style={{
-        display:      "flex",
-        gap:          4,
-        marginBottom: 12,
-        borderBottom: "1px solid #e2e8f0",
+        display:       "flex",
+        gap:           4,
+        marginBottom:  12,
+        borderBottom:  "1px solid var(--border)",
         paddingBottom: 8,
-        flexWrap:     "wrap",
+        flexWrap:      "wrap",
       }}>
         {tabs.map((tab) => {
           const count = tab.key === "all"
             ? timeline.length
             : timeline.filter((a) => a.type === tab.key).length
+          const isActive = activeTab === tab.key
 
           return (
             <button
@@ -390,12 +384,12 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
               onClick={() => setActiveTab(tab.key)}
               style={{
                 padding:      "4px 12px",
-                background:   activeTab === tab.key ? "#2563eb" : "transparent",
-                color:        activeTab === tab.key ? "#fff" : "#64748b",
+                background:   isActive ? "#2563eb" : "transparent",
+                color:        isActive ? "#fff" : "var(--text-muted)",
                 border:       "none",
                 borderRadius: 999,
                 fontSize:     12,
-                fontWeight:   activeTab === tab.key ? 600 : 400,
+                fontWeight:   isActive ? 600 : 400,
                 cursor:       "pointer",
               }}
             >
@@ -404,7 +398,8 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                 <span style={{
                   marginLeft:   4,
                   fontSize:     10,
-                  background:   activeTab === tab.key ? "rgba(255,255,255,0.3)" : "#e2e8f0",
+                  background:   isActive ? "rgba(255,255,255,0.25)" : "var(--bg-card2)",
+                  color:        isActive ? "#fff" : "var(--text-muted)",
                   padding:      "1px 5px",
                   borderRadius: 999,
                 }}>
@@ -418,18 +413,18 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
 
       {/* ── Timeline Items ────────────────────────────── */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 32, color: "#94a3b8", fontSize: 13 }}>
+        <div style={{ textAlign: "center", padding: 32, color: "var(--text-muted)", fontSize: 13 }}>
           Memuat timeline...
         </div>
       ) : filtered.length === 0 ? (
         <div style={{
           textAlign:    "center",
           padding:      32,
-          color:        "#94a3b8",
+          color:        "var(--text-muted)",
           fontSize:     13,
-          background:   "#f8fafc",
+          background:   "var(--bg-card2)",
           borderRadius: 8,
-          border:       "1px dashed #e2e8f0",
+          border:       "1px dashed var(--border)",
         }}>
           <div style={{ fontSize: 24, marginBottom: 8 }}>📋</div>
           Belum ada aktivitas. Mulai dengan menambahkan catatan atau mengirim email.
@@ -437,19 +432,20 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {filtered.map((activity, index) => {
-            const cfg       = TYPE_CONFIG[activity.type] ?? TYPE_CONFIG.NOTE
+            const cfg        = TYPE_CONFIG[activity.type] ?? TYPE_CONFIG.NOTE
             const isExpanded = expandedId === activity.id
-            const isLast    = index === filtered.length - 1
+            const isLast     = index === filtered.length - 1
 
             return (
               <div key={activity.id} style={{ display: "flex", gap: 12 }}>
-                {/* Timeline line */}
+
+                {/* ── Timeline spine ── */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
                   <div style={{
                     width:          32,
                     height:         32,
                     borderRadius:   "50%",
-                    background:     cfg.bg,
+                    background:     `${cfg.color}18`,
                     border:         `2px solid ${cfg.color}40`,
                     display:        "flex",
                     alignItems:     "center",
@@ -460,32 +456,40 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                     {cfg.icon}
                   </div>
                   {!isLast && (
-                    <div style={{ width: 2, flex: 1, background: "#e2e8f0", minHeight: 16, marginTop: 4 }} />
+                    <div style={{
+                      width:     2,
+                      flex:      1,
+                      background:"var(--border)",
+                      minHeight: 16,
+                      marginTop: 4,
+                    }} />
                   )}
                 </div>
 
-                {/* Content */}
+                {/* ── Content card ── */}
                 <div style={{
                   flex:          1,
                   paddingBottom: isLast ? 0 : 16,
                   paddingTop:    2,
                 }}>
                   <div style={{
-                    background:   "#fff",
+                    background:   "var(--bg-card)",
                     borderRadius: 8,
-                    border:       "1px solid #e2e8f0",
+                    border:       "1px solid var(--border)",
                     overflow:     "hidden",
-                    opacity:      activity.isDone && activity.type === "TASK" ? 0.7 : 1,
+                    opacity:      activity.isDone && activity.type === "TASK" ? 0.65 : 1,
+                    transition:   "opacity 0.15s",
                   }}>
-                    {/* Activity header */}
+
+                    {/* Activity header (click to expand) */}
                     <div
                       onClick={() => setExpandedId(isExpanded ? null : activity.id)}
                       style={{
-                        padding:  "10px 14px",
-                        cursor:   "pointer",
-                        display:  "flex",
+                        padding:    "10px 14px",
+                        cursor:     "pointer",
+                        display:    "flex",
                         alignItems: "center",
-                        gap:      8,
+                        gap:        8,
                       }}
                     >
                       {/* Type badge */}
@@ -494,7 +498,7 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                         fontWeight:   600,
                         padding:      "2px 8px",
                         borderRadius: 999,
-                        background:   cfg.bg,
+                        background:   `${cfg.color}18`,
                         color:        cfg.color,
                         flexShrink:   0,
                       }}>
@@ -505,11 +509,14 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                       <span style={{
                         fontSize:       13,
                         fontWeight:     600,
-                        color:          "#0f172a",
+                        color:          "var(--text-primary)",
                         flex:           1,
                         textDecoration: activity.isDone && activity.type === "TASK"
                           ? "line-through"
                           : "none",
+                        overflow:       "hidden",
+                        textOverflow:   "ellipsis",
+                        whiteSpace:     "nowrap",
                       }}>
                         {activity.title}
                       </span>
@@ -521,7 +528,7 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                           fontWeight:   600,
                           padding:      "2px 8px",
                           borderRadius: 999,
-                          background:   EMAIL_STATUS_CONFIG[activity.email.status].bg,
+                          background:   EMAIL_STATUS_CONFIG[activity.email.status].varBg,
                           color:        EMAIL_STATUS_CONFIG[activity.email.status].color,
                           flexShrink:   0,
                         }}>
@@ -529,39 +536,36 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                         </span>
                       )}
 
-                      {/* Meta */}
-                      <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>
-                        {format(
-                          new Date(activity.createdAt),
-                          "d MMM, HH:mm",
-                          { locale: localeId }
-                        )}
+                      {/* Timestamp */}
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
+                        {format(new Date(activity.createdAt), "d MMM, HH:mm", { locale: localeId })}
                       </span>
 
                       {/* Expand indicator */}
-                      <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                      <span style={{ fontSize: 10, color: "var(--text-muted)", flexShrink: 0 }}>
                         {isExpanded ? "▲" : "▼"}
                       </span>
                     </div>
 
-                    {/* Expanded content */}
+                    {/* ── Expanded detail ── */}
                     {isExpanded && (
                       <div style={{
-                        padding:    "0 14px 14px",
-                        borderTop:  "1px solid #f1f5f9",
-                        paddingTop: 12,
+                        padding:    "12px 14px 14px",
+                        borderTop:  "1px solid var(--border)",
                       }}>
-                        {/* Content / Body */}
+
+                        {/* Content / body */}
                         {(activity.content || activity.description) && (
                           <div style={{
                             fontSize:     13,
-                            color:        "#374151",
+                            color:        "var(--text-secondary)",
                             lineHeight:   1.7,
                             whiteSpace:   "pre-wrap",
                             marginBottom: 10,
                             padding:      10,
-                            background:   "#f8fafc",
+                            background:   "var(--bg-card2)",
                             borderRadius: 6,
+                            border:       "1px solid var(--border-light)",
                           }}>
                             {activity.content ?? activity.description}
                           </div>
@@ -572,19 +576,23 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                           <div style={{
                             marginBottom: 10,
                             padding:      10,
-                            background:   "#f0f9ff",
+                            background:   "rgba(37,99,235,0.06)",
                             borderRadius: 6,
                             fontSize:     12,
-                            border:       "1px solid #bae6fd",
+                            border:       "1px solid rgba(37,99,235,0.15)",
+                            color:        "var(--text-secondary)",
                           }}>
                             <div style={{ marginBottom: 4 }}>
-                              <strong>Dari:</strong> {activity.email.fromAddress}
+                              <strong style={{ color: "var(--text-primary)" }}>Dari:</strong>{" "}
+                              {activity.email.fromAddress}
                             </div>
                             <div style={{ marginBottom: 4 }}>
-                              <strong>Kepada:</strong> {activity.email.toAddress}
+                              <strong style={{ color: "var(--text-primary)" }}>Kepada:</strong>{" "}
+                              {activity.email.toAddress}
                             </div>
                             <div style={{ marginBottom: 4 }}>
-                              <strong>Subjek:</strong> {activity.email.subject}
+                              <strong style={{ color: "var(--text-primary)" }}>Subjek:</strong>{" "}
+                              {activity.email.subject}
                             </div>
                             {activity.email.sentAt && (
                               <div style={{ color: "#059669" }}>
@@ -593,7 +601,7 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                               </div>
                             )}
                             {activity.email.status === "FAILED" && activity.email.errorLog && (
-                              <div style={{ color: "#dc2626", marginTop: 4 }}>
+                              <div style={{ color: "#ef4444", marginTop: 4 }}>
                                 <strong>Error:</strong> {activity.email.errorLog}
                               </div>
                             )}
@@ -607,28 +615,38 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                             color:        new Date(activity.dueDate) < new Date() && !activity.isDone
                               ? "#ef4444"
                               : "#f59e0b",
-                            marginBottom: 8,
+                            marginBottom: 10,
+                            display:      "flex",
+                            alignItems:   "center",
+                            gap:          4,
                           }}>
-                            ⏰ Due: {format(new Date(activity.dueDate), "d MMM yyyy, HH:mm", { locale: localeId })}
+                            ⏰ Due:{" "}
+                            {format(new Date(activity.dueDate), "d MMM yyyy, HH:mm", { locale: localeId })}
                           </div>
                         )}
 
-                        {/* Author */}
+                        {/* Author + actions */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                            oleh <strong>{activity.user.name}</strong>
+                          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                            oleh{" "}
+                            <strong style={{ color: "var(--text-secondary)" }}>
+                              {activity.user.name}
+                            </strong>
                           </span>
 
-                          {/* Actions */}
                           <div style={{ display: "flex", gap: 6 }}>
                             {activity.type === "TASK" && (
                               <button
                                 onClick={() => handleToggleDone(activity)}
                                 style={{
                                   padding:      "3px 10px",
-                                  background:   activity.isDone ? "#f1f5f9" : "#f0fdf4",
-                                  color:        activity.isDone ? "#64748b" : "#16a34a",
-                                  border:       "none",
+                                  background:   activity.isDone
+                                    ? "var(--bg-card2)"
+                                    : "rgba(22,163,74,0.1)",
+                                  color:        activity.isDone
+                                    ? "var(--text-muted)"
+                                    : "#16a34a",
+                                  border:       `1px solid ${activity.isDone ? "var(--border)" : "rgba(22,163,74,0.25)"}`,
                                   borderRadius: 6,
                                   fontSize:     11,
                                   cursor:       "pointer",
@@ -642,9 +660,9 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
                               onClick={() => handleDelete(activity.id)}
                               style={{
                                 padding:      "3px 10px",
-                                background:   "#fef2f2",
-                                color:        "#dc2626",
-                                border:       "none",
+                                background:   "rgba(239,68,68,0.08)",
+                                color:        "#ef4444",
+                                border:       "1px solid rgba(239,68,68,0.2)",
                                 borderRadius: 6,
                                 fontSize:     11,
                                 cursor:       "pointer",
@@ -667,13 +685,14 @@ export default function LeadTimeline({ leadId, clientEmail }: Props) {
   )
 }
 
-// ── Shared input style ─────────────────────────────────
+// ── Shared input style — uses CSS variables ────────────
 const inputStyle: React.CSSProperties = {
   width:        "100%",
   padding:      "8px 12px",
-  border:       "1px solid #d1d5db",
+  border:       "1px solid var(--input-border)",
   borderRadius: 6,
   fontSize:     13,
   boxSizing:    "border-box",
-  background:   "#fff",
+  background:   "var(--input-bg)",
+  color:        "var(--input-text)",
 }

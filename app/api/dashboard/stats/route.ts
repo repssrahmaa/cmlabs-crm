@@ -37,12 +37,25 @@ export async function GET(req: Request) {
     }
   }
 
-  // ── KPI ───────────────────────────────────────────────────────
-  const [totalLeads, dealLeads, recycleLeads, activeLeads] = await Promise.all([
+  // ── KPI — count semua status sekaligus ────────────────────────
+  const [
+    totalLeads,
+    dealLeads,
+    recycleLeads,
+    activeLeads,
+    approachCount,
+    coldLeadCount,
+    deckCount,
+    meetingCount,
+  ] = await Promise.all([
     prisma.lead.count({ where: dateFilter }),
     prisma.lead.count({ where: { ...dateFilter, status: DEAL_STATUS } }),
     prisma.lead.count({ where: { ...dateFilter, status: RECYCLE_STATUS } }),
     prisma.lead.count({ where: { ...dateFilter, status: { in: ACTIVE_STATUSES } } }),
+    prisma.lead.count({ where: { ...dateFilter, status: "APPROACH" } }),
+    prisma.lead.count({ where: { ...dateFilter, status: "COLD_LEAD" } }),
+    prisma.lead.count({ where: { ...dateFilter, status: "DECK_REQUEST" } }),
+    prisma.lead.count({ where: { ...dateFilter, status: "MEETING" } }),
   ])
 
   const revenueResult = await prisma.lead.aggregate({
@@ -60,7 +73,7 @@ export async function GET(req: Request) {
   const closedLeads = dealLeads + recycleLeads
   const winRate     = closedLeads > 0 ? Math.round((dealLeads / closedLeads) * 100) : 0
 
-  // ── Leads per Status — pakai enum terbaru ─────────────────────
+  // ── Leads per Status ──────────────────────────────────────────
   const leadsByStatusRaw = await prisma.lead.groupBy({
     by:     ["status"],
     where:  dateFilter,
@@ -121,17 +134,28 @@ export async function GET(req: Request) {
       name: u.name, role: u.role, total, won, lost, active,
       winRate: (won + lost) > 0 ? Math.round((won / (won + lost)) * 100) : 0,
       revenue,
-      leads: u.assignedLeads,    // ← untuk detail modal
+      leads: u.assignedLeads,
     }
   }).sort((a, b) => b.revenue - a.revenue)
 
   return NextResponse.json({
-    kpi: { totalLeads, dealLeads, recycleLeads, activeLeads, totalRevenue, pipelineValue, winRate,
+    kpi: {
+      totalLeads,
+      dealLeads,
+      recycleLeads,
+      activeLeads,
+      totalRevenue,
+      pipelineValue,
+      winRate,
+      // per-status counts untuk breakdown KPI card
+      approachCount,
+      coldLeadCount,
+      deckCount,
+      meetingCount,
       // backward compat
-      wonLeads: dealLeads, lostLeads: recycleLeads,
+      wonLeads:  dealLeads,
+      lostLeads: recycleLeads,
     },
     charts: { leadsByStatus, monthlyData, monthlyRevenue, salesPerformance },
   })
 }
-
-

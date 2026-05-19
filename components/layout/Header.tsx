@@ -20,7 +20,6 @@ const IconDot = () => (
 const PAGE_META: Record<string, { title: string; sub: string }> = {
   "/dashboard":        { title: "Dashboard",             sub: "Ringkasan performa tim" },
   "/leads":            { title: "Manajemen Leads",        sub: "Pipeline & Kanban Board" },
-  "/mails":            { title: "Komunikasi",             sub: "Pesan internal tim" },
   "/forecasting":      { title: "Forecasting",            sub: "Proyeksi revenue pipeline" },
   "/team":             { title: "Manajemen Tim",          sub: "Anggota & performa sales" },
   "/reports":          { title: "Laporan & Dokumen",      sub: "Performa & generate dokumen" },

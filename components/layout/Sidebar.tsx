@@ -151,7 +151,6 @@ export default function Sidebar() {
   const SIDEBAR_LINKS = [
     { href: "/dashboard",        label: "Dashboard",     Icon: NavIcons.Dashboard, show: true },
     { href: "/leads",            label: "Leads",         Icon: NavIcons.Leads,     show: true },
-    { href: "/mails",            label: "Komunikasi",    Icon: NavIcons.Mail,      show: is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") },
     { href: "/forecasting",      label: "Forecasting",   Icon: NavIcons.Chart,     show: canAccessForecasting },
     { href: "/reports",          label: "Laporan",       Icon: NavIcons.Report,    show: canAccessReports },
     { href: "/reports/personal", label: "Performa Saya", Icon: NavIcons.Star,      show: is("SALES_MANAGER","ACCOUNT_EXECUTIVE") && canAccessReports },
