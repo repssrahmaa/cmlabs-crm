@@ -12,6 +12,7 @@ import {
 import { STATUS_LABEL, STATUS_COLOR, KANBAN_COLUMNS } from "@/types/lead"
 import { format } from "date-fns"
 import { id as localeId } from "date-fns/locale"
+import { MetricCard } from "@/components/dashboard/MetricCards"
 
 // ── Constants ──────────────────────────────────────────────────
 const CUR_YEAR = new Date().getFullYear()
@@ -310,12 +311,84 @@ export default function DashboardPage() {
       </div>
 
       {/* ── KPI Cards ───────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }} className="grid-4">
-        <StatCard label="Pipeline Value" value={formatRp(kpi.pipelineValue)} color="#7c3aed" sub="Estimasi aktif" />
-        <StatCard label="Win Rate"       value={`${kpi.winRate}%`}           color="#059669" sub={`${kpi.dealLeads} deal / ${kpi.dealLeads + kpi.recycleLeads} closed`} />
-        <StatCard label="Total Revenue"  value={formatRp(kpi.totalRevenue)}  color="#3b82f6" sub="Dari deal confirmed" />
-        <StatCard label="Recycle"        value={kpi.recycleLeads}            color="#dc2626" sub="Lead yang gagal" />
-      </div>
+{/* KPI Cards — 4 cards interaktif */}
+<div className="grid-4 stagger-children">
+  {/* Pipeline Value */}
+  <MetricCard
+    index={0}
+    label="Pipeline Value"
+    value={formatRp(kpi.pipelineValue)}
+    rawValue={kpi.pipelineValue}
+    color="#7c3aed"
+    sub={`${kpi.activeLeads} leads aktif`}
+    sparkData={[5,8,3,9,6,11,8,12,7,14]}
+    trend="up"
+    trendValue="+12%"
+    details={[
+      { label: "Approach",     value: kpi.approachCount  ?? 0, color: "#6366f1" },
+      { label: "Cold Lead",    value: kpi.coldLeadCount  ?? 0, color: "#3b82f6" },
+      { label: "Deck Request", value: kpi.deckCount      ?? 0, color: "#f59e0b" },
+      { label: "Meeting",      value: kpi.meetingCount   ?? 0, color: "#8b5cf6" },
+    ]}
+  />
+
+  {/* Win Rate */}
+  <MetricCard
+    index={1}
+    label="Win Rate"
+    value={`${kpi.winRate}%`}
+    rawValue={kpi.winRate}
+    color="#10b981"
+    variant="winrate"
+    sub={`${kpi.dealLeads} deal`}
+    details={[
+      { label: "Deal",    value: kpi.dealLeads,    color: "#10b981" },
+      { label: "Recycle", value: kpi.recycleLeads, color: "#ef4444" },
+    ]}
+  />
+
+  {/* Total Revenue */}
+  <MetricCard
+    index={2}
+    label="Total Revenue"
+    value={formatRp(kpi.totalRevenue)}
+    rawValue={kpi.totalRevenue}
+    color="#3b82f6"
+    sub="Dari deal confirmed"
+    sparkData={[2,4,3,7,5,9,6,11,8,13]}
+    trend="up"
+    trendValue="+8%"
+    details={[
+      {
+        label: "Avg Deal",
+        value: kpi.dealLeads > 0 ? Math.round(kpi.totalRevenue / kpi.dealLeads) : 0,
+        color: "#3b82f6",
+      },
+    ]}
+  />
+
+  {/* Recycle */}
+  <MetricCard
+    index={3}
+    label="Recycle"
+    value={kpi.recycleLeads}
+    rawValue={kpi.totalLeads}
+    color="#ef4444"
+    sub="Lead yang gagal"
+    sparkData={[3,2,4,2,3,1,2,1,2,kpi.recycleLeads]}
+    trend="down"
+    trendValue="-5%"
+    details={[
+      {
+        label: "dari total",
+        value: kpi.totalLeads > 0
+          ? Math.round((kpi.recycleLeads / kpi.totalLeads) * 100)
+          : 0,
+        color: "#ef4444",
+      },
+    ]}
+  />
+</div>
 
       {/* ── Trend Chart ─────────────────────────────────── */}
       <ChartCard
