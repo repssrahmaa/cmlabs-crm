@@ -9,6 +9,12 @@ import { Lead, LeadStatus, KANBAN_COLUMNS } from "@/types/lead"
 import KanbanColumn             from "@/components/leads/KanbanColumn"
 import LeadModal                from "@/components/leads/LeadModal"
 import AddLeadModal             from "@/components/leads/AddLeadModal"
+import {
+  ClipboardList,
+  TrendingUp,
+  DollarSign,
+  Trophy,
+} from "lucide-react"
 
 export default function LeadsPage() {
   const { leads, loading, fetchLeads, updateLeadStatus, createLead, deleteLead } = useLeads()
@@ -195,38 +201,108 @@ color: "var(--input-text)",
   }}
 >
   {[
-{ label: "Total Leads", value: leads.length, suffix: "leads", color: "var(--primary)", icon: "📋" },
-{ label: "Pipeline Value", value: formatRupiah(pipelineValue), suffix: "", color: "var(--warning)", icon: "🔥" },
-{ label: "Revenue DEAL", value: formatRupiah(DEALValue), suffix: "", color: "var(--success)", icon: "💰" },
-{ label: "DEAL", value: leads.filter(l => l.status === "DEAL").length, suffix: "leads", color: "var(--purple)", icon: "🏆" },
-].map((s) => (
-<div key={s.label} style={{
-background: "var(--bg-card)", // ← BUKAN #fff
-borderRadius: 10,
-padding: "10px 14px",
-border: "1px solid var(--border)", // ← BUKAN hardcoded
-display: "flex", alignItems: "center", gap: 10,
-boxShadow: "var(--shadow-xs)",
-}}>
-<span style={{ fontSize: 18 }}>{s.icon}</span>
-<div>
-<div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>
-{s.value}
-{s.suffix && (
-<span style={{ fontSize: 11, fontWeight: 500, color: "var(--text-muted)", marginLeft: 3 }}>
-{s.suffix}
-</span>
-)}
-</div>
-<div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-{s.label}
-</div>
-</div>
-</div>
-))}
-</div>
+    {
+      label: "Total Leads",
+      value: leads.length,
+      suffix: "leads",
+      color: "var(--primary)",
+      icon: ClipboardList,
+    },
+    {
+      label: "Pipeline Value",
+      value: formatRupiah(pipelineValue),
+      suffix: "",
+      color: "var(--warning)",
+      icon: TrendingUp,
+    },
+    {
+      label: "Revenue DEAL",
+      value: formatRupiah(DEALValue),
+      suffix: "",
+      color: "var(--success)",
+      icon: DollarSign,
+    },
+    {
+      label: "DEAL",
+      value: leads.filter((l) => l.status === "DEAL").length,
+      suffix: "leads",
+      color: "var(--purple)",
+      icon: Trophy,
+    },
+  ].map((s) => {
+    const Icon = s.icon
 
+    return (
+      <div
+        key={s.label}
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: 10,
+          padding: "10px 14px",
+          border: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "var(--shadow-xs)",
+        }}
+      >
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: `${s.color}15`,
+          }}
+        >
+          <Icon
+            size={18}
+            color={s.color}
+          />
+        </div>
 
+        <div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              color: s.color,
+            }}
+          >
+            {s.value}
+
+            {s.suffix && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "var(--text-muted)",
+                  marginLeft: 3,
+                }}
+              >
+                {s.suffix}
+              </span>
+            )}
+          </div>
+
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--text-muted)",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {s.label}
+          </div>
+        </div>
+      </div>
+    )
+  })}
+</div>
 
 
       {/* ── Kanban Board ──────────────────────────────────── */}

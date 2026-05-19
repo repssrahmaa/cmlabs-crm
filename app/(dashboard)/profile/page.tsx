@@ -2,6 +2,23 @@
 
 import { useState, useEffect } from "react"
 import Button from "@/components/ui/Button"
+import {
+  Crown,
+  Briefcase,
+  BarChart3,
+  Target,
+  Eye,
+  CheckCircle2,
+  TriangleAlert,
+  Pencil,
+  User,
+  Smartphone,
+  Mail,
+  Lock,
+  EyeOff,
+  ShieldCheck,
+  Icon,
+} from "lucide-react"
 
 interface Profile {
 id: string
@@ -13,12 +30,32 @@ createdAt: string
 _count: { assignedLeads: number; activities: number }
 }
 
-const ROLE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-SUPER_ADMIN: { label: "Super Admin", color: "#ef4444", icon: "👑" },
-EXECUTIVE: { label: "Executive", color: "#8b5cf6", icon: "💼" },
-SALES_MANAGER: { label: "Sales Manager", color: "#4B9EF3", icon: "📊" },
-ACCOUNT_EXECUTIVE: { label: "Account Executive", color: "#10b981", icon: "🎯" },
-VIEWER: { label: "Viewer", color: "#64748b", icon: "👁️" },
+const ROLE_CONFIG = {
+  SUPER_ADMIN: {
+    label: "Super Admin",
+    color: "#ef4444",
+    icon: <Crown size={14} />,
+  },
+  EXECUTIVE: {
+    label: "Executive",
+    color: "#8b5cf6",
+    icon: <Briefcase size={14} />,
+  },
+  SALES_MANAGER: {
+    label: "Sales Manager",
+    color: "#4B9EF3",
+    icon: <BarChart3 size={14} />,
+  },
+  ACCOUNT_EXECUTIVE: {
+    label: "Account Executive",
+    color: "#10b981",
+    icon: <Target size={14} />,
+  },
+  VIEWER: {
+    label: "Viewer",
+    color: "#64748b",
+    icon: <Eye size={14} />,
+  },
 }
 
 export default function ProfilePage() {
@@ -74,7 +111,9 @@ if (loading) return (
 )
 
 if (!profile) return null
-const roleCfg = ROLE_CONFIG[profile.role] ?? ROLE_CONFIG.VIEWER
+const roleCfg =
+  ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG] ??
+  ROLE_CONFIG.VIEWER
 
 return (
 <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -89,7 +128,13 @@ border: `1px solid ${success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}
 color: success ? "var(--success)" : "var(--danger)",
 fontSize: 13, fontWeight: 500,
 }}>
-<span style={{ fontSize: 18 }}>{success ? "✅" : "⚠️"}</span>
+<div style={{ display: "flex", alignItems: "center" }}>
+  {success ? (
+    <CheckCircle2 size={18} />
+  ) : (
+    <TriangleAlert size={18} />
+  )}
+</div>
 <span>{success || error}</span>
 </div>
 )}
@@ -133,7 +178,26 @@ borderRadius: 999, background: roleCfg.color + "25",
 color: roleCfg.color === "#ef4444" ? "#fca5a5" : roleCfg.color,
 border: `1px solid ${roleCfg.color}30`,
 }}>
-{roleCfg.icon} {roleCfg.label}
+
+<span
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "3px 10px",
+    borderRadius: 999,
+    background: roleCfg.color + "25",
+    color: roleCfg.color === "#ef4444"
+      ? "#fca5a5"
+      : roleCfg.color,
+    border: `1px solid ${roleCfg.color}30`,
+  }}
+>
+  {roleCfg.icon}
+  {roleCfg.label}
+</span>
 </span>
 </div>
 <p style={{ margin: "0 0 12px", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
@@ -144,6 +208,7 @@ border: `1px solid ${roleCfg.color}30`,
 { v: profile._count.assignedLeads, l: "Leads", c: "#4B9EF3" },
 { v: profile._count.activities, l: "Aktivitas", c: "#10b981" },
 ].map((s) => (
+    
 <div key={s.l}>
 <div style={{ fontSize: 20, fontWeight: 800, color: s.c }}>{s.v}</div>
 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.l}</div>
@@ -158,7 +223,7 @@ border: `1px solid ${roleCfg.color}30`,
 <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: "1px solid var(--border)" }}>
 <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--primary-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-✏️
+<Pencil size={16} color="var(--primary)" />
 </div>
 <div>
 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Informasi Akun</h3>
@@ -168,15 +233,38 @@ border: `1px solid ${roleCfg.color}30`,
 
 <form onSubmit={handleUpdateInfo} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 {[
-{ label: "Nama Lengkap", key: "name", type: "text", required: true, icon: "👤" },
-{ label: "No. Telepon", key: "phone", type: "text", required: false, icon: "📱" },
+  {
+    label: "Nama Lengkap",
+    key: "name",
+    type: "text",
+    required: true,
+    icon: User,
+  },
+  {
+    label: "No. Telepon",
+    key: "phone",
+    type: "text",
+    required: false,
+    icon: Smartphone,
+  },
 ].map(({ label, key, type, required, icon }) => (
 <div key={key}>
 <label style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
 {label} {required && <span style={{ color: "var(--danger)" }}>*</span>}
 </label>
 <div style={{ position: "relative" }}>
-<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, pointerEvents: "none", opacity: 0.5 }}>{icon}</span>
+<div
+  style={{
+    position: "absolute",
+    left: 12,
+    top: "50%",
+    transform: "translateY(-50%)",
+    opacity: 0.5,
+    pointerEvents: "none",
+  }}
+>
+  {roleCfg.icon}
+</div>
 <input
 type={type}
 value={(infoForm as any)[key]}
@@ -203,7 +291,18 @@ boxSizing: "border-box",
 Email <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(tidak dapat diubah)</span>
 </label>
 <div style={{ position: "relative" }}>
-<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, opacity: 0.3, pointerEvents: "none" }}>✉️</span>
+<div
+  style={{
+    position: "absolute",
+    left: 12,
+    top: "50%",
+    transform: "translateY(-50%)",
+    opacity: 0.3,
+    pointerEvents: "none",
+  }}
+>
+  <Mail size={16} />
+</div>
 <input
 type="email"
 value={profile.email}
@@ -223,7 +322,7 @@ Simpan Perubahan
 <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: "1px solid var(--border)" }}>
 <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--warning-pale)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-🔐
+<ShieldCheck size={16} color="var(--warning)" />
 </div>
 <div>
 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Ganti Password</h3>
@@ -242,7 +341,18 @@ Simpan Perubahan
 {label} *
 </label>
 <div style={{ position: "relative" }}>
-<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 15, opacity: 0.4, pointerEvents: "none" }}>🔒</span>
+<div
+  style={{
+    position: "absolute",
+    left: 12,
+    top: "50%",
+    transform: "translateY(-50%)",
+    opacity: 0.4,
+    pointerEvents: "none",
+  }}
+>
+  <Lock size={16} />
+</div>
 <input
 type={show ? "text" : "password"}
 required
@@ -274,14 +384,17 @@ padding: "4px",
 onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
 onMouseLeave={(e) => e.currentTarget.style.opacity = "0.5"}
 >
-{show ? "🙈" : "👁️"}
+{show ? <EyeOff size={16} /> : <Eye size={16} />}
 </button>
 </div>
 </div>
 ))}
 
 <Button type="submit" variant="warning" loading={saving} fullWidth>
-🔐 Ganti Password
+<>
+  <ShieldCheck size={16} />
+  <span>Ganti Password</span>
+</>
 </Button>
 </form>
 </div>
