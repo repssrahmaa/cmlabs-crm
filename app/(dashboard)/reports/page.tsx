@@ -878,6 +878,7 @@ export default function ReportsPage() {
   const [activeTab,  setActiveTab]  = useState<"report"|"document">("report")
   const [selectedDoc,setSelectedDoc]= useState<any>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [selectedSales, setSelectedSales] = useState<any>(null)
   const [docs,       setDocs]       = useState<any[]>([])
   const [leads,      setLeads]      = useState<any[]>([])
   const [reportData, setReportData] = useState<any>(null)
@@ -1102,7 +1103,9 @@ export default function ReportsPage() {
                     </thead>
                      <tbody>
                       {salesPerf.map((s: any, i: number) => (
-                        <tr key={s.name} style={{ borderTop: "1px solid var(--table-border)", background: i % 2 === 0 ? "var(--table-odd)" : "var(--table-even)", cursor: "pointer", transition: "background .1s" }}
+                        <tr
+  key={s.name}
+  onClick={() => setSelectedSales(s)} style={{ borderTop: "1px solid var(--table-border)", background: i % 2 === 0 ? "var(--table-odd)" : "var(--table-even)", cursor: "pointer", transition: "background .1s" }}
                           onMouseEnter={(e) => e.currentTarget.style.background = "var(--table-hover)"}
                           onMouseLeave={(e) => e.currentTarget.style.background = i % 2 === 0 ? "var(--table-odd)" : "var(--table-even)"}
                         >
@@ -1197,7 +1200,12 @@ export default function ReportsPage() {
           )}
         </>
       )}
-
+{selectedSales && (
+  <SalesDetailModal
+    sales={selectedSales}
+    onClose={() => setSelectedSales(null)}
+  />
+)}
       {showCreate && (
         <CreateDocModal
           leads={leads}

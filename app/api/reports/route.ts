@@ -57,10 +57,17 @@ export async function GET(req: NextRequest) {
 
   // Leads per status
   const byStatusRaw = await prisma.lead.groupBy({
-    by: ["status"], where: dateFilter, _count: true,
-  })
-  const leadsByStatus = byStatusRaw.map((d) => ({ status: d.status, count: d._count }))
+  by: ["status"],
+  where: dateFilter,
+  _count: {
+    status: true,
+  },
+})
 
+const leadsByStatus = byStatusRaw.map((d) => ({
+  status: d.status,
+  count: d._count.status,
+}))
   // Monthly breakdown
   const monthlyBreakdown = []
   const months = month === "all" ? 12 : 1
