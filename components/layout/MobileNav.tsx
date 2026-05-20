@@ -277,49 +277,13 @@ export default function MobileNav() {
               </button>
             </div>
 
-            {/* User profile card */}
-            <div style={{
-              margin: "10px 12px 4px",
-              padding: "11px 12px",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 10, flexShrink: 0,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
-                  border: `1px solid ${userRoleColor}40`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13, fontWeight: 800, color: userRoleColor, flexShrink: 0,
-                }}>
-                  {userInitial}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#e8f0f8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {userName}
-                  </div>
-                  <div style={{
-                    display: "inline-flex", marginTop: 3,
-                    padding: "1px 6px", borderRadius: 999,
-                    background: userRoleColor + "18", border: `1px solid ${userRoleColor}30`,
-                  }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: userRoleColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                      {userRoleLabel}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Nav Links — same structure as sidebar */}
             <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
               <SectionLabel label="Menu Utama" />
               <MobileNavItem href="/dashboard"   label="Dashboard"    Icon={Icons.Dashboard}   isActive={isActive("/dashboard", true)} onClick={close} />
               <MobileNavItem href="/leads"       label="Leads"        Icon={Icons.Leads}       isActive={isActive("/leads")}           onClick={close} />
-              {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
-                <MobileNavItem href="/mails"     label="Komunikasi"   Icon={Icons.Mail}        isActive={isActive("/mails")}           onClick={close} />
-              )}
+              
 
               {(canAccessForecasting || canAccessReports) && (
                 <SectionLabel label="Analitik" />
@@ -381,7 +345,40 @@ export default function MobileNav() {
           </div>
         </>
       )}
-
+            {/* User profile card */}
+            <div style={{
+              margin: "10px 12px 4px",
+              padding: "11px 12px",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 10, flexShrink: 0,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
+                  border: `1px solid ${userRoleColor}40`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 800, color: userRoleColor, flexShrink: 0,
+                }}>
+                  {userInitial}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#e8f0f8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {userName}
+                  </div>
+                  <div style={{
+                    display: "inline-flex", marginTop: 3,
+                    padding: "1px 6px", borderRadius: 999,
+                    background: userRoleColor + "18", border: `1px solid ${userRoleColor}30`,
+                  }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: userRoleColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                      {userRoleLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
       <style>{`
         @keyframes slideInRight {
           from { transform: translateX(100%); opacity: 0; }

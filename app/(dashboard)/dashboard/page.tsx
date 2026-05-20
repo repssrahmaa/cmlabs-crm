@@ -121,14 +121,14 @@ function SectionFilter({
 }
 
 // ── Progress Bar ───────────────────────────────────────────────
-function ProgressBar({ pct, color, label, value }: {
-  pct: number; color: string; label: string; value: string | number
+function ProgressBar({ pct, color, label, value, isCurrency }: {
+  pct: number; color: string; label: string; value: string | number; isCurrency?: boolean
 }) {
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
         <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color }}>{value}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color }}>{isCurrency ? formatRp(Number(value)) : value}</span>
       </div>
       <div style={{ height: 7, background: "var(--bg-card2)", borderRadius: 999, overflow: "hidden" }}>
         <div style={{
@@ -151,7 +151,13 @@ function KpiCard({
   value:     string | number
   color:     string
   icon:      React.ReactNode
-  breakdown?: { label: string; value: number; total: number; color: string }[]
+  breakdown?: {
+  label: string
+  value: number
+  total: number
+  color: string
+  isCurrency?: boolean
+}[]
   index?:    number
 }) {
   const [hov, setHov] = useState(false)
@@ -218,12 +224,13 @@ function KpiCard({
           const pct = b.total > 0 ? (b.value / b.total) * 100 : 0
           return (
             <ProgressBar
-              key={i}
-              label={b.label}
-              value={b.value}
-              pct={pct}
-              color={b.color}
-            />
+  key={i}
+  label={b.label}
+  value={b.value}
+  pct={pct}
+  color={b.color}
+  isCurrency={b.isCurrency}
+/>
           )
         })}
       </div>
@@ -655,35 +662,34 @@ const kpi = kpiData ?? {
         />
 
         {/* Total Revenue */}
-        <KpiCard
-          index={2}
-          label="Total Revenue"
-          value={formatRp(kpi.totalRevenue)}
-          color="#3b82f6"
-          icon={<IconRevenue />}
-          breakdown={[
-            {
-              label: "Dari Deal",
-              value: kpi.dealLeads ?? kpi.wonLeads ?? 0,
-              total: kpi.totalLeads,
-              color: "#3b82f6",
-            },
-            {
-  label: "Avg per Deal",
-  value:
-    (kpi.dealLeads ?? kpi.wonLeads ?? 0) > 0
-      ? formatRp(
-          Math.round(
-            kpi.totalRevenue /
-            (kpi.dealLeads ?? kpi.wonLeads ?? 1)
-          )
-        )
-      : formatRp(0),
-  total: kpi.totalRevenue || 1,
-  color: "#60a5fa",
-},
-          ]}
-        />
+<KpiCard
+  index={2}
+  label="Total Revenue"
+  value={formatRp(kpi.totalRevenue)}
+  color="#3b82f6"
+  icon={<IconRevenue />}
+  breakdown={[
+    {
+      label: "Dari Deal",
+      value: kpi.dealLeads ?? kpi.wonLeads ?? 0,
+      total: kpi.totalLeads,
+      color: "#3b82f6",
+    },
+    {
+      label: "Avg per Deal",
+      value:
+        (kpi.dealLeads ?? kpi.wonLeads ?? 0) > 0
+          ? Math.round(
+              kpi.totalRevenue /
+              (kpi.dealLeads ?? kpi.wonLeads ?? 1)
+            )
+          : 0,
+      total: kpi.totalRevenue || 1,
+      color: "#60a5fa",
+      isCurrency: true,
+    },
+  ]}
+/>
 
         {/* Recycle */}
         <KpiCard

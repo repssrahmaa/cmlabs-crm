@@ -621,7 +621,6 @@ export default function TeamPage() {
   </button>
 )}
 
-// Modal render
 {selectedUser && (
   <SalesDetailModal
     userId={selectedUser.id}
