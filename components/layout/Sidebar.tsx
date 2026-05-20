@@ -4,7 +4,7 @@ import Link               from "next/link"
 import { usePathname }    from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { useRoleGuard }   from "@/hooks/useRoleGuard"
-import ThemeToggle        from "@/components/layout/ThemeToggle"
+import type { RoleType }  from "@/lib/permissions"
 
 // ── SVG Icons ──────────────────────────────────────────────────
 const NavIcons = {
@@ -183,7 +183,7 @@ export default function Sidebar() {
   const userRole      = role ?? "VIEWER"
   const userRoleLabel = ROLE_LABEL[userRole] ?? userRole
   const userRoleColor = ROLE_COLOR[userRole] ?? "#94a3b8"
-  const userName      = session?.user?.name ?? "User"
+  const userName      = session?.user?.name  ?? "User"
   const userEmail     = session?.user?.email ?? ""
   const userInitial   = userName.charAt(0).toUpperCase()
 
@@ -243,8 +243,8 @@ export default function Sidebar() {
       <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
 
         <NavSection label="Menu Utama" />
-        <NavItem href="/dashboard" label="Dashboard" Icon={NavIcons.Dashboard} isActive={isActive("/dashboard", true)} />
-        <NavItem href="/leads"     label="Leads"     Icon={NavIcons.Leads}     isActive={isActive("/leads")} />
+        <NavItem href="/dashboard" label="Dashboard"  Icon={NavIcons.Dashboard}   isActive={isActive("/dashboard", true)} />
+        <NavItem href="/leads"     label="Leads"      Icon={NavIcons.Leads}       isActive={isActive("/leads")} />
 
         {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
           <NavItem href="/mails" label="Komunikasi" Icon={NavIcons.Mail} isActive={isActive("/mails")} />
@@ -255,49 +255,42 @@ export default function Sidebar() {
         )}
 
         {canAccessForecasting && (
-          <NavItem href="/forecasting" label="Forecasting" Icon={NavIcons.Forecast} isActive={isActive("/forecasting")} />
+          <NavItem href="/forecasting"      label="Forecasting"       Icon={NavIcons.Forecast}     isActive={isActive("/forecasting")} />
         )}
 
         {canAccessReports && (
-          <NavItem href="/reports" label="Laporan & Dokumen" Icon={NavIcons.Report} isActive={isActive("/reports")} />
+          <NavItem href="/reports"          label="Laporan & Dokumen" Icon={NavIcons.Report}        isActive={isActive("/reports")} />
         )}
 
         {is("SALES_MANAGER","ACCOUNT_EXECUTIVE") && canAccessReports && (
-          <NavItem href="/reports/personal" label="Performa Saya" Icon={NavIcons.Performance} isActive={isActive("/reports/personal")} />
+          <NavItem href="/reports/personal" label="Performa Saya"     Icon={NavIcons.Performance}  isActive={isActive("/reports/personal")} />
         )}
 
         <NavSection label="Manajemen" />
 
         {canAccessTeam && (
-          <NavItem href="/team" label="Tim" Icon={NavIcons.Team} isActive={isActive("/team")} />
+          <NavItem href="/team"    label="Tim"         Icon={NavIcons.Team}    isActive={isActive("/team")} />
         )}
 
-        <NavItem href="/profile" label="Profil Saya" Icon={NavIcons.Profile} isActive={isActive("/profile", true)} />
+        <NavItem href="/profile"   label="Profil Saya" Icon={NavIcons.Profile} isActive={isActive("/profile", true)} />
 
         <NavSection label="Pengujian" />
-        <NavItem href="/uat-guide" label="Panduan UAT" Icon={NavIcons.Guide} isActive={isActive("/uat-guide")} badge="UAT" />
+        <NavItem href="/uat-guide" label="Panduan UAT" Icon={NavIcons.Guide}   isActive={isActive("/uat-guide")} badge="UAT" />
       </nav>
 
-      {/* ── Footer: Theme + User Card + Logout ────────── */}
+      {/* ── Footer: User Card + Logout ────────────────── */}
       <div style={{
         borderTop:     "1px solid rgba(255,255,255,0.06)",
         flexShrink:    0,
         display:       "flex",
         flexDirection: "column",
-        gap:           0,
       }}>
-
-        {/* Theme Toggle */}
-        <div style={{ padding: "10px 12px 6px" }}>
-          <ThemeToggle />
-        </div>
-
         {/* User Profile Card */}
         <div style={{
-          margin:  "4px 10px 8px",
-          padding: "11px 12px",
-          background: "rgba(255,255,255,0.04)",
-          border:  "1px solid rgba(255,255,255,0.07)",
+          margin:       "10px 10px 8px",
+          padding:      "11px 12px",
+          background:   "rgba(255,255,255,0.04)",
+          border:       "1px solid rgba(255,255,255,0.07)",
           borderRadius: 10,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -369,7 +362,7 @@ export default function Sidebar() {
             <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
               <NavIcons.Logout />
             </span>
-            Keluar dari Akun
+            Keluar
           </button>
         </div>
       </div>

@@ -5,7 +5,6 @@ import Link               from "next/link"
 import { usePathname }    from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { useRoleGuard }   from "@/hooks/useRoleGuard"
-import ThemeToggle        from "@/components/layout/ThemeToggle"
 
 // ── SVG Icons ──────────────────────────────────────────────────
 const IC = {
@@ -242,19 +241,6 @@ export default function MobileNav() {
 
         {/* Right actions */}
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <ThemeToggle compact />
-          <button
-            onClick={() => setOpen(true)}
-            style={{
-              width: 34, height: 34, borderRadius: 8,
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              cursor: "pointer", color: "rgba(255,255,255,0.7)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <IC.Bars />
-          </button>
         </div>
       </div>
 
@@ -366,10 +352,7 @@ export default function MobileNav() {
               flexDirection: "column",
               gap:           0,
             }}>
-              {/* Theme toggle */}
-              <div style={{ padding: "10px 12px 6px" }}>
-                <ThemeToggle />
-              </div>
+
 
               {/* User card */}
               <div style={{
@@ -432,7 +415,7 @@ export default function MobileNav() {
                   }}
                 >
                   <IC.Logout />
-                  Keluar dari Akun
+                  Keluar
                 </button>
               </div>
             </div>
