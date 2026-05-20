@@ -1,18 +1,39 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { NextResponse }  from "next/server"
+import { prisma }        from "@/lib/prisma"
+import { auth }          from "@/lib/auth"
 import { hasPermission } from "@/lib/permissions"
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns"
 import type { RoleType } from "@/lib/permissions"
 
-// ── Status baru yang sesuai dengan enum terbaru ────────────────
-const ACTIVE_STATUSES = ["APPROACH", "COLD_LEAD", "DECK_REQUEST", "MEETING"]
+// ── Status enum terbaru ────────────────────────────────────────
 const DEAL_STATUS     = "DEAL"
 const RECYCLE_STATUS  = "RECYCLE"
+const ACTIVE_STATUSES = ["APPROACH","COLD_LEAD","DECK_REQUEST","MEETING"] as const
+
+// ── Helper: build date filter ──────────────────────────────────
+function buildDateFilter(year: string, month: string) {
+  if (month !== "all") {
+    const d = new Date(Number(year), Number(month) - 1, 1)
+    return {
+      createdAt: {
+        gte: startOfMonth(d),
+        lte: endOfMonth(d),
+      },
+    }
+  }
+  return {
+    createdAt: {
+      gte: new Date(Number(year), 0,  1),
+      lte: new Date(Number(year), 11, 31, 23, 59, 59),
+    },
+  }
+}
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
   const role = session.user.role as RoleType
   if (!hasPermission(role, "read", "dashboard")) {
@@ -20,142 +41,210 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url)
-  const year  = searchParams.get("year")  ?? String(new Date().getFullYear())
-  const month = searchParams.get("month") ?? "all"
+  const year    = searchParams.get("year")    ?? String(new Date().getFullYear())
+  const month   = searchParams.get("month")   ?? "all"
+  const section = searchParams.get("section") ?? "all"
 
-  // Date filter
-  let dateFilter: any = {}
-  if (month !== "all") {
-    const d = new Date(Number(year), Number(month) - 1, 1)
-    dateFilter = { createdAt: { gte: startOfMonth(d), lte: endOfMonth(d) } }
-  } else {
-    dateFilter = {
-      createdAt: {
-        gte: new Date(Number(year), 0, 1),
-        lte: new Date(Number(year), 11, 31),
-      },
-    }
-  }
+  const df      = buildDateFilter(year, month)
+  const result: any = {}
 
-  // ── KPI — count semua status sekaligus ────────────────────────
-  const [
-    totalLeads,
-    dealLeads,
-    recycleLeads,
-    activeLeads,
-    approachCount,
-    coldLeadCount,
-    deckCount,
-    meetingCount,
-  ] = await Promise.all([
-    prisma.lead.count({ where: dateFilter }),
-    prisma.lead.count({ where: { ...dateFilter, status: DEAL_STATUS } }),
-    prisma.lead.count({ where: { ...dateFilter, status: RECYCLE_STATUS } }),
-    prisma.lead.count({ where: { ...dateFilter, status: { in: ACTIVE_STATUSES } } }),
-    prisma.lead.count({ where: { ...dateFilter, status: "APPROACH" } }),
-    prisma.lead.count({ where: { ...dateFilter, status: "COLD_LEAD" } }),
-    prisma.lead.count({ where: { ...dateFilter, status: "DECK_REQUEST" } }),
-    prisma.lead.count({ where: { ...dateFilter, status: "MEETING" } }),
-  ])
-
-  const revenueResult = await prisma.lead.aggregate({
-    where: { ...dateFilter, status: DEAL_STATUS },
-    _sum:  { value: true },
-  })
-  const totalRevenue = Number(revenueResult._sum.value ?? 0)
-
-  const pipelineResult = await prisma.lead.aggregate({
-    where: { ...dateFilter, status: { in: ACTIVE_STATUSES } },
-    _sum:  { value: true },
-  })
-  const pipelineValue = Number(pipelineResult._sum.value ?? 0)
-
-  const closedLeads = dealLeads + recycleLeads
-  const winRate     = closedLeads > 0 ? Math.round((dealLeads / closedLeads) * 100) : 0
-
-  // ── Leads per Status ──────────────────────────────────────────
-  const leadsByStatusRaw = await prisma.lead.groupBy({
-    by:     ["status"],
-    where:  dateFilter,
-    _count: true,
-  })
-  const leadsByStatus = leadsByStatusRaw.map((d) => ({
-    status: d.status,
-    _count: d._count,
-  }))
-
-  // ── Monthly Data 12 bulan ─────────────────────────────────────
-  const monthlyData = []
-  for (let i = 11; i >= 0; i--) {
-    const d    = subMonths(new Date(), i)
-    const s    = startOfMonth(d)
-    const e    = endOfMonth(d)
-    const [created, deal, recycle] = await Promise.all([
-      prisma.lead.count({ where: { createdAt: { gte: s, lte: e } } }),
-      prisma.lead.count({ where: { status: DEAL_STATUS,    createdAt: { gte: s, lte: e } } }),
-      prisma.lead.count({ where: { status: RECYCLE_STATUS, createdAt: { gte: s, lte: e } } }),
-    ])
-    monthlyData.push({ month: format(d, "MMM"), year: d.getFullYear(), created, won: deal, lost: recycle })
-  }
-
-  // ── Monthly Revenue ───────────────────────────────────────────
-  const monthlyRevenue = []
-  for (let i = 11; i >= 0; i--) {
-    const d   = subMonths(new Date(), i)
-    const res = await prisma.lead.aggregate({
-      where: { status: DEAL_STATUS, createdAt: { gte: startOfMonth(d), lte: endOfMonth(d) } },
-      _sum:  { value: true },
-    })
-    monthlyRevenue.push({ month: format(d, "MMM"), revenue: Number(res._sum.value ?? 0) })
-  }
-
-  // ── Sales Performance ─────────────────────────────────────────
-  const salesUsers = await prisma.user.findMany({
-    where:  { role: { in: ["SALES_MANAGER", "ACCOUNT_EXECUTIVE"] }, isActive: true },
-    select: {
-      id: true, name: true, role: true,
-      assignedLeads: {
-        where:  dateFilter,
-        select: { id: true, title: true, status: true, value: true, clientName: true, clientCompany: true },
-      },
-    },
-  })
-
-  const salesPerformance = salesUsers.map((u) => {
-    const total   = u.assignedLeads.length
-    const won     = u.assignedLeads.filter((l) => l.status === DEAL_STATUS).length
-    const lost    = u.assignedLeads.filter((l) => l.status === RECYCLE_STATUS).length
-    const active  = u.assignedLeads.filter((l) => ACTIVE_STATUSES.includes(l.status)).length
-    const revenue = u.assignedLeads
-      .filter((l) => l.status === DEAL_STATUS)
-      .reduce((s, l) => s + Number(l.value ?? 0), 0)
-
-    return {
-      name: u.name, role: u.role, total, won, lost, active,
-      winRate: (won + lost) > 0 ? Math.round((won / (won + lost)) * 100) : 0,
-      revenue,
-      leads: u.assignedLeads,
-    }
-  }).sort((a, b) => b.revenue - a.revenue)
-
-  return NextResponse.json({
-    kpi: {
+  // ────────────────────────────────────────────────────────────
+  // KPI
+  // ────────────────────────────────────────────────────────────
+  if (section === "all" || section === "kpi") {
+    const [
       totalLeads,
       dealLeads,
       recycleLeads,
       activeLeads,
-      totalRevenue,
-      pipelineValue,
-      winRate,
-      // per-status counts untuk breakdown KPI card
       approachCount,
       coldLeadCount,
       deckCount,
       meetingCount,
+    ] = await Promise.all([
+      prisma.lead.count({ where: df }),
+      prisma.lead.count({ where: { ...df, status: DEAL_STATUS    } }),
+      prisma.lead.count({ where: { ...df, status: RECYCLE_STATUS } }),
+      prisma.lead.count({ where: { ...df, status: { in: [...ACTIVE_STATUSES] } } }),
+      prisma.lead.count({ where: { ...df, status: "APPROACH"     } }),
+      prisma.lead.count({ where: { ...df, status: "COLD_LEAD"    } }),
+      prisma.lead.count({ where: { ...df, status: "DECK_REQUEST" } }),
+      prisma.lead.count({ where: { ...df, status: "MEETING"      } }),
+    ])
+
+    // Revenue dari DEAL leads
+    const revenueAgg = await prisma.lead.aggregate({
+      where: { ...df, status: DEAL_STATUS },
+      _sum:  { value: true },
+      _avg:  { value: true },
+      _max:  { value: true },
+    })
+
+    // Pipeline value dari leads aktif
+    const pipelineAgg = await prisma.lead.aggregate({
+      where: { ...df, status: { in: [...ACTIVE_STATUSES] } },
+      _sum:  { value: true },
+      _avg:  { value: true },
+    })
+
+    const totalRevenue      = Number(revenueAgg._sum.value  ?? 0)
+    const avgDealValue      = Number(revenueAgg._avg.value  ?? 0)
+    const maxDealValue      = Number(revenueAgg._max.value  ?? 0)
+    const pipelineValue     = Number(pipelineAgg._sum.value ?? 0)
+    const avgPipelineValue  = Number(pipelineAgg._avg.value ?? 0)
+
+    const closedLeads = dealLeads + recycleLeads
+    const winRate     = closedLeads > 0
+      ? Math.round((dealLeads / closedLeads) * 100)
+      : 0
+
+    // Revenue per status breakdown (untuk detail Pipeline Value card)
+    const pipelineByStatus = await Promise.all(
+      ACTIVE_STATUSES.map(async (status) => {
+        const agg = await prisma.lead.aggregate({
+          where: { ...df, status },
+          _sum:  { value: true },
+          _count: true,
+        })
+        return {
+          status,
+          count: agg._count,
+          totalValue: Number(agg._sum.value ?? 0),
+        }
+      })
+    )
+
+    result.kpi = {
+      // Counts
+      totalLeads,
+      dealLeads,
+      recycleLeads,
+      activeLeads,
+      approachCount,
+      coldLeadCount,
+      deckCount,
+      meetingCount,
+      // Revenue
+      totalRevenue,
+      avgDealValue:     Math.round(avgDealValue),
+      maxDealValue,
+      pipelineValue,
+      avgPipelineValue: Math.round(avgPipelineValue),
+      // Rates
+      winRate,
+      closedLeads,
+      // Breakdown pipeline per stage
+      pipelineByStatus,
       // backward compat
       wonLeads:  dealLeads,
       lostLeads: recycleLeads,
-    },
-    charts: { leadsByStatus, monthlyData, monthlyRevenue, salesPerformance },
-  })
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // TREND — 12 bulan rolling
+  // ────────────────────────────────────────────────────────────
+  if (section === "all" || section === "trend") {
+    const monthlyData: any[]    = []
+    const monthlyRevenue: any[] = []
+
+    for (let i = 11; i >= 0; i--) {
+      const d   = subMonths(new Date(), i)
+      const s   = startOfMonth(d)
+      const e   = endOfMonth(d)
+      const mth = format(d, "MMM")
+
+      const [created, won, lost] = await Promise.all([
+        prisma.lead.count({ where: { createdAt: { gte: s, lte: e } } }),
+        prisma.lead.count({ where: { status: DEAL_STATUS,    createdAt: { gte: s, lte: e } } }),
+        prisma.lead.count({ where: { status: RECYCLE_STATUS, createdAt: { gte: s, lte: e } } }),
+      ])
+      const rev = await prisma.lead.aggregate({
+        where: { status: DEAL_STATUS, createdAt: { gte: s, lte: e } },
+        _sum:  { value: true },
+      })
+
+      monthlyData.push({ month: mth, year: d.getFullYear(), created, won, lost })
+      monthlyRevenue.push({ month: mth, revenue: Number(rev._sum.value ?? 0) })
+    }
+
+    if (!result.charts) result.charts = {}
+    result.charts.monthlyData    = monthlyData
+    result.charts.monthlyRevenue = monthlyRevenue
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // STATUS distribution
+  // ────────────────────────────────────────────────────────────
+  if (section === "all" || section === "status") {
+    const byStatus = await prisma.lead.groupBy({
+      by:    ["status"],
+      where: df,
+      _count: true,
+    })
+
+    if (!result.charts) result.charts = {}
+    result.charts.leadsByStatus = byStatus.map((d) => ({
+      status: d.status,
+      count:  d._count,
+      _count: d._count,   // backward compat
+    }))
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // SALES performance
+  // ────────────────────────────────────────────────────────────
+  if (section === "all" || section === "sales") {
+    const salesUsers = await prisma.user.findMany({
+      where: {
+        role:     { in: ["SALES_MANAGER","ACCOUNT_EXECUTIVE"] },
+        isActive: true,
+      },
+      select: {
+        id: true, name: true, role: true,
+        assignedLeads: {
+          where:  df,
+          select: {
+            id: true, title: true, status: true,
+            value: true, clientName: true, clientCompany: true,
+          },
+        },
+      },
+    })
+
+    const salesPerformance = salesUsers.map((u) => {
+      const leads   = u.assignedLeads
+      const won     = leads.filter((l) => l.status === DEAL_STATUS).length
+      const lost    = leads.filter((l) => l.status === RECYCLE_STATUS).length
+      const active  = leads.filter((l) =>
+        (ACTIVE_STATUSES as readonly string[]).includes(l.status)
+      ).length
+
+      const revenue = leads
+        .filter((l) => l.status === DEAL_STATUS)
+        .reduce((s, l) => s + Number(l.value ?? 0), 0)
+
+      const avgDeal  = won > 0 ? Math.round(revenue / won) : 0
+      const winRate  = (won + lost) > 0 ? Math.round((won / (won + lost)) * 100) : 0
+
+      return {
+        id:       u.id,
+        name:     u.name,
+        role:     u.role,
+        total:    leads.length,
+        won,
+        lost,
+        active,
+        winRate,
+        revenue,
+        avgDeal,
+        leads,  // untuk detail modal
+      }
+    }).sort((a, b) => b.revenue - a.revenue)
+
+    if (!result.charts) result.charts = {}
+    result.charts.salesPerformance = salesPerformance
+  }
+
+  return NextResponse.json(result)
 }

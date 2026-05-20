@@ -49,170 +49,287 @@ function CTooltip({ active, payload, label, fmt }: any) {
 }
 
 // ── Sales Detail Modal ─────────────────────────────────────────
-function SalesDetailModal({ user, onClose }: { user: any; onClose: () => void }) {
-  const [year,  setYear]  = useState(String(CUR_YEAR))
-  const [month, setMonth] = useState("all")
-  const [data,  setData]  = useState<any>(null)
-  const [loading,setLoading]=useState(true)
+function SalesDetailModal({ userId, userName, userRole, onClose }: {
+  userId:   string
+  userName: string
+  userRole: string
+  onClose:  () => void
+}) {
+  const [year,     setYear]     = useState(String(new Date().getFullYear()))
+  const [month,    setMonth]    = useState("all")
+  const [data,     setData]     = useState<any>(null)
+  const [loading,  setLoading]  = useState(true)
+  const [tab,      setTab]      = useState<"all"|"deal"|"recycle">("all")
 
+  const YEARS  = Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i))
+  const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+
+  const STATUS_COLOR: Record<string, string> = {
+    APPROACH:"#6366f1", COLD_LEAD:"#3b82f6", DECK_REQUEST:"#f59e0b",
+    MEETING:"#8b5cf6", DEAL:"#10b981", RECYCLE:"#ef4444",
+  }
+  const STATUS_LABEL: Record<string, string> = {
+    APPROACH:"Approach", COLD_LEAD:"Cold Lead", DECK_REQUEST:"Deck Request",
+    MEETING:"Meeting", DEAL:"Deal", RECYCLE:"Recycle",
+  }
+
+  // ── Fetch dari endpoint sales detail ─────────────────────────
   useEffect(() => {
-    const params = new URLSearchParams({ salesId: user.id, year, month })
-    fetch(`/api/reports/sales-detail?${params}`)
+    setLoading(true)
+    // Ambil dari dashboard stats dengan filter sales ID
+    const params = new URLSearchParams({
+      year, month, section: "sales",
+    })
+    fetch(`/api/dashboard/stats?${params}`)
       .then((r) => r.json())
-      .then(setData)
+      .then((d) => {
+        const allSales = d.charts?.salesPerformance ?? []
+        const found    = allSales.find((s: any) => s.id === userId)
+        setData(found ?? null)
+      })
       .catch(() => setData(null))
       .finally(() => setLoading(false))
-  }, [user.id, year, month])
+  }, [userId, year, month])
 
-  const leads   = data?.leads ?? user.assignedLeads ?? []
-  const byStatus = leads.reduce((acc: any, l: any) => {
-    acc[l.status] = (acc[l.status] ?? 0) + 1; return acc
-  }, {})
-  const pieData = Object.entries(byStatus).map(([s, c]) => ({
-    name:  STATUS_LABEL[s as keyof typeof STATUS_LABEL] ?? s,
-    value: c as number,
-    color: STATUS_COLOR[s as keyof typeof STATUS_COLOR] ?? "#94a3b8",
-  }))
+  function formatRp(v: number) {
+    return new Intl.NumberFormat("id-ID", {
+      style:"currency", currency:"IDR", notation:"compact",
+    }).format(v)
+  }
 
-  const wonLeads    = leads.filter((l: any) => l.status === "DEAL")
-  const recycleLeads= leads.filter((l: any) => l.status === "RECYCLE")
-  const revenue     = wonLeads.reduce((s: number, l: any) => s + Number(l.value ?? 0), 0)
-  const winRate     = (wonLeads.length + recycleLeads.length) > 0
+  const leads        = data?.leads ?? []
+  const wonLeads     = leads.filter((l: any) => l.status === "DEAL")
+  const recycleLeads = leads.filter((l: any) => l.status === "RECYCLE")
+  const revenue      = wonLeads.reduce((s: number, l: any) => s + Number(l.value ?? 0), 0)
+  const winRate      = (wonLeads.length + recycleLeads.length) > 0
     ? Math.round((wonLeads.length / (wonLeads.length + recycleLeads.length)) * 100) : 0
 
+  const byStatus = leads.reduce((acc: any, l: any) => {
+    acc[l.status] = (acc[l.status] ?? 0) + 1; return acc
+  }, {} as Record<string, number>)
+
+  const filteredLeads = tab === "all"     ? leads
+    : tab === "deal"    ? wonLeads
+    : recycleLeads
+
+  const ROLE_LABEL: Record<string, string> = {
+    SALES_MANAGER:"Sales Manager", ACCOUNT_EXECUTIVE:"Account Executive",
+  }
+
   return (
-    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:200,
+      display:"flex", alignItems:"center", justifyContent:"center", padding:20,
+    }}>
       <div onClick={(e) => e.stopPropagation()} style={{
-        background:"var(--bg-card)", borderRadius:16, padding:24,
-        width:"100%", maxWidth:680, maxHeight:"90vh", overflowY:"auto",
+        background:"var(--bg-card)", borderRadius:16, padding:0,
+        width:"100%", maxWidth:680, maxHeight:"90vh",
         border:"1px solid var(--border)", boxShadow:"var(--shadow-xl)",
-        animation:"scaleIn .2s ease",
+        display:"flex", flexDirection:"column",
+        animation:"scaleIn .22s ease",
       }}>
-        {/* Header */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+
+        {/* Modal Header */}
+        <div style={{
+          padding:"18px 22px 14px",
+          borderBottom:"1px solid var(--border)",
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          flexShrink:0,
+        }}>
           <div>
             <h3 style={{ margin:"0 0 3px", fontSize:16, fontWeight:700, color:"var(--text-primary)" }}>
-              Performa — {user.name}
+              Detail Performa — {userName}
             </h3>
             <p style={{ margin:0, fontSize:12, color:"var(--text-muted)" }}>
-              {user.role === "SALES_MANAGER" ? "Sales Manager" : "Account Executive"}
+              {ROLE_LABEL[userRole] ?? userRole}
             </p>
           </div>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            {/* Filter */}
             <select value={year} onChange={(e) => setYear(e.target.value)} style={{
               padding:"5px 9px", background:"var(--bg-card2)", color:"var(--text-secondary)",
-              border:"1px solid var(--border)", borderRadius:6, fontSize:11, cursor:"pointer",
+              border:"1px solid var(--border)", borderRadius:7, fontSize:11, cursor:"pointer",
             }}>
               {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
             <select value={month} onChange={(e) => setMonth(e.target.value)} style={{
               padding:"5px 9px", background:"var(--bg-card2)", color:"var(--text-secondary)",
-              border:"1px solid var(--border)", borderRadius:6, fontSize:11, cursor:"pointer",
+              border:"1px solid var(--border)", borderRadius:7, fontSize:11, cursor:"pointer",
             }}>
               <option value="all">Semua Bulan</option>
               {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
             </select>
-            <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", fontSize:20 }}>&times;</button>
+            <button onClick={onClose} style={{
+              width:32, height:32, borderRadius:8,
+              background:"var(--bg-card2)", border:"1px solid var(--border)",
+              cursor:"pointer", color:"var(--text-muted)",
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:18,
+            }}>
+              &times;
+            </button>
           </div>
         </div>
 
-        {/* KPI row */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:10, marginBottom:20 }}>
-          {[
-            { l:"Total Lead", v:leads.length,            c:"var(--primary)" },
-            { l:"Deal",       v:wonLeads.length,          c:"var(--success)" },
-            { l:"Recycle",    v:recycleLeads.length,      c:"var(--danger)"  },
-            { l:"Revenue",    v:formatRp(revenue),        c:"var(--purple)"  },
-          ].map((s) => (
-            <div key={s.l} style={{ background:"var(--bg-card2)", borderRadius:10, padding:"12px 14px", border:"1px solid var(--border)" }}>
-              <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:3, textTransform:"uppercase", letterSpacing:"0.05em" }}>{s.l}</div>
-              <div style={{ fontSize:18, fontWeight:800, color:s.c }}>{s.v}</div>
+        {/* Modal Content */}
+        <div style={{ flex:1, overflowY:"auto", padding:"18px 22px" }}>
+          {loading ? (
+            <div style={{ textAlign:"center", padding:"48px 0", color:"var(--text-muted)" }}>
+              Memuat data...
             </div>
-          ))}
-        </div>
-
-        {/* Charts */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
-          {/* Pie */}
-          <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
-            <p style={{ margin:"0 0 10px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Distribusi Status</p>
-            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <PieChart width={100} height={100}>
-                <Pie data={pieData} cx={45} cy={45} innerRadius={28} outerRadius={44} dataKey="value" paddingAngle={3} strokeWidth={0}>
-                  {pieData.map((_,i) => <Cell key={i} fill={pieData[i].color} />)}
-                </Pie>
-              </PieChart>
-              <div style={{ display:"flex", flexDirection:"column", gap:5, flex:1 }}>
-                {pieData.slice(0, 5).map((d) => (
-                  <div key={d.name} style={{ display:"flex", justifyContent:"space-between" }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                      <div style={{ width:7, height:7, borderRadius:2, background:d.color }} />
-                      <span style={{ fontSize:10, color:"var(--text-secondary)" }}>{d.name}</span>
-                    </div>
-                    <span style={{ fontSize:10, fontWeight:700, color:d.color }}>{d.value}</span>
+          ) : !data ? (
+            <div style={{ textAlign:"center", padding:"48px 0", color:"var(--text-muted)" }}>
+              Tidak ada data untuk periode ini
+            </div>
+          ) : (
+            <>
+              {/* KPI strip — semua dari data.leads yang sudah difilter API */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:10, marginBottom:18 }} className="grid-4">
+                {[
+                  { l:"Total Lead", v:leads.length,   c:"var(--primary)" },
+                  { l:"Deal",       v:wonLeads.length, c:"var(--success)" },
+                  { l:"Recycle",    v:recycleLeads.length, c:"var(--danger)" },
+                  { l:"Revenue",    v:formatRp(revenue), c:"var(--purple)" },
+                ].map((s) => (
+                  <div key={s.l} style={{
+                    background:"var(--bg-card2)", borderRadius:10,
+                    padding:"12px 14px", border:"1px solid var(--border)",
+                    borderTop:`2px solid ${s.c}`,
+                  }}>
+                    <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{s.l}</div>
+                    <div style={{ fontSize:18, fontWeight:800, color:s.c }}>{s.v}</div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* Win rate gauge */}
-          <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
-            <p style={{ margin:"0 0 10px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Win Rate</p>
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {[
-                { l:"Deal",    v:wonLeads.length,    c:"var(--success)" },
-                { l:"Aktif",   v:leads.filter((l:any) => !["DEAL","RECYCLE"].includes(l.status)).length, c:"var(--primary)" },
-                { l:"Recycle", v:recycleLeads.length, c:"var(--danger)"  },
-              ].map((s) => (
-                <div key={s.l}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                    <span style={{ fontSize:11, color:"var(--text-secondary)" }}>{s.l}</span>
-                    <span style={{ fontSize:11, fontWeight:700, color:s.c }}>{s.v}</span>
-                  </div>
-                  <div style={{ height:5, background:"var(--bg-card)", borderRadius:999, overflow:"hidden" }}>
-                    <div style={{ height:"100%", width:leads.length > 0 ? `${Math.round(s.v / leads.length * 100)}%` : "0%", background:s.c, borderRadius:999 }} />
+              {/* Win rate + Status distribusi */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:18 }} className="grid-2">
+
+                {/* Win Rate visual */}
+                <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
+                  <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Win Rate</p>
+                  {[
+                    { l:"Deal",    v:wonLeads.length,    c:"var(--success)", total:leads.length },
+                    { l:"Aktif",   v:leads.length - wonLeads.length - recycleLeads.length, c:"var(--primary)", total:leads.length },
+                    { l:"Recycle", v:recycleLeads.length, c:"var(--danger)", total:leads.length },
+                  ].map((s) => {
+                    const pct = s.total > 0 ? Math.round((s.v / s.total) * 100) : 0
+                    return (
+                      <div key={s.l} style={{ marginBottom:10 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                          <span style={{ fontSize:12, color:"var(--text-secondary)" }}>{s.l}</span>
+                          <span style={{ fontSize:12, fontWeight:700, color:s.c }}>{s.v} ({pct}%)</span>
+                        </div>
+                        <div style={{ height:6, background:"var(--bg-card)", borderRadius:999, overflow:"hidden" }}>
+                          <div style={{ height:"100%", width:`${pct}%`, background:s.c, borderRadius:999, transition:"width .8s ease" }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div style={{ textAlign:"center", marginTop:12, paddingTop:10, borderTop:"1px solid var(--border-light)" }}>
+                    <span style={{ fontSize:24, fontWeight:900, color:"var(--success)" }}>{winRate}%</span>
+                    <span style={{ fontSize:11, color:"var(--text-muted)", marginLeft:5 }}>Win Rate</span>
                   </div>
                 </div>
-              ))}
-              <div style={{ textAlign:"center", marginTop:4 }}>
-                <span style={{ fontSize:22, fontWeight:800, color:"var(--success)" }}>{winRate}%</span>
-                <span style={{ fontSize:11, color:"var(--text-muted)", marginLeft:4 }}>Win Rate</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Lead list */}
-        {leads.length > 0 && (
-          <div style={{ background:"var(--bg-card2)", borderRadius:12, border:"1px solid var(--border)", overflow:"hidden" }}>
-            <div style={{ padding:"12px 16px", borderBottom:"1px solid var(--border)" }}>
-              <p style={{ margin:0, fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Detail Lead ({leads.length})</p>
-            </div>
-            <div style={{ maxHeight:220, overflowY:"auto" }}>
-              {leads.map((lead: any) => {
-                const c = STATUS_COLOR[lead.status as keyof typeof STATUS_COLOR] ?? "#94a3b8"
-                const l = STATUS_LABEL[lead.status as keyof typeof STATUS_LABEL] ?? lead.status
-                const isDeal = lead.status === "DEAL"
-                return (
-                  <div key={lead.id} style={{
-                    display:"flex", alignItems:"center", gap:10, padding:"10px 16px",
-                    borderBottom:"1px solid var(--border-light)",
-                    background: isDeal ? "rgba(16,185,129,0.04)" : "transparent",
+                {/* Status distribusi */}
+                <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
+                  <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Distribusi Status</p>
+                  {Object.entries(byStatus).length === 0 ? (
+                    <p style={{ fontSize:12, color:"var(--text-muted)", textAlign:"center", paddingTop:20 }}>Tidak ada lead</p>
+                  ) : (
+                    Object.entries(byStatus)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([status, count]) => {
+                        const c   = STATUS_COLOR[status] ?? "#94a3b8"
+                        const l   = STATUS_LABEL[status] ?? status
+                        const pct = leads.length > 0 ? Math.round(((count as number) / leads.length) * 100) : 0
+                        return (
+                          <div key={status} style={{ marginBottom:8 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                              <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                                <div style={{ width:7, height:7, borderRadius:2, background:c }} />
+                                <span style={{ fontSize:11, color:"var(--text-secondary)" }}>{l}</span>
+                              </div>
+                              <span style={{ fontSize:11, fontWeight:700, color:c }}>{count as number}</span>
+                            </div>
+                            <div style={{ height:5, background:"var(--bg-card)", borderRadius:999, overflow:"hidden" }}>
+                              <div style={{ height:"100%", width:`${pct}%`, background:c, borderRadius:999 }} />
+                            </div>
+                          </div>
+                        )
+                      })
+                  )}
+                </div>
+              </div>
+
+              {/* Tab filter leads */}
+              <div style={{ display:"flex", gap:4, padding:4, background:"var(--bg-card2)", borderRadius:10, border:"1px solid var(--border)", marginBottom:12 }}>
+                {([
+                  { k:"all"    as const, l:`Semua (${leads.length})`        },
+                  { k:"deal"   as const, l:`Deal (${wonLeads.length})`      },
+                  { k:"recycle"as const, l:`Recycle (${recycleLeads.length})` },
+                ]).map((t) => (
+                  <button key={t.k} onClick={() => setTab(t.k)} style={{
+                    flex:1, padding:"7px 10px",
+                    background: tab === t.k ? "var(--bg-card)" : "transparent",
+                    border:"none", borderRadius:7,
+                    fontSize:12, fontWeight: tab === t.k ? 700 : 500,
+                    color: tab === t.k
+                      ? t.k === "deal" ? "var(--success)" : t.k === "recycle" ? "var(--danger)" : "var(--primary)"
+                      : "var(--text-muted)",
+                    cursor:"pointer", transition:"all .15s",
+                    boxShadow: tab === t.k ? "var(--shadow-xs)" : "none",
                   }}>
-                    <div style={{ width:7, height:7, borderRadius:"50%", background:c, flexShrink:0 }} />
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{lead.title}</div>
-                      <div style={{ fontSize:10, color:"var(--text-muted)" }}>{lead.clientName}</div>
-                    </div>
-                    <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:999, background:c+"18", color:c, flexShrink:0 }}>{l}</span>
-                    {lead.value && <span style={{ fontSize:11, fontWeight:700, color:isDeal ? "var(--success)" : "var(--text-muted)", flexShrink:0 }}>{formatRp(Number(lead.value))}</span>}
+                    {t.l}
+                  </button>
+                ))}
+              </div>
+
+              {/* Lead list */}
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {filteredLeads.length === 0 ? (
+                  <div style={{ textAlign:"center", padding:"24px 0", color:"var(--text-muted)", fontSize:13 }}>
+                    Tidak ada data
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+                ) : filteredLeads.map((lead: any) => {
+                  const sc     = STATUS_COLOR[lead.status] ?? "#94a3b8"
+                  const sl     = STATUS_LABEL[lead.status] ?? lead.status
+                  const isDeal = lead.status === "DEAL"
+                  return (
+                    <div key={lead.id} style={{
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"11px 14px",
+                      background: isDeal ? "rgba(16,185,129,0.05)" : "var(--bg-card2)",
+                      borderRadius:10,
+                      border:`1px solid ${isDeal ? "rgba(16,185,129,0.15)" : "var(--border)"}`,
+                    }}>
+                      <div style={{ width:7, height:7, borderRadius:"50%", background:sc, flexShrink:0 }} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {lead.title}
+                        </div>
+                        <div style={{ fontSize:10, color:"var(--text-muted)" }}>
+                          {lead.clientName}{lead.clientCompany ? ` — ${lead.clientCompany}` : ""}
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:999,
+                        background:sc+"18", color:sc, flexShrink:0,
+                      }}>
+                        {sl}
+                      </span>
+                      {lead.value && (
+                        <span style={{ fontSize:11, fontWeight:700, color: isDeal ? "var(--success)" : "var(--text-muted)", flexShrink:0 }}>
+                          {formatRp(Number(lead.value))}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </div>
       <style>{`@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
     </div>
@@ -229,7 +346,7 @@ export default function TeamPage() {
 
   const [users,       setUsers]       = useState<any[]>([])
   const [loading,     setLoading]     = useState(true)
-  const [selectedUser,setSelectedUser]= useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState<{ id:string; name:string; role:string } | null>(null)
   const [showModal,   setShowModal]   = useState(false)
   const [editUser,    setEditUser]    = useState<any>(null)
   const [saving,      setSaving]      = useState(false)
@@ -487,17 +604,31 @@ export default function TeamPage() {
                       <div style={{ display:"flex", gap:6, alignItems:"center" }}>
                         {/* Tombol detail — visible untuk semua termasuk executive */}
                         {["SALES_MANAGER","ACCOUNT_EXECUTIVE"].includes(user.role) && (
-                          <button
-                            onClick={() => setSelectedUser(user)}
-                            style={{
-                              padding:"5px 10px", background:"var(--primary-pale)",
-                              color:"var(--primary)", border:"1px solid var(--primary-glow)",
-                              borderRadius:7, fontSize:11, fontWeight:600, cursor:"pointer",
-                              display:"flex", alignItems:"center", gap:4,
-                            }}
-                          >
-                            Performa <IconChevronRight />
-                          </button>
+  <button
+    onClick={() => setSelectedUser({ id: user.id, name: user.name, role: user.role })}
+    style={{
+      padding:"5px 12px",
+      background:"var(--primary-pale)", color:"var(--primary)",
+      border:"1px solid var(--primary-glow)",
+      borderRadius:7, fontSize:11, fontWeight:600, cursor:"pointer",
+      display:"flex", alignItems:"center", gap:4,
+    }}
+  >
+    Performa
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </button>
+)}
+
+// Modal render
+{selectedUser && (
+  <SalesDetailModal
+    userId={selectedUser.id}
+    userName={selectedUser.name}
+    userRole={selectedUser.role}
+    onClose={() => setSelectedUser(null)}
+  />
                         )}
                         {!isReadOnly && canEdit && (
                           <button
@@ -588,9 +719,14 @@ export default function TeamPage() {
         </div>
       )}
 
-      {selectedUser && (
-        <SalesDetailModal user={selectedUser} onClose={() => setSelectedUser(null)} />
-      )}
+{selectedUser && (
+  <SalesDetailModal
+    userId={selectedUser.id}
+    userName={selectedUser.name}
+    userRole={selectedUser.role}
+    onClose={() => setSelectedUser(null)}
+  />
+)}
 
       <AccessToast type={notice.type} message={notice.message} show={notice.show} onClose={hideNotice} />
     </div>
