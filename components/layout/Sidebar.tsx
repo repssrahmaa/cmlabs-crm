@@ -6,7 +6,7 @@ import { signOut, useSession } from "next-auth/react"
 import { useRoleGuard }   from "@/hooks/useRoleGuard"
 import ThemeToggle        from "@/components/layout/ThemeToggle"
 
-// ── SVG Nav Icons ──────────────────────────────────────────────
+// ── SVG Icons ──────────────────────────────────────────────────
 const NavIcons = {
   Dashboard: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -80,23 +80,13 @@ const NavIcons = {
       <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
   ),
-  ChevronRight: () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6"/>
-    </svg>
-  ),
 }
 
 // ── Nav Item ───────────────────────────────────────────────────
-interface NavItemProps {
-  href:     string
-  label:    string
-  Icon:     React.FC
-  isActive: boolean
-  badge?:   string
-}
-
-function NavItem({ href, label, Icon, isActive, badge }: NavItemProps) {
+function NavItem({ href, label, Icon, isActive, badge }: {
+  href: string; label: string; Icon: React.FC
+  isActive: boolean; badge?: string
+}) {
   return (
     <Link
       href={href}
@@ -116,7 +106,6 @@ function NavItem({ href, label, Icon, isActive, badge }: NavItemProps) {
           : "transparent",
         transition:     "all 0.15s ease",
         boxShadow:      isActive ? "0 2px 10px rgba(59,130,246,0.3)" : "none",
-        position:       "relative",
       }}
       onMouseEnter={(e) => {
         if (!isActive) {
@@ -131,12 +120,7 @@ function NavItem({ href, label, Icon, isActive, badge }: NavItemProps) {
         }
       }}
     >
-      <span style={{
-        flexShrink: 0,
-        opacity:    isActive ? 1 : 0.55,
-        display:    "flex",
-        alignItems: "center",
-      }}>
+      <span style={{ flexShrink: 0, opacity: isActive ? 1 : 0.55, display: "flex", alignItems: "center" }}>
         <Icon />
       </span>
       <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -144,14 +128,9 @@ function NavItem({ href, label, Icon, isActive, badge }: NavItemProps) {
       </span>
       {badge && (
         <span style={{
-          fontSize:     9,
-          fontWeight:   800,
-          padding:      "2px 6px",
-          borderRadius: 999,
-          background:   isActive ? "rgba(255,255,255,0.25)" : "#f59e0b",
-          color:        "#fff",
-          letterSpacing: "0.04em",
-          flexShrink:   0,
+          fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999,
+          background: isActive ? "rgba(255,255,255,0.25)" : "#f59e0b",
+          color: "#fff", letterSpacing: "0.04em", flexShrink: 0,
         }}>
           {badge}
         </span>
@@ -164,12 +143,10 @@ function NavItem({ href, label, Icon, isActive, badge }: NavItemProps) {
 function NavSection({ label }: { label: string }) {
   return (
     <div style={{
-      fontSize:      9,
-      fontWeight:    700,
-      color:         "rgba(255,255,255,0.2)",
-      letterSpacing: "0.12em",
-      textTransform: "uppercase",
-      padding:       "14px 12px 6px",
+      fontSize: 9, fontWeight: 700,
+      color: "rgba(255,255,255,0.2)",
+      letterSpacing: "0.12em", textTransform: "uppercase",
+      padding: "14px 12px 6px",
     }}>
       {label}
     </div>
@@ -180,7 +157,13 @@ function NavSection({ label }: { label: string }) {
 export default function Sidebar() {
   const pathname          = usePathname()
   const { data: session } = useSession()
-  const { role, is, canAccessForecasting, canAccessTeam, canAccessReports } = useRoleGuard()
+  const {
+    role,
+    is,
+    canAccessForecasting,
+    canAccessTeam,
+    canAccessReports,
+  } = useRoleGuard()
 
   const ROLE_LABEL: Record<string, string> = {
     SUPER_ADMIN:       "Super Administrator",
@@ -197,11 +180,12 @@ export default function Sidebar() {
     VIEWER:            "#94a3b8",
   }
 
-  const userRole       = role ?? "VIEWER"
-  const userRoleLabel  = ROLE_LABEL[userRole]  ?? userRole
-  const userRoleColor  = ROLE_COLOR[userRole]  ?? "#94a3b8"
-  const userName       = session?.user?.name   ?? "User"
-  const userInitial    = userName.charAt(0).toUpperCase()
+  const userRole      = role ?? "VIEWER"
+  const userRoleLabel = ROLE_LABEL[userRole] ?? userRole
+  const userRoleColor = ROLE_COLOR[userRole] ?? "#94a3b8"
+  const userName      = session?.user?.name ?? "User"
+  const userEmail     = session?.user?.email ?? ""
+  const userInitial   = userName.charAt(0).toUpperCase()
 
   const isActive = (href: string, exact = false) =>
     exact
@@ -210,53 +194,42 @@ export default function Sidebar() {
 
   return (
     <aside style={{
-      width:          240,
-      height:         "100vh",
-      position:       "fixed",
-      top:            0,
-      left:           0,
-      background:     "linear-gradient(180deg, #07111e 0%, #0a1628 60%, #060e1a 100%)",
-      borderRight:    "1px solid rgba(255,255,255,0.06)",
-      display:        "flex",
-      flexDirection:  "column",
-      zIndex:         40,
-      overflowY:      "auto",
-      overflowX:      "hidden",
+      width:         240,
+      height:        "100vh",
+      position:      "fixed",
+      top:           0,
+      left:          0,
+      background:    "linear-gradient(180deg, #07111e 0%, #0a1628 60%, #060e1a 100%)",
+      borderRight:   "1px solid rgba(255,255,255,0.06)",
+      display:       "flex",
+      flexDirection: "column",
+      zIndex:        40,
+      overflowY:     "auto",
+      overflowX:     "hidden",
     }}>
 
-      {/* ── Logo / Brand ──────────────────────────────── */}
+      {/* ── Brand / Logo ──────────────────────────────── */}
       <div style={{
         padding:      "20px 16px 16px",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         flexShrink:   0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Logo mark */}
           <div style={{
-            width:          36,
-            height:         36,
-            borderRadius:   10,
+            width:          36, height: 36, borderRadius: 10,
             background:     "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-            display:        "flex",
-            alignItems:     "center",
-            justifyContent: "center",
+            display:        "flex", alignItems: "center", justifyContent: "center",
             flexShrink:     0,
             boxShadow:      "0 4px 14px rgba(59,130,246,0.4)",
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17l10 5 10-5"            stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12l10 5 10-5"            stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 2L2 7l10 5 10-5-10-5z"   stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17l10 5 10-5"              stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12l10 5 10-5"              stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <div>
-            <div style={{
-              fontSize:      15,
-              fontWeight:    800,
-              color:         "#f0f6fc",
-              letterSpacing: "-0.02em",
-              lineHeight:    1.2,
-            }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#f0f6fc", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               CMLabs CRM
             </div>
             <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -266,71 +239,17 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* ── User Profile Card ─────────────────────────── */}
-      <div style={{
-        margin:       "12px 12px 4px",
-        padding:      "12px 12px",
-        background:   "rgba(255,255,255,0.04)",
-        border:       "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 10,
-        flexShrink:   0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Avatar */}
-          <div style={{
-            width:          34,
-            height:         34,
-            borderRadius:   9,
-            background:     `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
-            border:         `1px solid ${userRoleColor}40`,
-            display:        "flex",
-            alignItems:     "center",
-            justifyContent: "center",
-            fontSize:       14,
-            fontWeight:     800,
-            color:          userRoleColor,
-            flexShrink:     0,
-          }}>
-            {userInitial}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize:      12,
-              fontWeight:    600,
-              color:         "#e8f0f8",
-              overflow:      "hidden",
-              textOverflow:  "ellipsis",
-              whiteSpace:    "nowrap",
-              lineHeight:    1.3,
-            }}>
-              {userName}
-            </div>
-            <div style={{
-              display:      "inline-flex",
-              alignItems:   "center",
-              marginTop:    3,
-              padding:      "1px 7px",
-              borderRadius: 999,
-              background:   userRoleColor + "18",
-              border:       `1px solid ${userRoleColor}30`,
-            }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: userRoleColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                {userRoleLabel}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── Navigation ────────────────────────────────── */}
       <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
 
-        {/* Main */}
         <NavSection label="Menu Utama" />
-        <NavItem href="/dashboard"   label="Dashboard"   Icon={NavIcons.Dashboard} isActive={isActive("/dashboard", true)} />
-        <NavItem href="/leads"       label="Leads"       Icon={NavIcons.Leads}     isActive={isActive("/leads")} />
+        <NavItem href="/dashboard" label="Dashboard" Icon={NavIcons.Dashboard} isActive={isActive("/dashboard", true)} />
+        <NavItem href="/leads"     label="Leads"     Icon={NavIcons.Leads}     isActive={isActive("/leads")} />
 
-        {/* Analytics */}
+        {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
+          <NavItem href="/mails" label="Komunikasi" Icon={NavIcons.Mail} isActive={isActive("/mails")} />
+        )}
+
         {(canAccessForecasting || canAccessReports) && (
           <NavSection label="Analitik" />
         )}
@@ -344,15 +263,9 @@ export default function Sidebar() {
         )}
 
         {is("SALES_MANAGER","ACCOUNT_EXECUTIVE") && canAccessReports && (
-          <NavItem
-            href="/reports/personal"
-            label="Performa Saya"
-            Icon={NavIcons.Performance}
-            isActive={isActive("/reports/personal")}
-          />
+          <NavItem href="/reports/personal" label="Performa Saya" Icon={NavIcons.Performance} isActive={isActive("/reports/personal")} />
         )}
 
-        {/* Management */}
         <NavSection label="Manajemen" />
 
         {canAccessTeam && (
@@ -361,60 +274,104 @@ export default function Sidebar() {
 
         <NavItem href="/profile" label="Profil Saya" Icon={NavIcons.Profile} isActive={isActive("/profile", true)} />
 
-        {/* UAT */}
         <NavSection label="Pengujian" />
         <NavItem href="/uat-guide" label="Panduan UAT" Icon={NavIcons.Guide} isActive={isActive("/uat-guide")} badge="UAT" />
       </nav>
 
-      {/* ── Footer ────────────────────────────────────── */}
+      {/* ── Footer: Theme + User Card + Logout ────────── */}
       <div style={{
-        padding:      "10px 10px 16px",
-        borderTop:    "1px solid rgba(255,255,255,0.06)",
-        flexShrink:   0,
-        display:      "flex",
-        flexDirection:"column",
-        gap:          8,
+        borderTop:     "1px solid rgba(255,255,255,0.06)",
+        flexShrink:    0,
+        display:       "flex",
+        flexDirection: "column",
+        gap:           0,
       }}>
-        {/* Theme toggle */}
-        <div style={{ padding: "0 2px" }}>
+
+        {/* Theme Toggle */}
+        <div style={{ padding: "10px 12px 6px" }}>
           <ThemeToggle />
         </div>
 
+        {/* User Profile Card */}
+        <div style={{
+          margin:  "4px 10px 8px",
+          padding: "11px 12px",
+          background: "rgba(255,255,255,0.04)",
+          border:  "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 10,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Avatar */}
+            <div style={{
+              width:          34, height: 34, borderRadius: 9,
+              background:     `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
+              border:         `1px solid ${userRoleColor}40`,
+              display:        "flex", alignItems: "center", justifyContent: "center",
+              fontSize:       14, fontWeight: 800,
+              color:          userRoleColor, flexShrink: 0,
+            }}>
+              {userInitial}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize:     12, fontWeight: 600, color: "#e8f0f8",
+                overflow:     "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                lineHeight:   1.3,
+              }}>
+                {userName}
+              </div>
+              <div style={{
+                fontSize:     10, color: "rgba(255,255,255,0.3)",
+                overflow:     "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                lineHeight:   1.3, marginBottom: 3,
+              }}>
+                {userEmail}
+              </div>
+              <div style={{
+                display:      "inline-flex",
+                padding:      "1px 7px", borderRadius: 999,
+                background:   userRoleColor + "18",
+                border:       `1px solid ${userRoleColor}30`,
+              }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: userRoleColor, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                  {userRoleLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Logout */}
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          style={{
-            display:      "flex",
-            alignItems:   "center",
-            gap:          8,
-            width:        "100%",
-            padding:      "9px 12px",
-            background:   "rgba(239,68,68,0.07)",
-            border:       "1px solid rgba(239,68,68,0.15)",
-            borderRadius: 9,
-            color:        "rgba(248,113,113,0.8)",
-            fontSize:     12,
-            fontWeight:   500,
-            cursor:       "pointer",
-            textAlign:    "left",
-            transition:   "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background   = "rgba(239,68,68,0.15)"
-            e.currentTarget.style.borderColor  = "rgba(239,68,68,0.3)"
-            e.currentTarget.style.color        = "#f87171"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background   = "rgba(239,68,68,0.07)"
-            e.currentTarget.style.borderColor  = "rgba(239,68,68,0.15)"
-            e.currentTarget.style.color        = "rgba(248,113,113,0.8)"
-          }}
-        >
-          <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-            <NavIcons.Logout />
-          </span>
-          Keluar dari Akun
-        </button>
+        <div style={{ padding: "0 10px 14px" }}>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            style={{
+              display:      "flex", alignItems: "center", gap: 8,
+              width:        "100%", padding: "9px 12px",
+              background:   "rgba(239,68,68,0.07)",
+              border:       "1px solid rgba(239,68,68,0.15)",
+              borderRadius: 9, color: "rgba(248,113,113,0.8)",
+              fontSize:     12, fontWeight: 500,
+              cursor:       "pointer", textAlign: "left",
+              transition:   "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background  = "rgba(239,68,68,0.15)"
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"
+              e.currentTarget.style.color       = "#f87171"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background  = "rgba(239,68,68,0.07)"
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.15)"
+              e.currentTarget.style.color       = "rgba(248,113,113,0.8)"
+            }}
+          >
+            <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+              <NavIcons.Logout />
+            </span>
+            Keluar dari Akun
+          </button>
+        </div>
       </div>
     </aside>
   )
