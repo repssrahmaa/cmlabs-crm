@@ -193,21 +193,34 @@ export default function Sidebar() {
       : pathname === href || pathname.startsWith(href + "/")
 
   return (
-    <aside style={{
-      width:         240,
-      height:        "100vh",
-      position:      "fixed",
-      top:           0,
-      left:          0,
-      background:    "linear-gradient(180deg, #07111e 0%, #0a1628 60%, #060e1a 100%)",
-      borderRight:   "1px solid rgba(255,255,255,0.06)",
-      display:       "flex",
-      flexDirection: "column",
-      zIndex:        40,
-      overflowY:     "auto",
-      overflowX:     "hidden",
-    }}>
+    <aside
+  className="desktop-sidebar"
+  style={{
+    width:         240,
+    height:        "100vh",
+    position:      "fixed",
+    top:           0,
+    left:          0,
+    background:    "linear-gradient(180deg, #07111e 0%, #0a1628 60%, #060e1a 100%)",
+    borderRight:   "1px solid rgba(255,255,255,0.06)",
+    display:       "flex",
+    flexDirection: "column",
+    zIndex:        40,
+    overflowY:     "auto",
+    overflowX:     "hidden",
+  }}
+>
+<style jsx>{`
+  .desktop-sidebar {
+    display: flex;
+  }
 
+  @media (max-width: 1024px) {
+    .desktop-sidebar {
+      display: none;
+    }
+  }
+`}</style>
       {/* ── Brand / Logo ──────────────────────────────── */}
       <div style={{
         padding:      "20px 16px 16px",

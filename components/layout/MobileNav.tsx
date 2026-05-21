@@ -210,7 +210,7 @@ export default function MobileNav() {
       : pathname === href || pathname.startsWith(href + "/")
 
   return (
-    <>
+  <div className="mobile-nav-wrapper">
       {/* ── Mobile Top Bar ──────────────────────────── */}
       <div
         className="mobile-topbar"
@@ -240,8 +240,25 @@ export default function MobileNav() {
         </div>
 
         {/* Right actions */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        </div>
+<div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+  <button
+    onClick={() => setOpen(true)}
+    style={{
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.05)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#fff",
+      cursor: "pointer",
+    }}
+  >
+    <IC.Bars />
+  </button>
+</div>
       </div>
 
       {/* ── Drawer ──────────────────────────────────── */}
@@ -424,11 +441,40 @@ export default function MobileNav() {
       )}
 
       <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to   { transform: translateX(0);    opacity: 1; }
-        }
-      `}</style>
-    </>
+  .mobile-nav-wrapper {
+    display: none;
+  }
+
+  @media (max-width: 1024px) {
+    .mobile-nav-wrapper {
+      display: block;
+    }
+  }
+
+  .mobile-topbar {
+    height: 60px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`}</style>
+</div>
   )
 }

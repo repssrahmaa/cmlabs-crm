@@ -40,7 +40,7 @@ export default function Header() {
       display:        "flex",
       alignItems:     "center",
       justifyContent: "space-between",
-      padding:        "0 22px",
+      padding:        "0 clamp(12px, 3vw, 22px)",
       position:       "sticky",
       top:            0,
       zIndex:         30,
@@ -52,7 +52,7 @@ export default function Header() {
         <div>
           <h1 style={{
             margin:       0,
-            fontSize:     15,
+            fontSize:     "clamp(13px, 2vw, 15px)",
             fontWeight:   700,
             color:        "var(--text-primary)",
             lineHeight:   1.2,

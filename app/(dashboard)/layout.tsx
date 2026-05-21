@@ -26,17 +26,16 @@ export default async function DashboardLayout({
 
         {/* Main content */}
         <div
-          className="main-with-sidebar"
-          style={{
-            flex:          1,
-            marginLeft:    0,
-            display:       "flex",
-            flexDirection: "column",
-            minHeight:     "100vh",
-            minWidth:      0,
-            width:         "calc(100% - 240px)",
-          }}
-        >
+  className="main-with-sidebar"
+  style={{
+    flex:          1,
+    display:       "flex",
+    flexDirection: "column",
+    minHeight:     "100vh",
+    minWidth:      0,
+    transition:    "all .3s ease",
+  }}
+>
           <div className="hide-mobile">
             <Header />
           </div>
@@ -54,3 +53,29 @@ export default async function DashboardLayout({
     </SessionProvider>
   )
 }
+<style jsx>{`
+  .sidebar-desktop {
+    display: block;
+  }
+
+  .main-with-sidebar {
+    margin-left: 0;
+    width: calc(100% - 240px);
+  }
+
+  @media (max-width: 1024px) {
+    .sidebar-desktop {
+      display: none;
+    }
+
+    .main-with-sidebar {
+      width: 100% !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-with-sidebar main {
+      padding: 16px 14px 24px !important;
+    }
+  }
+`}</style>
