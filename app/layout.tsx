@@ -1,15 +1,10 @@
 import type { Metadata } from "next"
-import { SessionProvider } from "next-auth/react"
 import "./globals.css"
-import { Geist } from "next/font/google"
-
-const geist = Geist({
-  subsets: ["latin"],
-})
-
+import { UATProvider } from "@/lib/uat/uatContext"
+import UATBubble      from "@/components/uat/UATBubble"
 
 export const metadata: Metadata = {
-  title: "CMLabs CRM",
+  title:       "CMLabs CRM",
   description: "Customer Relationship Management System",
 }
 
@@ -17,20 +12,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        {/* Script ini inject theme ke <html> SEBELUM render — no flash */}
+        {/* Inject theme sebelum render untuk menghindari flash */}
         <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            try {
-              var t = localStorage.getItem('crm-theme');
-              if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              document.documentElement.setAttribute('data-theme', t);
-              document.documentElement.style.colorScheme = t;
-            } catch(e) {}
+          (function(){
+            try{
+              var t=localStorage.getItem('crm-theme');
+              if(!t) t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+              document.documentElement.setAttribute('data-theme',t);
+              document.documentElement.style.colorScheme=t;
+            }catch(e){}
           })();
-        ` }} />
+        `}} />
       </head>
       <body>
-        {children}
+        <UATProvider>
+          {children}
+          {/* Bubble persist di semua halaman */}
+          <UATBubble />
+        </UATProvider>
       </body>
     </html>
   )

@@ -4,6 +4,8 @@ import { signIn }    from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme }  from "@/hooks/useTheme"
+import { useUAT }    from "@/lib/uat/uatContext"
+import { DEMO_ACCOUNTS, ROLE_COLOR, ROLE_LABEL, UATRole } from "@/lib/uat/uatSteps"
 
 // ── SVG Icons (no emoji) ───────────────────────────────────────
 const IconMoon = () => (
@@ -81,6 +83,18 @@ export default function LoginPage() {
     { email: "sales_mgr@cmlabs.co",  role: "Sales Manager",     color: "#2563eb" },
     { email: "ae@cmlabs.co",         role: "Account Executive", color: "#059669" },
   ]
+  const { start: startUAT, active: uatActive, role: uatRole } = useUAT()
+function handleStartUAT(role: UATRole) {
+  const account = DEMO_ACCOUNTS.find(
+    (acc) => acc.role === role
+  )
+
+  if (!account) return
+
+  setEmail(account.email)
+  setPassword("123456") // atau account.password jika ada
+  startUAT(role)
+}
 
   if (!mounted) return <div style={{ minHeight: "100vh", background: "#080d14" }} />
 
@@ -470,8 +484,97 @@ export default function LoginPage() {
                 ))}
               </div>
             </div>
+            
           </div>
         </div>
+        {/* ── UAT Onboarding Section ──────────────────────── */}
+<div style={{
+  marginTop:    20,
+  padding:      "18px 0 0",
+  borderTop:    `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"}`,
+}}>
+  <p style={{
+    margin:        "0 0 12px",
+    fontSize:      11, fontWeight: 700,
+    color:         isDark ? "#4d6680" : "#64748b",
+    textTransform: "uppercase", letterSpacing: "0.08em",
+  }}>
+    Mulai UAT — Pilih Role Pengujian
+  </p>
+  <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+    {(["SUPER_ADMIN","EXECUTIVE","SALES_MANAGER","ACCOUNT_EXECUTIVE"] as UATRole[]).map((r) => {
+      const c          = ROLE_COLOR[r]
+      const isSelected = uatActive && uatRole === r
+      return (
+        <button
+          key={r}
+          type="button"
+          onClick={() => handleStartUAT(r)}
+          style={{
+            display:      "flex",
+            alignItems:   "center",
+            justifyContent: "space-between",
+            padding:      "10px 13px",
+            background:   isSelected ? c + "18" : "transparent",
+            border:       `1px solid ${isSelected ? c + "50" : isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"}`,
+            borderRadius: 9,
+            cursor:       "pointer",
+            transition:   "all 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background   = c + "12"
+            e.currentTarget.style.borderColor  = c + "40"
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.background  = "transparent"
+              e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)"
+            }
+          }}
+        >
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: c }}>
+              {ROLE_LABEL[r]}
+            </div>
+            <div style={{
+              fontSize: 10,
+              color:    isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)",
+              fontFamily: "DM Mono, monospace",
+            }}>
+              {
+  DEMO_ACCOUNTS.find((acc) => acc.role === r)?.email
+}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            {isSelected && (
+              <span style={{
+                fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 999,
+                background: c + "20", color: c,
+                textTransform: "uppercase", letterSpacing: "0.04em",
+              }}>
+                Aktif
+              </span>
+            )}
+            <div style={{
+              fontSize:   10, color: c,
+              display:    "flex", alignItems: "center", gap: 3,
+            }}>
+              Mulai UAT
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          </div>
+        </button>
+      )
+    })}
+  </div>
+  <p style={{ margin: "10px 0 0", fontSize: 10, color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)", lineHeight: 1.5 }}>
+    Klik role untuk mengisi form login otomatis dan memulai panduan UAT step-by-step.
+    Bubble panduan akan mengikuti Anda di semua halaman.
+  </p>
+</div>
       </div>
 
       <style>{`
