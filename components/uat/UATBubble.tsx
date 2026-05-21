@@ -388,8 +388,8 @@ export default function UATBubble() {
 
             {/* External link (Google Form) */}
             {currentStep.isExternal && currentStep.externalUrl && (
-              
-                href={currentStep.externalUrl}
+              <a
+                href="https://forms.gle/fQxcNQjwspXH2wbDA"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -458,8 +458,8 @@ export default function UATBubble() {
 
           {/* Skip / Next */}
           {isFinish ? (
-            
-              href={GFORM_URL}
+            <a
+              href="https://forms.gle/fQxcNQjwspXH2wbDA"
               target="_blank"
               rel="noopener noreferrer"
               style={{

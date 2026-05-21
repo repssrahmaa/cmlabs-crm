@@ -98,7 +98,7 @@ export default function UATGuidePage() {
             </div>
             <div style={{ display:"flex", gap:8 }}>
               {allDone && (
-                <a href={GFORM_URL} target="_blank" rel="noopener noreferrer" style={{
+                <a href="https://forms.gle/fQxcNQjwspXH2wbDA" target="_blank" rel="noopener noreferrer" style={{
                   display:"flex", alignItems:"center", gap:6,
                   padding:"8px 14px",
                   background:"linear-gradient(135deg,#10b981,#059669)",
@@ -210,7 +210,7 @@ export default function UATGuidePage() {
         <p style={{ margin:"0 0 14px", fontSize:12, color:"var(--text-muted)" }}>
           Isi kuesioner UAT untuk menyelesaikan proses pengujian Anda.
         </p>
-        <a href={GFORM_URL} target="_blank" rel="noopener noreferrer" style={{
+        <a href="https://forms.gle/fQxcNQjwspXH2wbDA" target="_blank" rel="noopener noreferrer" style={{
           display:"inline-flex", alignItems:"center", gap:6,
           padding:"10px 22px",
           background:"linear-gradient(135deg,var(--primary),var(--primary-dark))",
