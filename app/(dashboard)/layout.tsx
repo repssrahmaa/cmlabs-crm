@@ -53,7 +53,7 @@ export default async function DashboardLayout({
     </SessionProvider>
   )
 }
-<style jsx>{`
+<style>{`
   .sidebar-desktop {
     display: block;
   }
