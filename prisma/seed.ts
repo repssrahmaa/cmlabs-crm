@@ -1,4 +1,5 @@
 import { PrismaClient, ActivityType, LeadStatus, LeadPriority } from "@prisma/client"
+import { UAT_ACCOUNTS } from "@/lib/uat/uatSteps"
 import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
@@ -117,6 +118,30 @@ async function main() {
   })
   console.log(`  ✓ VIEWER         → ${viewer.email}`)
 
+  async function seedUATAccounts() {
+  console.log("Seeding 34 UAT accounts...")
+
+  for (const acc of UAT_ACCOUNTS) {
+    const hashed = await hashPassword(acc.password)
+    
+    await prisma.user.upsert({
+      where:  { email: acc.email },
+      update: {},
+      create: {
+        name:     acc.name,
+        email:    acc.email,
+        password: hashed,
+        role:     acc.role,
+        isActive: true,
+        phone:    null,
+      },
+    })
+    console.log(`  Created: ${acc.no} — ${acc.email} (${acc.role})`)
+  }
+
+  console.log("34 UAT accounts seeded successfully!")
+}
+await seedUATAccounts()
   // ────────────────────────────────────────────────────────────
   // 2. LEADS — 3 leads dengan assignment berbeda
   // ────────────────────────────────────────────────────────────
@@ -342,6 +367,7 @@ async function main() {
   console.log("   │ viewer@cmlabs.co            │ Test1234!        │ VIEWER            │")
   console.log("   └─────────────────────────────┴──────────────────┴───────────────────┘")
 }
+
 
 main()
   .catch((err) => {

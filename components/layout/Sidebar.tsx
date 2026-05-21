@@ -210,17 +210,7 @@ export default function Sidebar() {
     overflowX:     "hidden",
   }}
 >
-<style jsx>{`
-  .desktop-sidebar {
-    display: flex;
-  }
 
-  @media (max-width: 1024px) {
-    .desktop-sidebar {
-      display: none;
-    }
-  }
-`}</style>
       {/* ── Brand / Logo ──────────────────────────────── */}
       <div style={{
         padding:      "20px 16px 16px",
@@ -259,9 +249,6 @@ export default function Sidebar() {
         <NavItem href="/dashboard" label="Dashboard"  Icon={NavIcons.Dashboard}   isActive={isActive("/dashboard", true)} />
         <NavItem href="/leads"     label="Leads"      Icon={NavIcons.Leads}       isActive={isActive("/leads")} />
 
-        {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
-          <NavItem href="/mails" label="Komunikasi" Icon={NavIcons.Mail} isActive={isActive("/mails")} />
-        )}
 
         {(canAccessForecasting || canAccessReports) && (
           <NavSection label="Analitik" />

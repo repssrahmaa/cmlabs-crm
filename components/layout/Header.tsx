@@ -63,7 +63,7 @@ export default function Header() {
           {meta.sub && (
             <p style={{
               margin:   0,
-              fontSize: 11,
+             fontSize: "clamp(10px, 1.8vw, 11px)",
               color:    "var(--text-muted)",
               lineHeight: 1,
             }}>

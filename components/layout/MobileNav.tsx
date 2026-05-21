@@ -210,10 +210,10 @@ export default function MobileNav() {
       : pathname === href || pathname.startsWith(href + "/")
 
   return (
-  <div className="mobile-nav-wrapper">
+    <>
       {/* ── Mobile Top Bar ──────────────────────────── */}
       <div
-        className="mobile-topbar"
+        className="mobile-nav-wrapper"
         style={{
           background:   "linear-gradient(90deg, #07111e, #0a1628)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -475,6 +475,6 @@ export default function MobileNav() {
     }
   }
 `}</style>
-</div>
+</>
   )
 }

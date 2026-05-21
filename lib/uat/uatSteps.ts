@@ -1,22 +1,28 @@
-// ── TIPE DATA ──────────────────────────────────────────────────
+// ── TYPES ─────────────────────────────────────────────────────
 export interface UATStep {
   id:           string
-  route:        string        // halaman tempat step ini dijalankan
+  route:        string
   title:        string
   description:  string
   substeps:     string[]
   checkpoint:   string
   tips?:        string
   warning?:     string
-  action?:      string        // label tombol navigasi
-  actionRoute?: string        // target navigasi
+  action?:      string
+  actionRoute?: string
   isExternal?:  boolean
   externalUrl?: string
+  backlog?:     string   // nomor product backlog
   role:         UATRole | "ALL"
 }
 
-export type UATRole = "SUPER_ADMIN" | "EXECUTIVE" | "SALES_MANAGER" | "ACCOUNT_EXECUTIVE"
+export type UATRole =
+  | "SUPER_ADMIN"
+  | "EXECUTIVE"
+  | "SALES_MANAGER"
+  | "ACCOUNT_EXECUTIVE"
 
+// ── GANTI DENGAN LINK GOOGLE FORM ANDA ────────────────────────
 export const GFORM_URL = "https://forms.gle/YOUR_FORM_LINK_HERE"
 
 // ── WARNA PER ROLE ─────────────────────────────────────────────
@@ -34,203 +40,312 @@ export const ROLE_LABEL: Record<string, string> = {
   ACCOUNT_EXECUTIVE: "Account Executive",
 }
 
-// Akun demo per role
-export const DEMO_ACCOUNTS: Record<UATRole, { email: string; password: string }> = {
-  SUPER_ADMIN:       { email: "super_admin@cmlabs.co", password: "Test1234!" },
-  EXECUTIVE:         { email: "executive@cmlabs.co",   password: "Test1234!" },
-  SALES_MANAGER:     { email: "sales_mgr@cmlabs.co",  password: "Test1234!" },
-  ACCOUNT_EXECUTIVE: { email: "ae@cmlabs.co",          password: "Test1234!" },
+export const ROLE_JABATAN: Record<string, string> = {
+  SUPER_ADMIN:       "Developer Tim",
+  EXECUTIVE:         "Head / C-Level",
+  SALES_MANAGER:     "Leader Divisi",
+  ACCOUNT_EXECUTIVE: "Marketing Team",
+}
+
+// ── DAFTAR AKUN UAT — 30 RESPONDEN, 34 AKUN UNIK ─────────────
+// Password semua: Test1234!
+// SA-01 ~ SA-02 : Super Admin (Developer Tim)
+// SM-01 ~ SM-05 : Sales Manager (Leader Divisi)
+// AE-01 ~ AE-20 : Account Executive (Marketing Team)
+// EX-01 ~ EX-03 : Executive (Head / C-Level)
+export const UAT_ACCOUNTS = [
+  { no:"SA-01", email:"superadmin01@cmlabs.co", password:"Test1234!", role:"SUPER_ADMIN" as UATRole, name:"SA Responden 1", jabatan:"Developer / System Admin" },
+  { no:"SA-02", email:"superadmin02@cmlabs.co", password:"Test1234!", role:"SUPER_ADMIN" as UATRole, name:"SA Responden 2", jabatan:"Developer / System Admin" },
+  { no:"SM-01", email:"sm01@cmlabs.co",          password:"Test1234!", role:"SALES_MANAGER" as UATRole, name:"SM Responden 1", jabatan:"Leader Divisi Digital" },
+  { no:"SM-02", email:"sm02@cmlabs.co",          password:"Test1234!", role:"SALES_MANAGER" as UATRole, name:"SM Responden 2", jabatan:"Leader Divisi Content" },
+  { no:"SM-03", email:"sm03@cmlabs.co",          password:"Test1234!", role:"SALES_MANAGER" as UATRole, name:"SM Responden 3", jabatan:"Leader Divisi SEO" },
+  { no:"SM-04", email:"sm04@cmlabs.co",          password:"Test1234!", role:"SALES_MANAGER" as UATRole, name:"SM Responden 4", jabatan:"Leader Divisi Design" },
+  { no:"SM-05", email:"sm05@cmlabs.co",          password:"Test1234!", role:"SALES_MANAGER" as UATRole, name:"SM Responden 5", jabatan:"Leader Divisi Ads" },
+  ...Array.from({ length: 20 }, (_, i) => ({
+    no:       `AE-${String(i+1).padStart(2,"0")}`,
+    email:    `ae${String(i+1).padStart(2,"0")}@cmlabs.co`,
+    password: "Test1234!",
+    role:     "ACCOUNT_EXECUTIVE" as UATRole,
+    name:     `AE Responden ${i+1}`,
+    jabatan:  "Marketing Team",
+  })),
+  { no:"EX-01", email:"exec01@cmlabs.co", password:"Test1234!", role:"EXECUTIVE" as UATRole, name:"Exec Responden 1", jabatan:"Head of Department" },
+  { no:"EX-02", email:"exec02@cmlabs.co", password:"Test1234!", role:"EXECUTIVE" as UATRole, name:"Exec Responden 2", jabatan:"C-Level / Direktur" },
+  { no:"EX-03", email:"exec03@cmlabs.co", password:"Test1234!", role:"EXECUTIVE" as UATRole, name:"Exec Responden 3", jabatan:"C-Level / Direktur" },
+]
+
+// Cari akun berdasarkan email
+export function findAccountByEmail(email: string) {
+  return UAT_ACCOUNTS.find((a) => a.email.toLowerCase() === email.toLowerCase()) ?? null
 }
 
 // ── SEMUA STEPS UAT ────────────────────────────────────────────
-// Setiap step memiliki `role` untuk menentukan step mana
-// yang ditampilkan untuk role tertentu.
-// Steps dengan route "/login" dimulai sebelum user login.
+// Product Backlog:
+// PB-1: Login Management & Role
+// PB-2: Dashboard Analytics
+// PB-3: Leads Management (Kanban Board)
+// PB-4: Team Management
+// PB-5: Profile Management
+// PB-6: Timeline Aktivitas per Lead  ← (pengganti Mailing System)
+// PB-7: Dashboard Forecasting
+// PB-8: Reporting & Document Generator
 
 export const ALL_STEPS: UATStep[] = [
 
   // ══════════════════════════════════════════════════════════════
-  // LANGKAH 1 — LOGIN (semua role mulai di sini)
+  // ONBOARDING — semua role (di halaman login)
   // ══════════════════════════════════════════════════════════════
   {
-    id: "login-1", route: "/login", role: "ALL",
-    title: "Selamat datang di UAT CMLabs CRM",
-    description: "Anda akan menguji sistem CRM berbasis web untuk monitoring leads dan sales. Ikuti setiap langkah yang ditampilkan hingga selesai dan mengisi kuesioner.",
+    id: "onboard-1", route: "/login", role: "ALL",
+    backlog: "Persiapan",
+    title: "Selamat datang di sesi UAT CMLabs CRM",
+    description: "Anda akan menguji sistem CRM berbasis web yang dikembangkan untuk skripsi. Ikuti setiap langkah bubble ini sampai selesai dan berakhir dengan mengisi kuesioner Google Form.",
     substeps: [
-      "Baca deskripsi setiap langkah dengan teliti",
-      "Lakukan instruksi yang diminta",
-      "Klik tombol Langkah Berikutnya setelah selesai",
-      "Bubble panduan ini akan selalu tampil di setiap halaman",
+      "Baca setiap langkah dengan teliti sebelum melakukan aksi",
+      "Bubble panduan ini akan SELALU tampil di setiap halaman",
+      "Gunakan tombol Langkah Berikutnya setelah selesai melakukan instruksi",
+      "Gunakan tombol Kembali jika ingin mengulang langkah sebelumnya",
+      "Tombol Lewati tersedia jika ada kendala teknis pada langkah tertentu",
+      "Progress Anda tersimpan otomatis — aman jika browser ditutup",
     ],
-    checkpoint: "Anda memahami alur pengujian UAT yang akan dijalani.",
-    tips: "Progress Anda tersimpan otomatis — jika browser ditutup, buka kembali dan lanjutkan dari langkah terakhir.",
+    checkpoint: "Anda memahami cara menggunakan bubble panduan UAT ini.",
+    tips: "Estimasi waktu pengujian: 20–30 menit. Jawab kuesioner dengan jujur berdasarkan pengalaman nyata.",
   },
   {
-    id: "login-2", route: "/login", role: "ALL",
-    title: "Masuk ke sistem dengan akun demo",
-    description: "Gunakan akun demo yang disediakan sesuai role yang Anda uji. Setiap role memiliki hak akses berbeda yang akan Anda eksplorasi.",
+    id: "onboard-2", route: "/login", role: "ALL",
+    backlog: "Persiapan",
+    title: "Cek akun login Anda",
+    description: "Setiap responden memiliki akun unik. Pastikan Anda menggunakan akun yang sudah diberikan — jangan berbagi akun dengan responden lain.",
     substeps: [
-      "Masukkan email sesuai role yang ditugaskan kepada Anda",
-      "Masukkan password: Test1234!",
-      "Klik tombol Masuk ke Dashboard",
-      "Tunggu hingga halaman Dashboard terbuka",
+      "Periksa pesan WhatsApp yang dikirimkan kepada Anda",
+      "Temukan email dan password akun UAT Anda",
+      "Contoh format: ae05@cmlabs.co / Test1234!",
+      "Pastikan tidak menggunakan akun milik responden lain",
     ],
-    checkpoint: "Berhasil masuk dan melihat halaman Dashboard. Sidebar menampilkan menu navigasi.",
-    tips: "Jika login gagal, pastikan Caps Lock tidak aktif. Password: Test1234! (huruf T kapital).",
-    action: "Klik di sini jika belum login", actionRoute: "/login",
+    checkpoint: "Anda sudah memegang email dan password akun UAT masing-masing.",
+    tips: "Password semua akun: Test1234! (T kapital). Akun Anda sudah terdaftar sebelumnya.",
+    warning: "Jangan berbagi akun — setiap akun diidentifikasi untuk tracking data responden.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // DASHBOARD — semua role
+  // PB-1: LOGIN MANAGEMENT & ROLE
   // ══════════════════════════════════════════════════════════════
   {
-    id: "dash-1", route: "/dashboard", role: "ALL",
-    title: "Eksplorasi Dashboard — KPI Cards",
-    description: "Dashboard menampilkan 4 KPI card utama yang berisi ringkasan performa tim secara real-time.",
+    id: "pb1-1", route: "/login", role: "ALL",
+    backlog: "PB-1",
+    title: "PB-1: Login ke sistem",
+    description: "Masuk ke sistem CRM menggunakan akun UAT Anda. Ini adalah pengujian fitur Login Management & Role.",
     substeps: [
-      "Amati KPI card Pipeline Value — perhatikan breakdown per stage pipeline",
-      "Amati KPI card Win Rate — perhatikan radial chart dan distribusi deal vs recycle",
+      "Ketikkan email akun UAT Anda di field Email",
+      "Ketikkan password: Test1234! di field Password",
+      "Klik tombol coba eye (lihat/sembunyikan password) untuk memastikan password benar",
+      "Klik tombol Masuk ke Dashboard",
+      "Tunggu hingga halaman Dashboard terbuka",
+    ],
+    checkpoint: "Berhasil masuk. Halaman Dashboard terbuka dan nama Anda tampil di sidebar.",
+    tips: "Jika login gagal, periksa apakah Caps Lock aktif. Password harus: Test1234! (huruf T kapital, angka 1234, tanda seru).",
+    action: "Buka Login", actionRoute: "/login",
+  },
+  {
+    id: "pb1-2", route: "/dashboard", role: "ALL",
+    backlog: "PB-1",
+    title: "PB-1: Verifikasi menu navigasi sesuai role",
+    description: "Periksa menu di sidebar kiri — setiap role menampilkan menu yang berbeda sesuai hak aksesnya.",
+    substeps: [
+      "Lihat sidebar di kiri layar",
+      "Perhatikan menu yang tersedia sesuai role Anda",
+      "Super Admin: semua menu termasuk Tim",
+      "Sales Manager: semua menu termasuk Performa Saya dan Tim",
+      "Account Executive: menu Leads, Performa Saya, Profil (tanpa Tim)",
+      "Executive: semua menu dalam mode baca-saja",
+      "Perhatikan badge role di bagian bawah sidebar",
+    ],
+    checkpoint: "Menu navigasi tampil sesuai role. Badge role (Super Admin/Executive/dll) terlihat di sidebar.",
+    action: "Buka Dashboard", actionRoute: "/dashboard",
+  },
+  {
+    id: "pb1-3", route: "/leads", role: "ACCOUNT_EXECUTIVE",
+    backlog: "PB-1",
+    title: "PB-1: Verifikasi batasan akses AE",
+    description: "Sebagai Account Executive, Anda bisa melihat semua leads tim tapi hanya bisa edit leads milik sendiri.",
+    substeps: [
+      "Buka halaman Leads",
+      "Cari card lead yang PIC-nya bukan nama Anda",
+      "Coba drag card lead tersebut ke kolom lain",
+      "Amati notifikasi akses terbatas yang muncul",
+      "Klik lead orang lain — pastikan tidak ada tombol Edit",
+    ],
+    checkpoint: "Notifikasi akses terbatas muncul. Tidak ada tombol Edit pada lead milik orang lain.",
+    action: "Buka Leads", actionRoute: "/leads",
+    warning: "Ini adalah fitur RBAC (Role-Based Access Control) yang disengaja.",
+  },
+  {
+    id: "pb1-4", route: "/leads", role: "EXECUTIVE",
+    backlog: "PB-1",
+    title: "PB-1: Verifikasi akses Read-Only Executive",
+    description: "Executive dapat melihat semua data namun tidak bisa mengubah apapun.",
+    substeps: [
+      "Buka halaman Leads",
+      "Perhatikan: tidak ada tombol + Tambah Lead",
+      "Klik salah satu card lead",
+      "Perhatikan: tidak ada tombol Edit atau Hapus di detail lead",
+      "Coba drag card lead — amati notifikasi yang muncul",
+    ],
+    checkpoint: "Halaman Leads tampil dalam mode baca-saja. Banner 'Mode Hanya Lihat' terlihat.",
+    action: "Buka Leads", actionRoute: "/leads",
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // PB-2: DASHBOARD ANALYTICS
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: "pb2-1", route: "/dashboard", role: "ALL",
+    backlog: "PB-2",
+    title: "PB-2: Amati 4 KPI Card di Dashboard",
+    description: "Dashboard menampilkan 4 KPI card utama yang meringkas performa tim secara real-time.",
+    substeps: [
+      "Pastikan Anda berada di halaman Dashboard",
+      "Amati KPI card Pipeline Value — perhatikan breakdown per stage (Approach, Cold Lead, Deck Request, Meeting)",
+      "Amati KPI card Win Rate — perhatikan radial chart dan progress bar deal vs recycle",
       "Amati KPI card Total Revenue — perhatikan rata-rata per deal",
-      "Amati KPI card Recycle — perhatikan persentase lead gagal",
+      "Amati KPI card Recycle — perhatikan persentase dari total lead",
       "Arahkan kursor ke setiap card untuk melihat efek hover",
     ],
     checkpoint: "4 KPI card menampilkan data dengan breakdown yang mudah dibaca.",
     action: "Buka Dashboard", actionRoute: "/dashboard",
   },
   {
-    id: "dash-2", route: "/dashboard", role: "ALL",
-    title: "Uji filter independen setiap section grafik",
-    description: "Setiap section grafik di dashboard memiliki filter tahun/bulan yang independen — mengubah satu filter tidak mempengaruhi grafik lainnya.",
+    id: "pb2-2", route: "/dashboard", role: "ALL",
+    backlog: "PB-2",
+    title: "PB-2: Uji filter independen tiap section grafik",
+    description: "Setiap section grafik punya filter sendiri — mengubah filter satu tidak mempengaruhi yang lain.",
     substeps: [
-      "Pada bagian header (KPI), ubah filter tahun — perhatikan 4 KPI card berubah",
-      "Ubah filter pada grafik Tren (bagian berbeda dari KPI) — perhatikan hanya grafik itu yang berubah",
-      "Ubah filter pada Distribusi Status — perhatikan hanya grafik batang itu berubah",
-      "Ubah filter pada Leaderboard — perhatikan hanya ranking yang berubah",
-      "Pastikan setiap perubahan filter hanya mempengaruhi section yang bersangkutan",
+      "Di header Dashboard, ubah filter tahun pada KPI — perhatikan 4 card berubah",
+      "Pada section grafik Tren, ubah filter ke tahun atau bulan yang berbeda",
+      "Pastikan perubahan filter Tren TIDAK mengubah KPI di atas",
+      "Pada section Distribusi Status, ubah filternya",
+      "Pada section Leaderboard, ubah filter bulan",
+      "Verifikasi setiap section berubah secara independen",
     ],
-    checkpoint: "Setiap section berubah secara independen — filter satu tidak mempengaruhi lainnya.",
-    tips: "Inilah keunggulan dashboard ini: analisis multi-periode dalam satu tampilan.",
+    checkpoint: "Setiap section grafik berubah secara mandiri. Filter satu section tidak mengubah section lain.",
+    tips: "Ini adalah fitur multi-period comparison — satu halaman bisa menampilkan data 4 periode berbeda sekaligus.",
   },
   {
-    id: "dash-3", route: "/dashboard", role: "ALL",
-    title: "Uji mode tampilan grafik Tren",
-    description: "Grafik tren performa tim bisa ditampilkan dalam 3 mode berbeda.",
+    id: "pb2-3", route: "/dashboard", role: "ALL",
+    backlog: "PB-2",
+    title: "PB-2: Uji mode visualisasi grafik Tren",
+    description: "Grafik Tren Performa Tim mendukung 3 mode tampilan dan 2 metrik berbeda.",
     substeps: [
-      "Pada section Tren Performa Tim, klik tombol Area → Bar → Combo",
-      "Toggle antara metrik Lead dan Revenue",
-      "Amati perubahan visualisasi data di setiap mode",
-      "Pilih mode yang menurut Anda paling mudah dipahami",
+      "Pada section grafik Tren, klik tombol Area",
+      "Klik tombol Bar — amati perubahan ke grafik batang",
+      "Klik tombol Combo — amati kombinasi area dan batang",
+      "Klik toggle Lead → amati grafik menampilkan data leads",
+      "Klik toggle Revenue → amati grafik menampilkan data revenue",
     ],
-    checkpoint: "Grafik berubah sesuai mode dan metrik yang dipilih.",
+    checkpoint: "Grafik berubah sesuai mode (Area/Bar/Combo) dan metrik (Lead/Revenue) yang dipilih.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // LEADS — Super Admin & Sales Manager & AE
+  // PB-3: LEADS MANAGEMENT (KANBAN BOARD)
   // ══════════════════════════════════════════════════════════════
   {
-    id: "leads-1", route: "/leads", role: "ALL",
-    title: "Buka halaman Leads — Kanban Board",
-    description: "Halaman Leads menampilkan Kanban Board dengan 6 kolom yang merepresentasikan tahap pipeline leads.",
+    id: "pb3-1", route: "/leads", role: "ALL",
+    backlog: "PB-3",
+    title: "PB-3: Buka Leads — Kanban Board 6 kolom",
+    description: "Halaman Leads menampilkan Kanban Board dengan 6 kolom yang merepresentasikan tahap pipeline.",
     substeps: [
       "Klik menu Leads di sidebar",
-      "Amati 6 kolom: Approach, Cold Lead, Deck Request, Meeting, Deal, Recycle",
-      "Perhatikan setiap card lead menampilkan: judul, nama klien, nilai deal, dan PIC",
+      "Amati 6 kolom pipeline: Approach → Cold Lead → Deck Request → Meeting → Deal → Recycle",
+      "Perhatikan setiap card menampilkan: judul lead, nama klien, nilai deal, dan PIC",
+      "Scroll horizontal jika diperlukan untuk melihat semua kolom",
     ],
-    checkpoint: "Kanban Board 6 kolom terbuka dengan card leads di dalamnya.",
+    checkpoint: "Kanban Board 6 kolom tampil lengkap dengan card leads di setiap kolom.",
     action: "Buka Leads", actionRoute: "/leads",
   },
   {
-    id: "leads-2", route: "/leads", role: "SUPER_ADMIN",
-    title: "Tambah Lead baru (Super Admin)",
-    description: "Sebagai Super Admin, Anda bisa menambah lead dan mengassign ke AE manapun.",
+    id: "pb3-2", route: "/leads", role: "SUPER_ADMIN",
+    backlog: "PB-3",
+    title: "PB-3: Tambah Lead baru (Super Admin)",
+    description: "Buat lead baru dan assign ke salah satu AE. Uji juga fitur formatting di Deskripsi.",
     substeps: [
       "Klik tombol + Tambah Lead",
-      "Isi Judul Lead: 'Demo UAT Super Admin'",
-      "Isi Nama Klien: 'PT Maju Bersama'",
-      "Isi Jabatan Klien: 'Marketing Director'",
-      "Isi Email: klien@example.com, Telepon: 08123456789",
-      "Isi Nilai Deal: 25000000",
+      "Isi Judul: 'UAT Lead SA-01' (sesuaikan dengan nomor akun Anda)",
+      "Isi Nama Klien: 'PT Demo UAT'",
+      "Isi Jabatan Klien: 'Marketing Manager'",
+      "Isi Email: klien.demo@example.com",
+      "Isi Nilai Deal: 20000000",
       "Pilih Prioritas: Tinggi",
-      "Di kolom Deskripsi, coba bold text dan buat bullet list",
-      "Pilih PIC: salah satu AE dari dropdown",
+      "Di field Deskripsi: tulis teks, klik ikon Bold (B), lalu coba buat bullet list",
+      "Di field PIC: pilih salah satu AE dari dropdown",
       "Klik Tambah Lead",
     ],
-    checkpoint: "Lead 'Demo UAT Super Admin' muncul di kolom Approach.",
-    tips: "Super Admin dapat assign lead ke siapapun. Formatting teks (bold, bullet) tersedia di field Deskripsi.",
+    checkpoint: "Lead baru muncul di kolom Approach. PIC menampilkan nama AE yang dipilih.",
+    tips: "Toolbar formatting di Deskripsi mendukung: Bold, Italic, Underline, Bullet List, Numbered List.",
   },
   {
-    id: "leads-2-sm", route: "/leads", role: "SALES_MANAGER",
-    title: "Tambah Lead dan assign ke AE",
-    description: "Sales Manager dapat menambah lead dan menugaskannya ke Account Executive mana pun.",
+    id: "pb3-2-sm", route: "/leads", role: "SALES_MANAGER",
+    backlog: "PB-3",
+    title: "PB-3: Tambah Lead dan assign ke AE",
+    description: "Sales Manager dapat membuat lead baru dan menugaskannya ke Account Executive manapun.",
     substeps: [
       "Klik tombol + Tambah Lead",
-      "Isi Judul: 'Demo UAT Sales Manager'",
-      "Isi data klien lengkap (nama, jabatan, perusahaan, email)",
-      "Isi Nilai Deal: 20000000",
-      "Di Deskripsi, coba formatting: tulis teks, klik Bold, klik List",
+      "Isi Judul: 'UAT Lead SM-01' (sesuaikan nomor Anda)",
+      "Isi data klien: nama, jabatan, perusahaan, email, telepon",
+      "Isi Nilai Deal: 15000000",
+      "Di Deskripsi: coba bold dan bullet list",
       "Pilih PIC: assign ke salah satu AE",
       "Klik Tambah Lead",
     ],
-    checkpoint: "Lead baru muncul di kolom Approach dengan AE yang dipilih sebagai PIC.",
+    checkpoint: "Lead muncul di kolom Approach dengan AE yang dipilih sebagai PIC.",
   },
   {
-    id: "leads-2-ae", route: "/leads", role: "ACCOUNT_EXECUTIVE",
-    title: "Tambah Lead (PIC otomatis = Anda)",
-    description: "AE dapat menambah lead, namun PIC otomatis diisi dengan nama Anda sendiri.",
+    id: "pb3-2-ae", route: "/leads", role: "ACCOUNT_EXECUTIVE",
+    backlog: "PB-3",
+    title: "PB-3: Tambah Lead (PIC otomatis = Anda)",
+    description: "AE membuat lead baru. PIC otomatis diisi nama Anda sendiri — tidak bisa diubah.",
     substeps: [
       "Klik tombol + Tambah Lead",
-      "Isi Judul: 'Demo UAT AE [nama Anda]'",
-      "Isi data klien: nama, jabatan, perusahaan, email, telepon",
-      "Isi Nilai Deal: 15000000",
-      "Di Deskripsi, coba bold dan bullet list menggunakan toolbar",
-      "Perhatikan field PIC sudah otomatis terisi nama Anda",
+      "Isi Judul: 'UAT Lead AE-01' (sesuaikan nomor akun Anda)",
+      "Isi data klien lengkap: nama, jabatan, perusahaan, email, telepon",
+      "Isi Nilai Deal: 10000000",
+      "Di Deskripsi: coba toolbar formatting (Bold, List)",
+      "Perhatikan field PIC sudah terisi nama Anda (tidak bisa diubah)",
       "Klik Tambah Lead",
     ],
-    checkpoint: "Lead muncul di kolom Approach. Field PIC menampilkan nama Anda.",
-    tips: "AE tidak bisa mengassign lead ke orang lain — PIC selalu diri sendiri.",
+    checkpoint: "Lead muncul di kolom Approach. PIC otomatis menampilkan nama Anda.",
+    tips: "AE tidak bisa assign lead ke orang lain — setiap lead yang dibuat AE langsung menjadi tanggung jawabnya.",
   },
   {
-    id: "leads-2-ex", route: "/leads", role: "EXECUTIVE",
-    title: "Verifikasi akses Read-Only di Leads",
-    description: "Executive hanya bisa melihat leads, tidak bisa mengubah data apapun.",
+    id: "pb3-3", route: "/leads", role: "SUPER_ADMIN",
+    backlog: "PB-3",
+    title: "PB-3: Pindahkan lead via Drag and Drop",
+    description: "Drag and drop adalah cara utama memperbarui status lead di Kanban Board.",
     substeps: [
-      "Perhatikan: tidak ada tombol + Tambah Lead",
-      "Klik salah satu card lead untuk membuka detail",
-      "Perhatikan tidak ada tombol Edit atau Hapus",
-      "Coba drag card lead ke kolom lain — amati notifikasi akses terbatas yang muncul",
-    ],
-    checkpoint: "Notifikasi akses terbatas muncul saat mencoba mengubah data. Tidak ada tombol edit.",
-    tips: "Banner biru 'Mode Hanya Lihat' ditampilkan sebagai konfirmasi status akses Executive.",
-    warning: "Executive tidak bisa mengubah data apapun — ini adalah batasan yang disengaja.",
-  },
-  {
-    id: "leads-3", route: "/leads", role: "SUPER_ADMIN",
-    title: "Pindahkan lead dengan Drag and Drop",
-    description: "Drag and drop adalah fitur utama Kanban untuk memperbarui status lead.",
-    substeps: [
-      "Temukan lead 'Demo UAT Super Admin' di kolom Approach",
-      "Klik dan tahan card lead tersebut",
+      "Temukan lead yang baru Anda buat di kolom Approach",
+      "Klik dan tahan card lead tersebut dengan mouse",
       "Seret perlahan ke kolom Cold Lead",
-      "Lepaskan — lead berpindah kolom",
+      "Lepaskan — lead berpindah ke Cold Lead",
       "Drag sekali lagi ke kolom Deck Request",
     ],
-    checkpoint: "Lead berhasil berpindah ke kolom Deck Request melalui drag and drop.",
+    checkpoint: "Lead berhasil dipindah ke kolom Deck Request melalui drag and drop.",
   },
   {
-    id: "leads-3-sm", route: "/leads", role: "SALES_MANAGER",
-    title: "Pindahkan lead via Drag and Drop",
-    description: "Perbarui status lead dengan drag and drop di Kanban Board.",
+    id: "pb3-3-sm", route: "/leads", role: "SALES_MANAGER",
+    backlog: "PB-3",
+    title: "PB-3: Drag and Drop lead",
+    description: "Perbarui status lead dengan drag and drop.",
     substeps: [
       "Temukan lead yang baru dibuat di kolom Approach",
       "Drag ke kolom Cold Lead",
-      "Drag sekali lagi ke kolom Meeting",
+      "Drag lagi ke kolom Meeting",
     ],
-    checkpoint: "Lead berpindah ke kolom Meeting.",
+    checkpoint: "Lead berhasil berpindah ke kolom Meeting.",
   },
   {
-    id: "leads-3-ae", route: "/leads", role: "ACCOUNT_EXECUTIVE",
-    title: "Pindah status lead sendiri & verifikasi batasan",
-    description: "AE hanya bisa drag lead miliknya. Coba juga drag lead milik orang lain.",
+    id: "pb3-3-ae", route: "/leads", role: "ACCOUNT_EXECUTIVE",
+    backlog: "PB-3",
+    title: "PB-3: Drag lead sendiri & verifikasi batasan",
+    description: "AE bisa drag lead miliknya. Coba juga drag lead orang lain untuk melihat batasan.",
     substeps: [
       "Drag lead milik Anda ke kolom Cold Lead",
       "Cari lead yang PIC-nya bukan Anda",
@@ -239,374 +354,348 @@ export const ALL_STEPS: UATStep[] = [
     ],
     checkpoint: "Lead sendiri berhasil dipindah. Lead orang lain memunculkan notifikasi akses terbatas.",
   },
+
+  // ══════════════════════════════════════════════════════════════
+  // PB-6: TIMELINE AKTIVITAS PER LEAD
+  // (PB-6 dijalankan sebelum PB-4/5 karena lebih relevan setelah leads)
+  // ══════════════════════════════════════════════════════════════
   {
-    id: "leads-4", route: "/leads", role: "ALL",
-    title: "Tambah aktivitas di Timeline Lead",
-    description: "Setiap lead memiliki timeline aktivitas untuk mencatat semua komunikasi dengan klien.",
+    id: "pb6-1", route: "/leads", role: "ALL",
+    backlog: "PB-6",
+    title: "PB-6: Tambah Catatan Internal di Timeline",
+    description: "Setiap lead memiliki timeline untuk mencatat semua aktivitas komunikasi secara kronologis.",
     substeps: [
       "Klik salah satu lead milik Anda untuk membuka detail",
-      "Temukan section Timeline/Aktivitas di panel detail",
+      "Temukan section Timeline / Aktivitas di panel detail lead",
       "Klik tombol + Tambah Aktivitas",
       "Pilih tipe: Catatan Internal",
-      "Isi judul: 'Follow up pertama'",
-      "Di kolom catatan, tulis teks lalu coba: klik Bold (B), klik Bullet List",
+      "Isi Judul: 'Follow up awal UAT'",
+      "Di kolom catatan: ketik teks, lalu klik ikon Bold (B) untuk menebalkan",
+      "Buat bullet list dengan klik ikon bullet list",
       "Klik Simpan",
-      "Perhatikan aktivitas muncul di timeline secara kronologis",
     ],
-    checkpoint: "Aktivitas Catatan Internal muncul di timeline dengan teks berformat.",
-    tips: "Toolbar formatting di textarea mendukung Bold, Italic, Underline, Bullet List, Numbered List, dan Heading.",
+    checkpoint: "Aktivitas Catatan Internal muncul di timeline dengan teks yang terformat (bold/list).",
+    tips: "Toolbar di textarea mendukung: Bold, Italic, Underline, Bullet List, Numbered List, Heading, Quote.",
+    action: "Buka Leads", actionRoute: "/leads",
   },
   {
-    id: "leads-5", route: "/leads", role: "ALL",
-    title: "Jadwalkan Meeting di Timeline",
-    description: "Buat aktivitas Meeting dengan detail waktu dan peserta di timeline lead.",
+    id: "pb6-2", route: "/leads", role: "ALL",
+    backlog: "PB-6",
+    title: "PB-6: Tambah Aktivitas Telepon",
+    description: "Catat hasil telepon/panggilan dengan klien.",
     substeps: [
       "Di panel timeline lead yang sama, klik + Tambah Aktivitas lagi",
-      "Pilih tipe: Meeting",
-      "Isi judul: 'Presentasi Proposal'",
+      "Pilih tipe: Telepon",
+      "Isi Judul: 'Telepon pertama klien UAT'",
+      "Di kolom catatan: isi hasil telepon (bold poin-poin penting)",
+      "Klik Simpan",
+      "Perhatikan aktivitas kedua muncul di timeline di bawah catatan pertama",
+    ],
+    checkpoint: "Aktivitas Telepon muncul di timeline. Urutan kronologis: Catatan Internal → Telepon.",
+  },
+  {
+    id: "pb6-3", route: "/leads", role: "ALL",
+    backlog: "PB-6",
+    title: "PB-6: Jadwalkan Meeting di Timeline",
+    description: "Buat aktivitas Meeting dengan detail waktu, peserta, dan link Google Meet.",
+    substeps: [
+      "Tambah aktivitas baru: pilih tipe Meeting",
+      "Isi Judul: 'Presentasi Proposal UAT'",
       "Pilih tanggal (pilih besok atau lusa)",
-      "Isi Jam Mulai: 09:00 dan Jam Selesai: 10:00",
-      "Di field Peserta, isi email klien",
-      "Isi Link Meeting: https://meet.google.com/xxx-xxxx-xxx (contoh)",
+      "Isi Jam Mulai: 10:00 dan Jam Selesai: 11:00",
+      "Di field Peserta: isi email contoh (misal: klien@example.com)",
+      "Di field Link Meeting: isi https://meet.google.com/xxx-demo (opsional)",
       "Klik Simpan Meeting",
     ],
-    checkpoint: "Meeting terjadwal tampil di timeline dengan informasi waktu, peserta, dan link meeting.",
+    checkpoint: "Meeting terjadwal tampil di timeline dengan info: waktu, peserta, dan link meeting.",
+    tips: "Timeline lead menggantikan fitur Mailing System — semua komunikasi dengan klien dicatat di sini.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // FORECASTING — SA, SM, EX
+  // PB-7: DASHBOARD FORECASTING
   // ══════════════════════════════════════════════════════════════
   {
-    id: "forecast-1", route: "/forecasting", role: "SUPER_ADMIN",
-    title: "Buka Forecasting dan amati KPI",
+    id: "pb7-1", route: "/forecasting", role: "SUPER_ADMIN",
+    backlog: "PB-7",
+    title: "PB-7: Buka Forecasting dan amati KPI",
     description: "Forecasting menampilkan proyeksi revenue berdasarkan weighted probability setiap lead.",
     substeps: [
       "Klik menu Forecasting di sidebar",
       "Amati 4 KPI: Total Forecast, Deal Confirmed, Weighted Forecast, Best Case",
-      "Amati grafik tren revenue 12 bulan terakhir",
-      "Ubah filter periode: coba Semua → Per Tahun → Per Bulan",
+      "Amati grafik tren revenue 12 bulan",
+      "Ubah filter periode: Semua → Per Tahun → Per Bulan",
+      "Perhatikan data KPI dan grafik berubah sesuai filter",
     ],
-    checkpoint: "Halaman Forecasting terbuka dengan KPI dan grafik periode.",
+    checkpoint: "Halaman Forecasting terbuka. KPI dan grafik responsif terhadap filter periode.",
     action: "Buka Forecasting", actionRoute: "/forecasting",
   },
   {
-    id: "forecast-1-sm", route: "/forecasting", role: "SALES_MANAGER",
-    title: "Analisis Forecasting untuk target tim",
-    description: "Gunakan forecasting sebagai dasar penetapan target penjualan tim.",
+    id: "pb7-1-sm", route: "/forecasting", role: "SALES_MANAGER",
+    backlog: "PB-7",
+    title: "PB-7: Analisis Forecasting untuk target tim",
+    description: "Sales Manager menggunakan forecasting untuk menetapkan target realistis.",
     substeps: [
       "Buka Forecasting",
-      "Filter dengan periode Bulan Ini",
-      "Bandingkan Weighted Forecast vs Best Case",
-      "Scroll ke tabel pipeline — klik salah satu lead",
-      "Baca penjelasan perhitungan formula di modal",
+      "Filter dengan bulan ini",
+      "Bandingkan nilai Weighted Forecast vs Best Case",
+      "Scroll ke tabel pipeline di bawah",
     ],
-    checkpoint: "Modal detail menampilkan formula: Nilai × Probabilitas = Weighted Value.",
+    checkpoint: "Perbedaan Weighted Forecast dan Best Case terbaca jelas.",
     action: "Buka Forecasting", actionRoute: "/forecasting",
   },
   {
-    id: "forecast-1-ex", route: "/forecasting", role: "EXECUTIVE",
-    title: "Review Forecasting Revenue",
-    description: "Lihat proyeksi revenue tim sebagai dasar evaluasi kinerja.",
+    id: "pb7-1-ex", route: "/forecasting", role: "EXECUTIVE",
+    backlog: "PB-7",
+    title: "PB-7: Review Forecasting Revenue",
+    description: "Executive melihat proyeksi revenue untuk evaluasi kinerja tim.",
     substeps: [
       "Buka Forecasting",
-      "Baca KPI Weighted Forecast — ini estimasi realistis berdasarkan probabilitas",
+      "Perhatikan Weighted Forecast = estimasi realistis berdasarkan probabilitas",
       "Ubah filter periode",
-      "Klik salah satu lead di tabel — baca detail perhitungan",
+      "Klik salah satu lead di tabel pipeline",
     ],
-    checkpoint: "Modal detail memberi penjelasan lengkap tentang cara perhitungan forecast.",
+    checkpoint: "Data forecasting tampil. Detail perhitungan bisa diakses dengan klik lead.",
     action: "Buka Forecasting", actionRoute: "/forecasting",
   },
   {
-    id: "forecast-2", route: "/forecasting", role: "SUPER_ADMIN",
-    title: "Drill-down perhitungan per lead",
-    description: "Klik setiap lead di tabel pipeline untuk melihat detail perhitungan weighted value.",
+    id: "pb7-2", route: "/forecasting", role: "SUPER_ADMIN",
+    backlog: "PB-7",
+    title: "PB-7: Drill-down perhitungan Weighted Value",
+    description: "Klik setiap lead di tabel pipeline untuk melihat detail perhitungan weighted forecast.",
     substeps: [
-      "Scroll ke tabel Pipeline di bagian bawah halaman",
-      "Klik tombol filter status untuk memfilter tampilan",
+      "Scroll ke tabel Pipeline di halaman Forecasting",
       "Klik salah satu baris lead",
-      "Modal terbuka — perhatikan: Nilai Lead × Probabilitas (%) = Weighted Value",
-      "Baca penjelasan probabilitas: stage lebih maju = probabilitas lebih tinggi",
-      "Tutup modal — klik lead lain dengan stage berbeda",
-      "Bandingkan weighted value kedua lead tersebut",
+      "Modal detail terbuka",
+      "Baca formula: Nilai Lead × Probabilitas (%) = Weighted Value",
+      "Contoh: Rp 20.000.000 × 35% (Deck Request) = Rp 7.000.000",
+      "Tutup modal dan klik lead lain dengan stage berbeda",
+      "Bandingkan perbedaan weighted value antar stage",
     ],
-    checkpoint: "Setiap lead menampilkan detail perhitungan yang berbeda sesuai stage-nya.",
-    tips: "Probabilitas: Approach 10%, Cold Lead 20%, Deck Request 35%, Meeting 60%, Deal 100%, Recycle 5%.",
+    checkpoint: "Modal menampilkan formula perhitungan yang jelas dan mudah dipahami.",
+    tips: "Probabilitas per stage: Approach 10%, Cold Lead 20%, Deck Request 35%, Meeting 60%, Deal 100%, Recycle 5%.",
+  },
+  {
+    id: "pb7-2-sm", route: "/forecasting", role: "SALES_MANAGER",
+    backlog: "PB-7",
+    title: "PB-7: Detail perhitungan per lead",
+    description: "Klik lead di tabel untuk memahami dasar perhitungan weighted forecast.",
+    substeps: [
+      "Di tabel pipeline, klik salah satu lead",
+      "Baca: Nilai × Probabilitas = Weighted Value",
+      "Klik lead lain dengan stage berbeda",
+      "Bandingkan hasilnya",
+    ],
+    checkpoint: "Formula perhitungan terbaca jelas di modal detail.",
+  },
+  {
+    id: "pb7-2-ex", route: "/forecasting", role: "EXECUTIVE",
+    backlog: "PB-7",
+    title: "PB-7: Pahami detail perhitungan forecasting",
+    description: "Baca detail perhitungan untuk memahami basis proyeksi.",
+    substeps: [
+      "Klik lead di tabel pipeline",
+      "Baca formula: Nilai × Probabilitas = Weighted Value",
+      "Lihat penjelasan probabilitas per stage",
+    ],
+    checkpoint: "Detail perhitungan terbaca dan dapat dipahami.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // LAPORAN — SA, SM, EX
+  // PB-8: REPORTING & DOCUMENT GENERATOR
   // ══════════════════════════════════════════════════════════════
   {
-    id: "report-1", route: "/reports", role: "SUPER_ADMIN",
-    title: "Buka Laporan Performa Tim",
-    description: "Halaman laporan menampilkan performa tim dengan filter periode dan drill-down per sales.",
+    id: "pb8-1", route: "/reports", role: "SUPER_ADMIN",
+    backlog: "PB-8",
+    title: "PB-8: Buka Laporan Performa Tim",
+    description: "Lihat laporan performa tim dengan filter periode dan drill-down per sales.",
     substeps: [
       "Klik menu Laporan & Dokumen di sidebar",
       "Pastikan tab Laporan Performa aktif",
       "Ubah filter bulan/tahun — amati KPI dan grafik berubah",
-      "Scroll ke tabel Performa Sales",
-    ],
-    checkpoint: "Laporan terbuka dengan data yang responsif terhadap filter.",
-    action: "Buka Laporan", actionRoute: "/reports",
-  },
-  {
-    id: "report-1-sm", route: "/reports", role: "SALES_MANAGER",
-    title: "Review laporan performa tim",
-    description: "Lihat laporan tim dengan filter periode dan detail per sales.",
-    substeps: [
-      "Buka Laporan & Dokumen",
-      "Ubah filter ke bulan ini",
       "Amati grafik tren lead bulanan",
       "Amati pie chart Deal vs Recycle",
+      "Scroll ke tabel Performa Sales",
     ],
-    checkpoint: "Grafik menampilkan data sesuai filter.",
+    checkpoint: "Laporan tampil dengan data yang responsif terhadap filter.",
     action: "Buka Laporan", actionRoute: "/reports",
   },
   {
-    id: "report-1-ex", route: "/reports", role: "EXECUTIVE",
-    title: "Review laporan performa (read-only)",
-    description: "Executive dapat melihat laporan lengkap namun tidak bisa mengubah data.",
+    id: "pb8-1-sm", route: "/reports", role: "SALES_MANAGER",
+    backlog: "PB-8",
+    title: "PB-8: Review laporan performa tim",
+    description: "Lihat laporan tim dengan berbagai filter dan detail per sales.",
     substeps: [
       "Buka Laporan & Dokumen",
-      "Amati semua section: KPI, grafik tren, distribusi status, pie chart",
-      "Ubah filter dan amati perubahan data",
+      "Ubah filter bulan ini",
+      "Amati grafik distribusi status",
       "Scroll ke tabel Performa Sales",
+    ],
+    checkpoint: "Grafik dan tabel menampilkan data tim yang akurat.",
+    action: "Buka Laporan", actionRoute: "/reports",
+  },
+  {
+    id: "pb8-1-ex", route: "/reports", role: "EXECUTIVE",
+    backlog: "PB-8",
+    title: "PB-8: Review laporan performa (read-only)",
+    description: "Executive melihat laporan lengkap dalam mode baca-saja.",
+    substeps: [
+      "Buka Laporan & Dokumen",
+      "Ubah filter dan amati data berubah",
+      "Amati semua grafik: tren, distribusi, pie chart",
+      "Scroll ke tabel performa sales",
     ],
     checkpoint: "Semua data laporan tersedia dalam mode read-only.",
     action: "Buka Laporan", actionRoute: "/reports",
   },
   {
-    id: "report-2", route: "/reports", role: "SUPER_ADMIN",
-    title: "Lihat detail performa per sales",
-    description: "Klik nama sales di tabel untuk melihat detail leads yang ditangani beserta statusnya.",
+    id: "pb8-2", route: "/reports", role: "SUPER_ADMIN",
+    backlog: "PB-8",
+    title: "PB-8: Drill-down detail performa per sales",
+    description: "Klik nama sales di tabel untuk melihat detail leads yang ditangani.",
     substeps: [
-      "Scroll ke tabel Performa Sales di halaman Laporan",
-      "Klik salah satu nama sales di tabel",
-      "Modal detail terbuka — perhatikan KPI: total lead, deal, recycle, revenue",
+      "Di tabel Performa Sales, klik salah satu nama sales",
+      "Modal terbuka — amati KPI individual: total lead, deal, recycle, revenue",
       "Klik tab Deal — lihat daftar leads yang berhasil closing",
-      "Klik tab Recycle — lihat leads yang gagal",
-      "Amati distribusi status dalam progress bar",
-      "Ubah filter tahun/bulan di modal — amati data berubah",
+      "Klik tab Recycle — lihat leads yang gagal/masuk recycle",
+      "Ubah filter tahun/bulan di dalam modal",
+      "Amati data berubah sesuai filter",
+      "Tutup modal",
     ],
-    checkpoint: "Modal menampilkan data lengkap per sales dengan rincian lead deal dan recycle.",
+    checkpoint: "Modal performa menampilkan detail leads lengkap dengan distribusi status.",
   },
   {
-    id: "report-2-sm", route: "/reports", role: "SALES_MANAGER",
-    title: "Detail performa per anggota tim",
-    description: "Drill-down ke performa individual setiap AE di tim.",
+    id: "pb8-2-sm", route: "/reports", role: "SALES_MANAGER",
+    backlog: "PB-8",
+    title: "PB-8: Detail performa per AE",
+    description: "Drill-down kinerja individual setiap AE di tim.",
     substeps: [
-      "Klik salah satu nama AE di tabel performa",
-      "Modal terbuka — amati KPI individual",
-      "Klik tab Deal dan Recycle secara bergantian",
-      "Amati leads mana yang berhasil dan mana yang gagal",
+      "Klik salah satu AE di tabel performa",
+      "Amati KPI individual",
+      "Klik tab Deal dan Recycle",
+      "Ubah filter modal",
     ],
-    checkpoint: "Modal menampilkan breakdown leads per status untuk AE yang dipilih.",
+    checkpoint: "Modal menampilkan leads lengkap per status untuk AE yang dipilih.",
   },
   {
-    id: "report-2-ex", route: "/reports", role: "EXECUTIVE",
-    title: "Detail performa per sales",
-    description: "Klik sales di tabel untuk melihat detail kinerja individual.",
+    id: "pb8-3", route: "/reports", role: "SUPER_ADMIN",
+    backlog: "PB-8",
+    title: "PB-8: Generate Dokumen Invoice (.docx)",
+    description: "Buat dokumen Invoice dalam format .docx yang bisa diedit.",
     substeps: [
-      "Klik salah satu nama sales di tabel",
-      "Amati KPI, distribusi status, dan win rate",
-      "Ubah filter modal dan amati perubahan",
-    ],
-    checkpoint: "Modal detail berfungsi dalam mode read-only untuk Executive.",
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // DOKUMEN — SA, SM, AE
-  // ══════════════════════════════════════════════════════════════
-  {
-    id: "doc-1", route: "/reports", role: "SUPER_ADMIN",
-    title: "Generate Dokumen Invoice",
-    description: "Buat dokumen Invoice dalam format .docx dari lead yang ada.",
-    substeps: [
-      "Di halaman Laporan, klik tab Dokumen",
+      "Klik tab Dokumen di bagian atas halaman",
       "Klik tombol + Buat Dokumen",
-      "Pilih lead dari dropdown",
+      "Pilih lead dari dropdown (pilih lead yang dibuat tadi)",
       "Pilih tipe: Invoice",
-      "Beri judul: 'Invoice Demo UAT'",
+      "Isi judul: 'Invoice UAT Demo SA'",
       "Klik Buat Dokumen",
-      "Dokumen baru muncul di daftar dengan status Draft",
+      "Dokumen muncul di daftar dengan status Draft",
     ],
-    checkpoint: "Dokumen Invoice berhasil dibuat dan tampil di daftar.",
+    checkpoint: "Dokumen Invoice berhasil dibuat dengan status Draft.",
   },
   {
-    id: "doc-1-sm", route: "/reports", role: "SALES_MANAGER",
-    title: "Generate Dokumen SPK",
-    description: "Buat Surat Perintah Kerja dari lead yang sudah dibuat.",
+    id: "pb8-3-sm", route: "/reports", role: "SALES_MANAGER",
+    backlog: "PB-8",
+    title: "PB-8: Generate Dokumen SPK",
+    description: "Buat Surat Perintah Kerja dari lead tim.",
     substeps: [
-      "Di halaman Laporan, klik tab Dokumen",
+      "Klik tab Dokumen",
       "Klik + Buat Dokumen",
-      "Pilih lead milik tim",
-      "Pilih tipe: SPK (Surat Perintah Kerja)",
-      "Beri judul dokumen",
-      "Klik Buat Dokumen",
+      "Pilih lead, pilih tipe SPK",
+      "Beri judul, klik Buat Dokumen",
     ],
     checkpoint: "Dokumen SPK berhasil dibuat.",
   },
   {
-    id: "doc-1-ae", route: "/reports", role: "ACCOUNT_EXECUTIVE",
-    title: "Generate Dokumen dari lead sendiri",
-    description: "AE bisa membuat dokumen dari leads miliknya sendiri.",
+    id: "pb8-3-ae", route: "/reports", role: "ACCOUNT_EXECUTIVE",
+    backlog: "PB-8",
+    title: "PB-8: Generate Dokumen dari lead sendiri",
+    description: "AE membuat dokumen dari leads miliknya.",
     substeps: [
       "Buka Laporan & Dokumen",
       "Klik tab Dokumen",
       "Klik + Buat Dokumen",
       "Pilih lead milik Anda (bukan milik orang lain)",
       "Pilih tipe: Invoice",
-      "Beri judul: 'Invoice Demo AE'",
-      "Klik Buat Dokumen",
+      "Beri judul, klik Buat Dokumen",
     ],
     checkpoint: "Dokumen berhasil dibuat dari lead milik sendiri.",
     action: "Buka Laporan", actionRoute: "/reports",
   },
   {
-    id: "doc-2", route: "/reports", role: "ALL",
-    title: "Buka detail dokumen dan download",
-    description: "Klik dokumen untuk membuka halaman detail, finalisasi, dan download .docx.",
+    id: "pb8-4", route: "/reports", role: "ALL",
+    backlog: "PB-8",
+    title: "PB-8: Buka detail dokumen, download, dan finalisasi",
+    description: "Buka halaman detail dokumen, verifikasi isi otomatis, download .docx, dan ubah status.",
     substeps: [
       "Klik dokumen yang baru dibuat di daftar",
       "Halaman detail dokumen terbuka",
-      "Perhatikan isi dokumen terisi otomatis dari data lead",
-      "Klik tombol Download .docx — file tersimpan di komputer",
-      "Buka file .docx di Microsoft Word atau Google Docs",
-      "Kembali ke sistem: klik Finalisasi Dokumen",
-      "Status berubah ke Finalized",
+      "Perhatikan isi dokumen terisi otomatis dari data lead (nama klien, nilai, PIC)",
+      "Klik tombol Download .docx — file tersimpan di perangkat",
+      "Buka file .docx di Microsoft Word atau Google Docs untuk verifikasi",
+      "Kembali ke sistem: klik Finalisasi Dokumen — status berubah ke Finalized",
       "Klik Tandai Sudah Dikirim — status berubah ke Terkirim",
     ],
-    checkpoint: "Dokumen ter-download dalam format .docx yang bisa diedit. Status dokumen berubah ke Terkirim.",
+    checkpoint: "File .docx ter-download dan bisa dibuka. Status dokumen berubah melalui Draft → Finalized → Terkirim.",
     tips: "Format .docx dipilih agar dokumen bisa diedit dan disesuaikan setelah di-download.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // PERFORMA SAYA — SM, AE
+  // PB-4: TEAM MANAGEMENT
   // ══════════════════════════════════════════════════════════════
   {
-    id: "personal-1", route: "/reports/personal", role: "SALES_MANAGER",
-    title: "Buka Performa Saya (Sales Manager)",
-    description: "Lihat statistik kinerja personal dengan filter independen di setiap section.",
-    substeps: [
-      "Klik menu Performa Saya di sidebar",
-      "Amati KPI: Total Lead, Deal, Win Rate, Revenue, Task Selesai",
-      "Ubah filter KPI (tahun/bulan) — amati perubahan data",
-    ],
-    checkpoint: "KPI Performa Saya menampilkan data yang akurat dan responsif terhadap filter.",
-    action: "Buka Performa Saya", actionRoute: "/reports/personal",
-  },
-  {
-    id: "personal-1-ae", route: "/reports/personal", role: "ACCOUNT_EXECUTIVE",
-    title: "Buka Performa Saya (Account Executive)",
-    description: "Monitor kinerja personal Anda melalui berbagai grafik dan filter.",
-    substeps: [
-      "Klik menu Performa Saya di sidebar",
-      "Amati KPI personal Anda",
-      "Ubah filter KPI",
-    ],
-    checkpoint: "Halaman Performa Saya terbuka dengan data kinerja personal.",
-    action: "Buka Performa Saya", actionRoute: "/reports/personal",
-  },
-  {
-    id: "personal-2", route: "/reports/personal", role: "SALES_MANAGER",
-    title: "Grafik Revenue dengan filter independen",
-    description: "Filter Revenue pada tab Overview bekerja terpisah dari filter KPI.",
-    substeps: [
-      "Pastikan tab Overview aktif",
-      "Pada grafik Revenue/Lead Trend, ubah filter (berbeda dari filter KPI di atas)",
-      "Amati grafik tren berubah tanpa mempengaruhi KPI di header",
-      "Ubah filter Revenue ke bulan yang berbeda dari filter KPI",
-    ],
-    checkpoint: "Filter Revenue dan filter KPI bekerja independen satu sama lain.",
-  },
-  {
-    id: "personal-2-ae", route: "/reports/personal", role: "ACCOUNT_EXECUTIVE",
-    title: "Grafik Revenue dengan filter independen",
-    description: "Filter di setiap section Performa Saya bekerja secara independen.",
-    substeps: [
-      "Tab Overview aktif — ubah filter Revenue",
-      "Amati grafik berubah tanpa mengubah KPI",
-      "Ubah filter ke bulan berbeda",
-    ],
-    checkpoint: "Filter Revenue bekerja independen dari KPI.",
-  },
-  {
-    id: "personal-3", route: "/reports/personal", role: "SALES_MANAGER",
-    title: "Tab Pipeline — History lengkap",
-    description: "Tab Pipeline menampilkan semua history lead termasuk Deal dan Recycle, bukan hanya yang aktif.",
-    substeps: [
-      "Klik tab Pipeline",
-      "Amati semua stage ditampilkan termasuk Deal dan Recycle",
-      "Perhatikan grafik batang dan progress bar per stage",
-      "Bandingkan jumlah lead di setiap stage",
-    ],
-    checkpoint: "Pipeline menampilkan semua history lead di semua 6 stage.",
-  },
-  {
-    id: "personal-3-ae", route: "/reports/personal", role: "ACCOUNT_EXECUTIVE",
-    title: "Tab Pipeline — History dan Tab Aktivitas",
-    description: "Pipeline menampilkan history lengkap. Tab Aktivitas punya filter sendiri.",
-    substeps: [
-      "Klik tab Pipeline — amati semua stage termasuk Deal dan Recycle",
-      "Klik tab Aktivitas",
-      "Ubah filter Aktivitas (tahun/bulan) — berbeda dari filter lainnya",
-      "Amati grafik aktivitas per tipe berubah",
-    ],
-    checkpoint: "Pipeline menampilkan history lengkap. Filter Aktivitas bekerja independen.",
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // TIM — SA, SM, EX
-  // ══════════════════════════════════════════════════════════════
-  {
-    id: "team-1", route: "/team", role: "SUPER_ADMIN",
-    title: "Buka halaman Tim",
-    description: "Halaman Tim menampilkan daftar anggota beserta visualisasi distribusi role dan performa.",
+    id: "pb4-1", route: "/team", role: "SUPER_ADMIN",
+    backlog: "PB-4",
+    title: "PB-4: Buka Tim dan amati visualisasi",
+    description: "Halaman Tim menampilkan distribusi role dan grafik performa sales.",
     substeps: [
       "Klik menu Tim di sidebar",
       "Amati pie chart distribusi role tim",
-      "Amati grafik Total Lead per Sales — ubah filter tahun/bulan",
+      "Amati grafik Total Lead per Sales",
+      "Ubah filter tahun/bulan pada grafik — amati data berubah",
       "Perhatikan tabel daftar anggota tim",
     ],
-    checkpoint: "Halaman Tim terbuka dengan visualisasi yang akurat.",
+    checkpoint: "Halaman Tim terbuka dengan visualisasi yang responsif terhadap filter.",
     action: "Buka Tim", actionRoute: "/team",
   },
   {
-    id: "team-1-sm", route: "/team", role: "SALES_MANAGER",
-    title: "Buka Tim dan verifikasi batasan akses",
-    description: "Sales Manager bisa edit anggota namun tidak bisa hapus atau ubah role.",
+    id: "pb4-1-sm", route: "/team", role: "SALES_MANAGER",
+    backlog: "PB-4",
+    title: "PB-4: Tim — verifikasi batasan SM",
+    description: "Sales Manager bisa edit anggota tapi tidak bisa hapus atau ubah role.",
     substeps: [
       "Buka halaman Tim",
-      "Amati visualisasi distribusi role dan grafik lead",
       "Klik Edit pada salah satu AE",
-      "Amati: tidak ada opsi ubah Role",
-      "Amati: tidak ada tombol Hapus",
+      "Perhatikan: tidak ada opsi mengubah Role",
+      "Perhatikan: tidak ada tombol Hapus",
+      "Tutup modal edit",
     ],
     checkpoint: "Edit tersedia tapi tanpa opsi ubah role. Tidak ada tombol Hapus.",
     action: "Buka Tim", actionRoute: "/team",
     warning: "Sales Manager tidak bisa menghapus user atau mengubah role anggota.",
   },
   {
-    id: "team-1-ex", route: "/team", role: "EXECUTIVE",
-    title: "Lihat Tim dan visualisasi performa",
-    description: "Executive dapat melihat semua data tim dalam mode read-only.",
+    id: "pb4-1-ex", route: "/team", role: "EXECUTIVE",
+    backlog: "PB-4",
+    title: "PB-4: Tim — verifikasi read-only Executive",
+    description: "Executive melihat semua data tim dalam mode baca-saja.",
     substeps: [
       "Buka halaman Tim",
-      "Ubah filter pada grafik Lead per Sales",
-      "Amati data berubah sesuai filter",
+      "Ubah filter grafik Lead per Sales",
       "Perhatikan tidak ada tombol Tambah/Edit/Hapus",
+      "Klik tombol Performa pada salah satu AE",
     ],
-    checkpoint: "Data tim dapat dilihat dalam mode read-only.",
+    checkpoint: "Data tim tampil lengkap. Tidak ada tombol perubahan data.",
     action: "Buka Tim", actionRoute: "/team",
   },
   {
-    id: "team-2", route: "/team", role: "SUPER_ADMIN",
-    title: "Tambah anggota tim baru",
-    description: "Super Admin bisa menambah anggota dengan role apapun.",
+    id: "pb4-2", route: "/team", role: "SUPER_ADMIN",
+    backlog: "PB-4",
+    title: "PB-4: Tambah anggota tim baru",
+    description: "Super Admin menambah anggota baru dengan role tertentu.",
     substeps: [
       "Klik tombol + Tambah Anggota",
-      "Isi Nama: 'Test UAT User'",
-      "Isi Email: test.uat@cmlabs.co",
+      "Isi Nama: 'Test UAT Baru'",
+      "Isi Email: test.uat.baru@cmlabs.co",
       "Isi Password: Test1234!",
       "Isi No. Telepon: 089999999999",
       "Pilih Role: Account Executive",
@@ -615,95 +704,138 @@ export const ALL_STEPS: UATStep[] = [
     checkpoint: "Anggota baru muncul di tabel dengan role Account Executive.",
   },
   {
-    id: "team-3", route: "/team", role: "ALL",
-    title: "Lihat detail performa per sales",
-    description: "Klik tombol Performa untuk melihat detail kinerja individual setiap sales.",
+    id: "pb4-3", route: "/team", role: "ALL",
+    backlog: "PB-4",
+    title: "PB-4: Lihat detail performa per sales",
+    description: "Klik tombol Performa untuk melihat statistik kinerja individual setiap sales.",
     substeps: [
-      "Di tabel anggota, cari baris AE atau SM",
+      "Di tabel anggota, cari baris yang memiliki tombol Performa (AE atau SM)",
       "Klik tombol Performa",
-      "Modal terbuka dengan KPI individual",
+      "Modal terbuka — amati KPI: total lead, deal, recycle, revenue, win rate",
       "Ubah filter tahun/bulan di dalam modal",
-      "Amati data (deal, recycle, revenue, distribusi status) berubah",
-      "Klik tab Deal dan Recycle di modal",
+      "Amati data berubah sesuai filter yang dipilih",
+      "Klik tab Deal — amati daftar leads yang berhasil",
+      "Klik tab Recycle — amati leads yang gagal",
       "Tutup modal",
     ],
-    checkpoint: "Modal performa menampilkan data lengkap yang sinkron dengan filter.",
+    checkpoint: "Modal performa menampilkan data yang sinkron dengan filter. Tab Deal dan Recycle berfungsi.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // PROFIL
+  // PB-5: PROFILE MANAGEMENT
   // ══════════════════════════════════════════════════════════════
   {
-    id: "profile-1", route: "/profile", role: "ALL",
-    title: "Buka dan edit Profil Saya",
-    description: "Setiap user bisa memperbarui nama dan nomor telepon melalui halaman profil.",
+    id: "pb5-1", route: "/profile", role: "ALL",
+    backlog: "PB-5",
+    title: "PB-5: Edit Profil Saya",
+    description: "Setiap user dapat memperbarui nama dan nomor telepon melalui halaman profil.",
     substeps: [
       "Klik menu Profil Saya di sidebar",
       "Perhatikan informasi akun: nama, email, role, nomor telepon",
       "Klik tombol Edit Profil",
-      "Ubah nama atau nomor telepon",
+      "Ubah nama atau tambahkan nomor telepon",
       "Klik Simpan Perubahan",
+      "Verifikasi nama berubah di sidebar dan header",
     ],
     checkpoint: "Perubahan tersimpan dan nama di sidebar/header ikut berubah.",
     action: "Buka Profil", actionRoute: "/profile",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // UI/UX — semua
+  // PERFORMA SAYA — SM dan AE
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: "personal-1", route: "/reports/personal", role: "SALES_MANAGER",
+    backlog: "PB-8",
+    title: "PB-8: Performa Saya — SM",
+    description: "Sales Manager melihat statistik kinerja personal dengan filter independen.",
+    substeps: [
+      "Klik menu Performa Saya di sidebar",
+      "Amati KPI: Total Lead, Deal, Win Rate, Revenue, Task Selesai",
+      "Ubah filter KPI (tahun/bulan)",
+      "Tab Overview: ubah filter Revenue secara terpisah dari KPI",
+      "Tab Pipeline: amati semua history (termasuk Deal dan Recycle)",
+      "Tab Aktivitas: ubah filter Aktivitas secara terpisah",
+    ],
+    checkpoint: "Setiap filter bekerja independen. Pipeline menampilkan history lengkap.",
+    action: "Buka Performa Saya", actionRoute: "/reports/personal",
+  },
+  {
+    id: "personal-1-ae", route: "/reports/personal", role: "ACCOUNT_EXECUTIVE",
+    backlog: "PB-8",
+    title: "PB-8: Performa Saya — AE",
+    description: "Account Executive memonitor kinerja personal melalui berbagai grafik dan filter.",
+    substeps: [
+      "Klik menu Performa Saya di sidebar",
+      "Amati KPI personal",
+      "Ubah filter KPI",
+      "Tab Overview: amati grafik tren, ubah filter Revenue",
+      "Tab Pipeline: lihat semua history leads (bukan hanya aktif)",
+      "Tab Aktivitas: ubah filter Aktivitas sendiri",
+    ],
+    checkpoint: "Pipeline menampilkan history lengkap. Filter Revenue dan Aktivitas independen.",
+    action: "Buka Performa Saya", actionRoute: "/reports/personal",
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // UI/UX — Dark Mode & Responsivitas
   // ══════════════════════════════════════════════════════════════
   {
     id: "uiux-1", route: "/dashboard", role: "ALL",
-    title: "Uji Dark Mode dan Light Mode",
-    description: "Sistem mendukung dua mode tampilan yang bisa diubah kapan saja tanpa reload.",
+    backlog: "UI/UX",
+    title: "UI/UX: Toggle Dark Mode dan Light Mode",
+    description: "Sistem mendukung dua mode tampilan. Pengalihan terjadi instan tanpa reload halaman.",
     substeps: [
-      "Klik tombol Dark Mode / Light Mode di sidebar bagian bawah",
-      "Amati seluruh tampilan berubah ke mode gelap secara instan",
-      "Jelajahi beberapa halaman: Leads, Forecasting, Laporan",
+      "Temukan tombol Dark Mode / Light Mode di sidebar bagian bawah",
+      "Klik tombol — seluruh tampilan berubah ke mode gelap secara instan",
+      "Navigasi ke beberapa halaman: Leads, Forecasting, Laporan",
       "Pastikan semua teks terbaca jelas dalam dark mode",
-      "Klik kembali untuk beralih ke Light Mode",
+      "Klik kembali tombol untuk beralih ke Light Mode",
+      "Verifikasi pergantian terjadi instan (tanpa refresh halaman)",
     ],
-    checkpoint: "Pergantian mode terjadi instan tanpa reload. Semua halaman terbaca jelas di kedua mode.",
-    tips: "Preferensi tema tersimpan di browser — tidak akan berubah saat refresh.",
+    checkpoint: "Pergantian mode terjadi instan. Semua halaman terbaca jelas di kedua mode.",
+    tips: "Preferensi tema tersimpan di browser — tidak berubah saat halaman di-refresh.",
     action: "Buka Dashboard", actionRoute: "/dashboard",
   },
   {
     id: "uiux-2", route: "/dashboard", role: "ALL",
-    title: "Uji responsivitas mobile dan tablet",
-    description: "Sistem responsif dan bisa diakses dari laptop, tablet, maupun mobile.",
+    backlog: "UI/UX",
+    title: "UI/UX: Uji responsivitas mobile/tablet",
+    description: "Sistem dibangun responsif untuk laptop, tablet, dan mobile.",
     substeps: [
-      "Tekan F12 (DevTools) di browser",
-      "Klik ikon device simulator (tablet/phone icon)",
-      "Pilih ukuran layar Mobile (misalnya iPhone 12)",
-      "Perhatikan sidebar berubah menjadi tombol menu di atas",
-      "Klik tombol menu — drawer navigasi terbuka",
-      "Pastikan struktur menu sama dengan sidebar desktop",
-      "Coba ukuran Tablet (misalnya iPad)",
+      "Cara 1 (Desktop): tekan F12 → klik ikon device (tablet/phone) di toolbar DevTools",
+      "Pilih ukuran Mobile (contoh: iPhone 12) — sidebar berubah jadi tombol menu",
+      "Klik tombol menu (hamburger) — drawer navigasi terbuka dari kanan",
+      "Pastikan semua menu tersedia di drawer mobile",
+      "Cara 2 (HP): buka link sistem langsung dari browser HP Anda",
+      "Navigasi beberapa halaman dan amati tampilan mobile",
     ],
-    checkpoint: "Tampilan mobile dan tablet berfungsi dengan navigasi yang lengkap.",
+    checkpoint: "Tampilan mobile berfungsi dengan drawer navigasi yang lengkap dan terbaca.",
   },
 
   // ══════════════════════════════════════════════════════════════
-  // SELESAI — redirect ke Google Form
+  // SELESAI — Kuesioner
   // ══════════════════════════════════════════════════════════════
   {
     id: "finish-1", route: "/uat-guide", role: "ALL",
+    backlog: "Selesai",
     title: "Pengujian selesai — Isi Kuesioner UAT",
-    description: "Anda telah menyelesaikan semua skenario pengujian. Langkah terakhir adalah mengisi kuesioner UAT melalui Google Form.",
+    description: "Selamat! Anda telah menyelesaikan semua skenario pengujian. Langkah terakhir: isi kuesioner Google Form.",
     substeps: [
       "Klik tombol Isi Kuesioner Google Form di bawah",
-      "Google Form akan terbuka di tab baru",
-      "Isi seluruh pertanyaan kuesioner dengan jujur",
-      "Klik Submit setelah selesai",
-      "Terima kasih atas partisipasi Anda!",
+      "Google Form terbuka di tab baru",
+      "Isi semua 36 pertanyaan dengan jujur berdasarkan pengalaman nyata",
+      "Klik Submit / Kirim setelah selesai",
+      "Terima kasih atas partisipasi Anda dalam pengujian ini!",
     ],
     checkpoint: "Kuesioner Google Form berhasil diisi dan disubmit.",
-    tips: "Jawaban Anda bersifat rahasia dan hanya digunakan untuk keperluan penelitian akademis.",
+    tips: "Jawaban Anda bersifat rahasia dan hanya digunakan untuk keperluan penelitian akademis skripsi.",
     action: "Isi Kuesioner Google Form",
     isExternal: true, externalUrl: GFORM_URL,
   },
 ]
 
-// Helper: filter steps berdasarkan role
+// Helper: dapatkan steps untuk role tertentu, urut sesuai backlog
 export function getStepsForRole(role: UATRole): UATStep[] {
   return ALL_STEPS.filter((s) => s.role === "ALL" || s.role === role)
 }
