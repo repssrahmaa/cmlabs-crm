@@ -85,15 +85,24 @@ export default function LoginPage() {
   ]
   const { start: startUAT, active: uatActive, role: uatRole } = useUAT()
 function handleStartUAT(role: UATRole) {
-  const account = DEMO_ACCOUNTS.find(
-    (acc) => acc.role === role
-  )
+  const accountMap: Record<UATRole, string> = {
+    SUPER_ADMIN: "super_admin@cmlabs.co",
+    EXECUTIVE: "executive@cmlabs.co",
+    SALES_MANAGER: "sales_mgr@cmlabs.co",
+    ACCOUNT_EXECUTIVE: "ae@cmlabs.co",
+  }
 
-  if (!account) return
+  setEmail(accountMap[role])
+  setPassword("Test1234!")
 
-  setEmail(account.email)
-  setPassword("123456") // atau account.password jika ada
   startUAT(role)
+
+  // auto login & redirect
+  signIn("credentials", {
+    email: accountMap[role],
+    password: "Test1234!",
+    callbackUrl: "/dashboard",
+  })
 }
 
   if (!mounted) return <div style={{ minHeight: "100vh", background: "#080d14" }} />
@@ -542,7 +551,12 @@ function handleStartUAT(role: UATRole) {
               fontFamily: "DM Mono, monospace",
             }}>
               {
-  DEMO_ACCOUNTS.find((acc) => acc.role === r)?.email
+  {
+    SUPER_ADMIN: "super_admin@cmlabs.co",
+    EXECUTIVE: "executive@cmlabs.co",
+    SALES_MANAGER: "sales_mgr@cmlabs.co",
+    ACCOUNT_EXECUTIVE: "ae@cmlabs.co",
+  }[r]
 }
             </div>
           </div>
