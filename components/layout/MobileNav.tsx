@@ -5,9 +5,10 @@ import Link               from "next/link"
 import { usePathname }    from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { useRoleGuard }   from "@/hooks/useRoleGuard"
+import { useTheme }       from "@/hooks/useTheme"
 
 // ── SVG Icons ──────────────────────────────────────────────────
-const IC = {
+const NavIcons = {
   Dashboard: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -22,12 +23,6 @@ const IC = {
       <circle cx="9" cy="7" r="4"/>
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
       <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-  Mail: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-      <polyline points="22,6 12,13 2,6"/>
     </svg>
   ),
   Forecast: () => (
@@ -79,21 +74,37 @@ const IC = {
       <line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
   ),
+  // Theme icons
+  Sun: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  ),
+  Moon: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  ),
+  // Hamburger & X
   Bars: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
       <line x1="3" y1="6"  x2="21" y2="6"/>
       <line x1="3" y1="12" x2="21" y2="12"/>
       <line x1="3" y1="18" x2="21" y2="18"/>
     </svg>
   ),
   X: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6"  y2="18"/>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
       <line x1="6"  y1="6" x2="18" y2="18"/>
     </svg>
   ),
   Layers: () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2L2 7l10 5 10-5-10-5z"/>
       <path d="M2 17l10 5 10-5"/>
       <path d="M2 12l10 5 10-5"/>
@@ -122,7 +133,7 @@ function MobileNavItem({ href, label, Icon, isActive, badge, onClick }: {
         fontWeight:     isActive ? 600 : 400,
         color:          isActive ? "#ffffff" : "rgba(255,255,255,0.45)",
         background:     isActive
-          ? "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(29,78,216,0.85))"
+          ? "linear-gradient(135deg,rgba(59,130,246,0.9),rgba(29,78,216,0.85))"
           : "transparent",
         boxShadow:      isActive ? "0 2px 10px rgba(59,130,246,0.3)" : "none",
         transition:     "all 0.15s",
@@ -159,7 +170,6 @@ function MobileNavItem({ href, label, Icon, isActive, badge, onClick }: {
   )
 }
 
-// ── Section Label ──────────────────────────────────────────────
 function SL({ label }: { label: string }) {
   return (
     <div style={{
@@ -172,17 +182,12 @@ function SL({ label }: { label: string }) {
   )
 }
 
-// ── Main Component ─────────────────────────────────────────────
 export default function MobileNav() {
   const [open, setOpen]   = useState(false)
   const pathname          = usePathname()
   const { data: session } = useSession()
-  const {
-    role, is,
-    canAccessForecasting,
-    canAccessTeam,
-    canAccessReports,
-  } = useRoleGuard()
+  const { isDark, toggle } = useTheme()
+  const { role, is, canAccessForecasting, canAccessTeam, canAccessReports } = useRoleGuard()
 
   const close = () => setOpen(false)
 
@@ -200,86 +205,130 @@ export default function MobileNav() {
   const userRole      = role ?? "VIEWER"
   const userRoleLabel = ROLE_LABEL[userRole] ?? userRole
   const userRoleColor = ROLE_COLOR[userRole] ?? "#94a3b8"
-  const userName      = session?.user?.name  ?? "User"
+  const userName      = session?.user?.name ?? "User"
   const userEmail     = session?.user?.email ?? ""
   const userInitial   = userName.charAt(0).toUpperCase()
 
   const isActive = (href: string, exact = false) =>
-    exact
-      ? pathname === href
-      : pathname === href || pathname.startsWith(href + "/")
+    exact ? pathname === href : pathname === href || pathname.startsWith(href + "/")
 
   return (
     <>
-      {/* ── Mobile Top Bar ──────────────────────────── */}
+      {/* ── Mobile Top Bar ──────────────────────────────
+          Layout: [Brand logo + nama] ... [Theme btn] [Menu btn]
+          Theme button di SEBELAH KIRI menu button (pojok kanan)
+      ─────────────────────────────────────────────────── */}
       <div
-        className="mobile-nav-wrapper"
+        className="mobile-topbar"
         style={{
-          background:   "linear-gradient(90deg, #07111e, #0a1628)",
+          background:   "linear-gradient(90deg,#07111e,#0a1628)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        {/* Brand */}
+        {/* Left: Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <div style={{
-            width:          30, height: 30, borderRadius: 8,
-            background:     "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-            display:        "flex", alignItems: "center", justifyContent: "center",
-            boxShadow:      "0 2px 10px rgba(59,130,246,0.4)",
+            width: 30, height: 30, borderRadius: 8,
+            background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(59,130,246,0.4)", flexShrink: 0,
           }}>
-            <IC.Layers />
+            <NavIcons.Layers />
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#f0f6fc", letterSpacing: "-0.01em", lineHeight: 1.2 }}>
               CMLabs CRM
             </div>
-            <div style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <div style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", letterSpacing: "0.07em", textTransform: "uppercase" }}>
               Sales Management
             </div>
           </div>
         </div>
 
-        {/* Right actions */}
-<div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-  <button
-    onClick={() => setOpen(true)}
-    style={{
-      width: 38,
-      height: 38,
-      borderRadius: 10,
-      border: "1px solid rgba(255,255,255,0.08)",
-      background: "rgba(255,255,255,0.05)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "#fff",
-      cursor: "pointer",
-    }}
-  >
-    <IC.Bars />
-  </button>
-</div>
+        {/* Right: Theme toggle (kiri) + Menu button (kanan/pojok kanan atas) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+
+          {/* Theme toggle button */}
+          <button
+            onClick={toggle}
+            title={isDark ? "Light Mode" : "Dark Mode"}
+            style={{
+              width:          36, height: 36,
+              borderRadius:   9,
+              background:     "rgba(255,255,255,0.07)",
+              border:         "1px solid rgba(255,255,255,0.12)",
+              cursor:         "pointer",
+              color:          "rgba(255,255,255,0.65)",
+              display:        "flex",
+              alignItems:     "center",
+              justifyContent: "center",
+              transition:     "all 0.15s",
+              flexShrink:     0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background   = "rgba(255,255,255,0.12)"
+              e.currentTarget.style.borderColor  = "rgba(255,255,255,0.2)"
+              e.currentTarget.style.color        = "#fff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background   = "rgba(255,255,255,0.07)"
+              e.currentTarget.style.borderColor  = "rgba(255,255,255,0.12)"
+              e.currentTarget.style.color        = "rgba(255,255,255,0.65)"
+            }}
+          >
+            {isDark ? <NavIcons.Sun /> : <NavIcons.Moon />}
+          </button>
+
+          {/* Hamburger menu button — pojok kanan atas */}
+          <button
+            onClick={() => setOpen(true)}
+            title="Buka menu navigasi"
+            style={{
+              width:          36, height: 36,
+              borderRadius:   9,
+              background:     "rgba(255,255,255,0.07)",
+              border:         "1px solid rgba(255,255,255,0.12)",
+              cursor:         "pointer",
+              color:          "rgba(255,255,255,0.7)",
+              display:        "flex",
+              alignItems:     "center",
+              justifyContent: "center",
+              transition:     "all 0.15s",
+              flexShrink:     0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background   = "rgba(255,255,255,0.13)"
+              e.currentTarget.style.borderColor  = "rgba(255,255,255,0.22)"
+              e.currentTarget.style.color        = "#fff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background   = "rgba(255,255,255,0.07)"
+              e.currentTarget.style.borderColor  = "rgba(255,255,255,0.12)"
+              e.currentTarget.style.color        = "rgba(255,255,255,0.7)"
+            }}
+          >
+            <NavIcons.Bars />
+          </button>
+        </div>
       </div>
 
-      {/* ── Drawer ──────────────────────────────────── */}
+      {/* ── Drawer ──────────────────────────────────────── */}
       {open && (
         <>
-          {/* Overlay */}
           <div
             onClick={close}
             style={{
               position: "fixed", inset: 0,
               background: "rgba(0,0,0,0.6)",
-              zIndex: 60, backdropFilter: "blur(2px)",
+              zIndex: 60, backdropFilter: "blur(3px)",
             }}
           />
 
-          {/* Drawer Panel */}
           <div style={{
             position:      "fixed",
-            top:           0, right: 0, bottom: 0,
+            top: 0, right: 0, bottom: 0,
             width:         280,
-            background:    "linear-gradient(180deg, #07111e 0%, #0a1628 60%, #060e1a 100%)",
+            background:    "linear-gradient(180deg,#07111e 0%,#0a1628 60%,#060e1a 100%)",
             zIndex:        70,
             display:       "flex",
             flexDirection: "column",
@@ -287,81 +336,77 @@ export default function MobileNav() {
             animation:     "slideInRight 0.25s ease",
           }}>
 
-            {/* Drawer Brand Header */}
+            {/* Drawer header */}
             <div style={{
-              padding:      "18px 16px 14px",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
-              display:      "flex",
+              padding:        "0 14px",
+              height:         54,
+              borderBottom:   "1px solid rgba(255,255,255,0.07)",
+              display:        "flex",
+              alignItems:     "center",
               justifyContent: "space-between",
-              alignItems:   "center",
-              flexShrink:   0,
+              flexShrink:     0,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              {/* Brand dalam drawer */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{
-                  width:      32, height: 32, borderRadius: 9,
-                  background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-                  display:    "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow:  "0 3px 12px rgba(59,130,246,0.4)",
+                  width: 28, height: 28, borderRadius: 7,
+                  background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
                 }}>
-                  <IC.Layers />
+                  <NavIcons.Layers />
                 </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#f0f6fc", letterSpacing: "-0.01em" }}>
-                    CMLabs CRM
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    Sales Management
-                  </div>
-                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#f0f6fc", letterSpacing: "-0.01em" }}>
+                  CMLabs CRM
+                </span>
               </div>
+
+              {/* Close button */}
               <button
                 onClick={close}
                 style={{
-                  width: 30, height: 30, borderRadius: 8,
+                  width: 32, height: 32, borderRadius: 8,
                   background: "rgba(255,255,255,0.07)",
                   border: "1px solid rgba(255,255,255,0.1)",
                   cursor: "pointer", color: "rgba(255,255,255,0.5)",
                   display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background="rgba(255,255,255,0.13)"; e.currentTarget.style.color="#fff" }}
+                onMouseLeave={(e) => { e.currentTarget.style.background="rgba(255,255,255,0.07)"; e.currentTarget.style.color="rgba(255,255,255,0.5)" }}
               >
-                <IC.X />
+                <NavIcons.X />
               </button>
             </div>
 
-            {/* Nav Links */}
+            {/* Nav links */}
             <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto" }}>
               <SL label="Menu Utama" />
-              <MobileNavItem href="/dashboard" label="Dashboard" Icon={IC.Dashboard} isActive={isActive("/dashboard", true)} onClick={close} />
-              <MobileNavItem href="/leads"     label="Leads"     Icon={IC.Leads}     isActive={isActive("/leads")}           onClick={close} />
+              <MobileNavItem href="/dashboard"   label="Dashboard"          Icon={NavIcons.Dashboard}   isActive={isActive("/dashboard",true)} onClick={close} />
+              <MobileNavItem href="/leads"       label="Leads"              Icon={NavIcons.Leads}       isActive={isActive("/leads")}          onClick={close} />
 
-              {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
-                <MobileNavItem href="/mails" label="Komunikasi" Icon={IC.Mail} isActive={isActive("/mails")} onClick={close} />
-              )}
-
-              {(canAccessForecasting || canAccessReports) && (
-                <SL label="Analitik" />
-              )}
+              {(canAccessForecasting || canAccessReports) && <SL label="Analitik" />}
               {canAccessForecasting && (
-                <MobileNavItem href="/forecasting" label="Forecasting" Icon={IC.Forecast} isActive={isActive("/forecasting")} onClick={close} />
+                <MobileNavItem href="/forecasting"       label="Forecasting"       Icon={NavIcons.Forecast}     isActive={isActive("/forecasting")}       onClick={close} />
               )}
               {canAccessReports && (
-                <MobileNavItem href="/reports" label="Laporan & Dokumen" Icon={IC.Report} isActive={isActive("/reports")} onClick={close} />
+                <MobileNavItem href="/reports"           label="Laporan & Dokumen" Icon={NavIcons.Report}        isActive={isActive("/reports")}           onClick={close} />
               )}
               {is("SALES_MANAGER","ACCOUNT_EXECUTIVE") && canAccessReports && (
-                <MobileNavItem href="/reports/personal" label="Performa Saya" Icon={IC.Performance} isActive={isActive("/reports/personal")} onClick={close} />
+                <MobileNavItem href="/reports/personal"  label="Performa Saya"     Icon={NavIcons.Performance}  isActive={isActive("/reports/personal")}  onClick={close} />
               )}
 
               <SL label="Manajemen" />
               {canAccessTeam && (
-                <MobileNavItem href="/team" label="Tim" Icon={IC.Team} isActive={isActive("/team")} onClick={close} />
+                <MobileNavItem href="/team"    label="Tim"         Icon={NavIcons.Team}    isActive={isActive("/team")}         onClick={close} />
               )}
-              <MobileNavItem href="/profile" label="Profil Saya" Icon={IC.Profile} isActive={isActive("/profile", true)} onClick={close} />
+              <MobileNavItem href="/profile"   label="Profil Saya" Icon={NavIcons.Profile} isActive={isActive("/profile",true)} onClick={close} />
 
               <SL label="Pengujian" />
-              <MobileNavItem href="/uat-guide" label="Panduan UAT" Icon={IC.Guide} isActive={isActive("/uat-guide")} badge="UAT" onClick={close} />
+              <MobileNavItem href="/uat-guide" label="Panduan UAT"  Icon={NavIcons.Guide}   isActive={isActive("/uat-guide")} badge="UAT" onClick={close} />
             </nav>
 
-            {/* Footer: Theme + User Card + Logout */}
+            {/* Footer — theme toggle + user card + logout */}
             <div style={{
               borderTop:     "1px solid rgba(255,255,255,0.06)",
               flexShrink:    0,
@@ -369,24 +414,53 @@ export default function MobileNav() {
               flexDirection: "column",
               gap:           0,
             }}>
-
+              {/* Theme toggle row */}
+              <div style={{ padding: "10px 12px 6px" }}>
+                <button
+                  onClick={toggle}
+                  style={{
+                    display:        "flex",
+                    alignItems:     "center",
+                    gap:            8,
+                    width:          "100%",
+                    padding:        "9px 12px",
+                    background:     "rgba(255,255,255,0.05)",
+                    border:         "1px solid rgba(255,255,255,0.1)",
+                    borderRadius:   9,
+                    cursor:         "pointer",
+                    fontSize:       12, fontWeight: 500,
+                    color:          "rgba(255,255,255,0.55)",
+                    transition:     "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background   = "rgba(255,255,255,0.09)"
+                    e.currentTarget.style.color        = "rgba(255,255,255,0.8)"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background   = "rgba(255,255,255,0.05)"
+                    e.currentTarget.style.color        = "rgba(255,255,255,0.55)"
+                  }}
+                >
+                  {isDark ? <NavIcons.Sun /> : <NavIcons.Moon />}
+                  {isDark ? "Light Mode" : "Dark Mode"}
+                </button>
+              </div>
 
               {/* User card */}
               <div style={{
-                margin:  "4px 10px 8px",
+                margin: "4px 10px 8px",
                 padding: "11px 12px",
-                background:   "rgba(255,255,255,0.04)",
-                border:       "1px solid rgba(255,255,255,0.07)",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 10,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{
-                    width:          32, height: 32, borderRadius: 8,
-                    background:     `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
-                    border:         `1px solid ${userRoleColor}40`,
-                    display:        "flex", alignItems: "center", justifyContent: "center",
-                    fontSize:       13, fontWeight: 800,
-                    color:          userRoleColor, flexShrink: 0,
+                    width: 32, height: 32, borderRadius: 8,
+                    background: `linear-gradient(135deg,${userRoleColor}30,${userRoleColor}15)`,
+                    border: `1px solid ${userRoleColor}40`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 800, color: userRoleColor, flexShrink: 0,
                   }}>
                     {userInitial}
                   </div>
@@ -411,28 +485,28 @@ export default function MobileNav() {
                 <button
                   onClick={() => signOut({ callbackUrl: "/login" })}
                   style={{
-                    display:      "flex", alignItems: "center", gap: 8,
-                    width:        "100%", padding: "9px 12px",
-                    background:   "rgba(239,68,68,0.07)",
-                    border:       "1px solid rgba(239,68,68,0.15)",
+                    display: "flex", alignItems: "center", gap: 8,
+                    width: "100%", padding: "9px 12px",
+                    background: "rgba(239,68,68,0.07)",
+                    border: "1px solid rgba(239,68,68,0.15)",
                     borderRadius: 9, color: "rgba(248,113,113,0.8)",
-                    fontSize:     12, fontWeight: 500,
-                    cursor:       "pointer", textAlign: "left",
-                    transition:   "all 0.15s",
+                    fontSize: 12, fontWeight: 500,
+                    cursor: "pointer", textAlign: "left",
+                    transition: "all 0.15s",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background  = "rgba(239,68,68,0.15)"
-                    e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"
-                    e.currentTarget.style.color       = "#f87171"
+                    e.currentTarget.style.background   = "rgba(239,68,68,0.15)"
+                    e.currentTarget.style.borderColor  = "rgba(239,68,68,0.3)"
+                    e.currentTarget.style.color        = "#f87171"
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background  = "rgba(239,68,68,0.07)"
-                    e.currentTarget.style.borderColor = "rgba(239,68,68,0.15)"
-                    e.currentTarget.style.color       = "rgba(248,113,113,0.8)"
+                    e.currentTarget.style.background   = "rgba(239,68,68,0.07)"
+                    e.currentTarget.style.borderColor  = "rgba(239,68,68,0.15)"
+                    e.currentTarget.style.color        = "rgba(248,113,113,0.8)"
                   }}
                 >
-                  <IC.Logout />
-                  Keluar
+                  <NavIcons.Logout />
+                  Keluar dari Akun
                 </button>
               </div>
             </div>
@@ -441,40 +515,11 @@ export default function MobileNav() {
       )}
 
       <style>{`
-  .mobile-nav-wrapper {
-    display: none;
-  }
-
-  @media (max-width: 1024px) {
-    .mobile-nav-wrapper {
-      display: block;
-    }
-  }
-
-  .mobile-topbar {
-    height: 60px;
-    padding: 0 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: blur(12px);
-  }
-
-  @keyframes slideInRight {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-`}</style>
-</>
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+      `}</style>
+    </>
   )
 }

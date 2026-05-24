@@ -55,14 +55,52 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
   userRole: string
   onClose:  () => void
 }) {
-  const [year,     setYear]     = useState(String(new Date().getFullYear()))
+  const CUR_YEAR = new Date().getFullYear()
+  const YEARS    = Array.from({ length: 5 }, (_, i) => String(CUR_YEAR - i))
+  const MONTHS   = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+
+  const [year,     setYear]     = useState(String(CUR_YEAR))
   const [month,    setMonth]    = useState("all")
   const [data,     setData]     = useState<any>(null)
   const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState("")
   const [tab,      setTab]      = useState<"all"|"deal"|"recycle">("all")
 
-  const YEARS  = Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i))
-  const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+  // AbortController untuk cancel request lama
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setLoading(true)
+    setError("")
+    setData(null)
+
+    const params = new URLSearchParams({ salesId: userId, year, month })
+
+    fetch(`/api/reports/sales-detail?${params}`, {
+      signal: ctrl.signal,
+      cache:  "no-store",
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Gagal memuat data")
+        return res.json()
+      })
+      .then((d) => {
+        setData(d)
+        setLoading(false)
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return   // request di-cancel, abaikan
+        setError(err.message)
+        setLoading(false)
+      })
+
+    return () => ctrl.abort()  // cancel saat filter berubah sebelum selesai
+  }, [userId, year, month])
+
+  function formatRp(v: number) {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency", currency: "IDR", notation: "compact",
+    }).format(v)
+  }
 
   const STATUS_COLOR: Record<string, string> = {
     APPROACH:"#6366f1", COLD_LEAD:"#3b82f6", DECK_REQUEST:"#f59e0b",
@@ -72,188 +110,245 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
     APPROACH:"Approach", COLD_LEAD:"Cold Lead", DECK_REQUEST:"Deck Request",
     MEETING:"Meeting", DEAL:"Deal", RECYCLE:"Recycle",
   }
-
-  // ── Fetch dari endpoint sales detail ─────────────────────────
-  useEffect(() => {
-    setLoading(true)
-    // Ambil dari dashboard stats dengan filter sales ID
-    const params = new URLSearchParams({
-      year, month, section: "sales",
-    })
-    fetch(`/api/dashboard/stats?${params}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const allSales = d.charts?.salesPerformance ?? []
-        const found    = allSales.find((s: any) => s.id === userId)
-        setData(found ?? null)
-      })
-      .catch(() => setData(null))
-      .finally(() => setLoading(false))
-  }, [userId, year, month])
-
-  function formatRp(v: number) {
-    return new Intl.NumberFormat("id-ID", {
-      style:"currency", currency:"IDR", notation:"compact",
-    }).format(v)
-  }
-
-  const leads        = data?.leads ?? []
-  const wonLeads     = leads.filter((l: any) => l.status === "DEAL")
-  const recycleLeads = leads.filter((l: any) => l.status === "RECYCLE")
-  const revenue      = wonLeads.reduce((s: number, l: any) => s + Number(l.value ?? 0), 0)
-  const winRate      = (wonLeads.length + recycleLeads.length) > 0
-    ? Math.round((wonLeads.length / (wonLeads.length + recycleLeads.length)) * 100) : 0
-
-  const byStatus = leads.reduce((acc: any, l: any) => {
-    acc[l.status] = (acc[l.status] ?? 0) + 1; return acc
-  }, {} as Record<string, number>)
-
-  const filteredLeads = tab === "all"     ? leads
-    : tab === "deal"    ? wonLeads
-    : recycleLeads
-
   const ROLE_LABEL: Record<string, string> = {
     SALES_MANAGER:"Sales Manager", ACCOUNT_EXECUTIVE:"Account Executive",
   }
 
-  return (
-    <div onClick={onClose} style={{
-      position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:200,
-      display:"flex", alignItems:"center", justifyContent:"center", padding:20,
-    }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background:"var(--bg-card)", borderRadius:16, padding:0,
-        width:"100%", maxWidth:680, maxHeight:"90vh",
-        border:"1px solid var(--border)", boxShadow:"var(--shadow-xl)",
-        display:"flex", flexDirection:"column",
-        animation:"scaleIn .22s ease",
-      }}>
+  const leads        = data?.leads ?? []
+  const stats        = data?.stats ?? { total:0, won:0, lost:0, active:0, revenue:0, winRate:0 }
+  const statusDist   = data?.statusDist ?? {}
 
-        {/* Modal Header */}
+  const filteredLeads = tab === "all"
+    ? leads
+    : tab === "deal"
+    ? leads.filter((l: any) => l.status === "DEAL")
+    : leads.filter((l: any) => l.status === "RECYCLE")
+
+  // Skeleton loader
+  function Skeleton({ w, h }: { w: string; h: number }) {
+    return (
+      <div style={{
+        width: w, height: h, borderRadius: 6,
+        background: "linear-gradient(90deg,var(--bg-card2) 25%,var(--bg-card3,#192538) 50%,var(--bg-card2) 75%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 1.4s infinite",
+      }} />
+    )
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,
+        display:"flex",alignItems:"center",justifyContent:"center",padding:20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background:   "var(--bg-card)",
+          borderRadius: 16,
+          width:        "100%", maxWidth: 640,
+          maxHeight:    "88vh",
+          border:       "1px solid var(--border)",
+          boxShadow:    "var(--shadow-xl)",
+          display:      "flex", flexDirection: "column",
+          animation:    "scaleIn .22s ease",
+          overflow:     "hidden",
+        }}
+      >
+
+        {/* ── Header ──────────────────────────────── */}
         <div style={{
-          padding:"18px 22px 14px",
-          borderBottom:"1px solid var(--border)",
-          display:"flex", justifyContent:"space-between", alignItems:"center",
-          flexShrink:0,
+          padding:        "16px 20px",
+          borderBottom:   "1px solid var(--border)",
+          display:        "flex",
+          justifyContent: "space-between",
+          alignItems:     "center",
+          flexShrink:     0,
         }}>
           <div>
-            <h3 style={{ margin:"0 0 3px", fontSize:16, fontWeight:700, color:"var(--text-primary)" }}>
-              Detail Performa — {userName}
+            <h3 style={{ margin:"0 0 2px",fontSize:15,fontWeight:700,color:"var(--text-primary)" }}>
+              Performa — {userName}
             </h3>
-            <p style={{ margin:0, fontSize:12, color:"var(--text-muted)" }}>
+            <p style={{ margin:0,fontSize:11,color:"var(--text-muted)" }}>
               {ROLE_LABEL[userRole] ?? userRole}
             </p>
           </div>
-          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-            {/* Filter */}
-            <select value={year} onChange={(e) => setYear(e.target.value)} style={{
-              padding:"5px 9px", background:"var(--bg-card2)", color:"var(--text-secondary)",
-              border:"1px solid var(--border)", borderRadius:7, fontSize:11, cursor:"pointer",
-            }}>
+          <div style={{ display:"flex",gap:7,alignItems:"center" }}>
+            {/* Filter — hanya aktif ketika data sudah ada */}
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              style={{
+                padding:"5px 9px",background:"var(--bg-card2)",color:"var(--text-secondary)",
+                border:"1px solid var(--border)",borderRadius:7,fontSize:11,cursor:"pointer",
+              }}
+            >
               {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
-            <select value={month} onChange={(e) => setMonth(e.target.value)} style={{
-              padding:"5px 9px", background:"var(--bg-card2)", color:"var(--text-secondary)",
-              border:"1px solid var(--border)", borderRadius:7, fontSize:11, cursor:"pointer",
-            }}>
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              style={{
+                padding:"5px 9px",background:"var(--bg-card2)",color:"var(--text-secondary)",
+                border:"1px solid var(--border)",borderRadius:7,fontSize:11,cursor:"pointer",
+              }}
+            >
               <option value="all">Semua Bulan</option>
               {MONTHS.map((m, i) => <option key={i+1} value={String(i+1)}>{m}</option>)}
             </select>
-            <button onClick={onClose} style={{
-              width:32, height:32, borderRadius:8,
-              background:"var(--bg-card2)", border:"1px solid var(--border)",
-              cursor:"pointer", color:"var(--text-muted)",
-              display:"flex", alignItems:"center", justifyContent:"center", fontSize:18,
-            }}>
+            <button
+              onClick={onClose}
+              style={{
+                width:32,height:32,borderRadius:8,
+                background:"var(--bg-card2)",border:"1px solid var(--border)",
+                cursor:"pointer",color:"var(--text-muted)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,
+              }}
+            >
               &times;
             </button>
           </div>
         </div>
 
-        {/* Modal Content */}
-        <div style={{ flex:1, overflowY:"auto", padding:"18px 22px" }}>
-          {loading ? (
-            <div style={{ textAlign:"center", padding:"48px 0", color:"var(--text-muted)" }}>
-              Memuat data...
+        {/* ── Content ─────────────────────────────── */}
+        <div style={{ flex:1,overflowY:"auto",padding:"16px 20px" }}>
+
+          {/* Error state */}
+          {error && (
+            <div style={{
+              padding:"12px 14px",background:"var(--danger-pale)",
+              border:"1px solid rgba(239,68,68,0.2)",borderRadius:9,
+              fontSize:13,color:"var(--danger)",marginBottom:12,
+            }}>
+              {error}
             </div>
-          ) : !data ? (
-            <div style={{ textAlign:"center", padding:"48px 0", color:"var(--text-muted)" }}>
-              Tidak ada data untuk periode ini
+          )}
+
+          {/* Loading skeleton */}
+          {loading && (
+            <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+              {/* KPI skeletons */}
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10 }}>
+                {[0,1,2,3].map((i) => (
+                  <div key={i} style={{ background:"var(--bg-card2)",borderRadius:10,padding:"12px 14px",border:"1px solid var(--border)" }}>
+                    <Skeleton w="60%" h={10} />
+                    <div style={{ marginTop:8 }}><Skeleton w="80%" h={22} /></div>
+                  </div>
+                ))}
+              </div>
+              {/* Chart skeletons */}
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+                <div style={{ background:"var(--bg-card2)",borderRadius:10,padding:14,border:"1px solid var(--border)",height:140 }}>
+                  <Skeleton w="50%" h={10} />
+                  <div style={{ marginTop:12,display:"flex",flexDirection:"column",gap:8 }}>
+                    {[0,1,2].map((i) => <Skeleton key={i} w="100%" h={14} />)}
+                  </div>
+                </div>
+                <div style={{ background:"var(--bg-card2)",borderRadius:10,padding:14,border:"1px solid var(--border)",height:140 }}>
+                  <Skeleton w="50%" h={10} />
+                  <div style={{ marginTop:12,display:"flex",flexDirection:"column",gap:8 }}>
+                    {[0,1,2,3].map((i) => <Skeleton key={i} w="100%" h={14} />)}
+                  </div>
+                </div>
+              </div>
+              {/* Lead list skeleton */}
+              <div style={{ background:"var(--bg-card2)",borderRadius:10,border:"1px solid var(--border)",overflow:"hidden" }}>
+                <div style={{ padding:"10px 14px",borderBottom:"1px solid var(--border)" }}>
+                  <Skeleton w="40%" h={12} />
+                </div>
+                {[0,1,2,3].map((i) => (
+                  <div key={i} style={{ padding:"11px 14px",borderBottom:"1px solid var(--border-light)",display:"flex",gap:10,alignItems:"center" }}>
+                    <Skeleton w="10px" h={10} />
+                    <div style={{ flex:1 }}>
+                      <Skeleton w="60%" h={12} />
+                      <div style={{ marginTop:5 }}><Skeleton w="40%" h={10} /></div>
+                    </div>
+                    <Skeleton w="60px" h={18} />
+                  </div>
+                ))}
+              </div>
+              <style>{`@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
             </div>
-          ) : (
+          )}
+
+          {/* Data loaded */}
+          {!loading && !error && data && (
             <>
-              {/* KPI strip — semua dari data.leads yang sudah difilter API */}
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:10, marginBottom:18 }} className="grid-4">
+              {/* KPI strip */}
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14 }} className="grid-4">
                 {[
-                  { l:"Total Lead", v:leads.length,   c:"var(--primary)" },
-                  { l:"Deal",       v:wonLeads.length, c:"var(--success)" },
-                  { l:"Recycle",    v:recycleLeads.length, c:"var(--danger)" },
-                  { l:"Revenue",    v:formatRp(revenue), c:"var(--purple)" },
+                  { l:"Total Lead", v:stats.total,          c:"var(--primary)" },
+                  { l:"Deal",       v:stats.won,            c:"var(--success)" },
+                  { l:"Recycle",    v:stats.lost,           c:"var(--danger)"  },
+                  { l:"Revenue",    v:formatRp(stats.revenue), c:"var(--purple)" },
                 ].map((s) => (
                   <div key={s.l} style={{
-                    background:"var(--bg-card2)", borderRadius:10,
-                    padding:"12px 14px", border:"1px solid var(--border)",
+                    background:"var(--bg-card2)",borderRadius:10,
+                    padding:"11px 13px",border:"1px solid var(--border)",
                     borderTop:`2px solid ${s.c}`,
                   }}>
-                    <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{s.l}</div>
-                    <div style={{ fontSize:18, fontWeight:800, color:s.c }}>{s.v}</div>
+                    <div style={{ fontSize:10,color:"var(--text-muted)",marginBottom:4,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em" }}>{s.l}</div>
+                    <div style={{ fontSize:18,fontWeight:800,color:s.c }}>{s.v}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Win rate + Status distribusi */}
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:18 }} className="grid-2">
+              {/* Win Rate + Status dist */}
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14 }} className="grid-2">
 
-                {/* Win Rate visual */}
-                <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
-                  <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Win Rate</p>
+                {/* Win Rate */}
+                <div style={{ background:"var(--bg-card2)",borderRadius:10,padding:"13px 14px",border:"1px solid var(--border)" }}>
+                  <p style={{ margin:"0 0 10px",fontSize:11,fontWeight:600,color:"var(--text-secondary)" }}>Win Rate</p>
                   {[
-                    { l:"Deal",    v:wonLeads.length,    c:"var(--success)", total:leads.length },
-                    { l:"Aktif",   v:leads.length - wonLeads.length - recycleLeads.length, c:"var(--primary)", total:leads.length },
-                    { l:"Recycle", v:recycleLeads.length, c:"var(--danger)", total:leads.length },
+                    { l:"Deal",    v:stats.won,                                   c:"var(--success)" },
+                    { l:"Aktif",   v:stats.active,                                c:"var(--primary)" },
+                    { l:"Recycle", v:stats.lost,                                  c:"var(--danger)"  },
                   ].map((s) => {
-                    const pct = s.total > 0 ? Math.round((s.v / s.total) * 100) : 0
+                    const pct = stats.total > 0 ? Math.round((s.v / stats.total) * 100) : 0
                     return (
-                      <div key={s.l} style={{ marginBottom:10 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                          <span style={{ fontSize:12, color:"var(--text-secondary)" }}>{s.l}</span>
-                          <span style={{ fontSize:12, fontWeight:700, color:s.c }}>{s.v} ({pct}%)</span>
+                      <div key={s.l} style={{ marginBottom:8 }}>
+                        <div style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
+                          <span style={{ fontSize:11,color:"var(--text-secondary)" }}>{s.l}</span>
+                          <span style={{ fontSize:11,fontWeight:700,color:s.c }}>{s.v} ({pct}%)</span>
                         </div>
-                        <div style={{ height:6, background:"var(--bg-card)", borderRadius:999, overflow:"hidden" }}>
-                          <div style={{ height:"100%", width:`${pct}%`, background:s.c, borderRadius:999, transition:"width .8s ease" }} />
+                        <div style={{ height:5,background:"var(--bg-card)",borderRadius:999,overflow:"hidden" }}>
+                          <div style={{ height:"100%",width:`${pct}%`,background:s.c,borderRadius:999,transition:"width .6s ease" }} />
                         </div>
                       </div>
                     )
                   })}
-                  <div style={{ textAlign:"center", marginTop:12, paddingTop:10, borderTop:"1px solid var(--border-light)" }}>
-                    <span style={{ fontSize:24, fontWeight:900, color:"var(--success)" }}>{winRate}%</span>
-                    <span style={{ fontSize:11, color:"var(--text-muted)", marginLeft:5 }}>Win Rate</span>
+                  <div style={{ borderTop:"1px solid var(--border-light)",paddingTop:8,textAlign:"center" }}>
+                    <span style={{ fontSize:22,fontWeight:900,color:"var(--success)" }}>{stats.winRate}%</span>
+                    <span style={{ fontSize:11,color:"var(--text-muted)",marginLeft:5 }}>Win Rate</span>
                   </div>
                 </div>
 
-                {/* Status distribusi */}
-                <div style={{ background:"var(--bg-card2)", borderRadius:12, padding:16, border:"1px solid var(--border)" }}>
-                  <p style={{ margin:"0 0 12px", fontSize:12, fontWeight:600, color:"var(--text-secondary)" }}>Distribusi Status</p>
-                  {Object.entries(byStatus).length === 0 ? (
-                    <p style={{ fontSize:12, color:"var(--text-muted)", textAlign:"center", paddingTop:20 }}>Tidak ada lead</p>
+                {/* Status distribution */}
+                <div style={{ background:"var(--bg-card2)",borderRadius:10,padding:"13px 14px",border:"1px solid var(--border)" }}>
+                  <p style={{ margin:"0 0 10px",fontSize:11,fontWeight:600,color:"var(--text-secondary)" }}>Distribusi Status</p>
+                  {Object.keys(statusDist).length === 0 ? (
+                    <p style={{ fontSize:12,color:"var(--text-muted)",textAlign:"center",padding:"20px 0" }}>Tidak ada lead</p>
                   ) : (
-                    Object.entries(byStatus)
-                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                    Object.entries(statusDist)
+                      .sort(([,a],[,b]) => (b as number) - (a as number))
                       .map(([status, count]) => {
                         const c   = STATUS_COLOR[status] ?? "#94a3b8"
                         const l   = STATUS_LABEL[status] ?? status
-                        const pct = leads.length > 0 ? Math.round(((count as number) / leads.length) * 100) : 0
+                        const pct = stats.total > 0 ? Math.round(((count as number)/stats.total)*100) : 0
                         return (
-                          <div key={status} style={{ marginBottom:8 }}>
-                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                              <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                                <div style={{ width:7, height:7, borderRadius:2, background:c }} />
-                                <span style={{ fontSize:11, color:"var(--text-secondary)" }}>{l}</span>
+                          <div key={status} style={{ marginBottom:7 }}>
+                            <div style={{ display:"flex",justifyContent:"space-between",marginBottom:3 }}>
+                              <div style={{ display:"flex",alignItems:"center",gap:5 }}>
+                                <div style={{ width:6,height:6,borderRadius:2,background:c }} />
+                                <span style={{ fontSize:11,color:"var(--text-secondary)" }}>{l}</span>
                               </div>
-                              <span style={{ fontSize:11, fontWeight:700, color:c }}>{count as number}</span>
+                              <span style={{ fontSize:11,fontWeight:700,color:c }}>{count as number}</span>
                             </div>
-                            <div style={{ height:5, background:"var(--bg-card)", borderRadius:999, overflow:"hidden" }}>
-                              <div style={{ height:"100%", width:`${pct}%`, background:c, borderRadius:999 }} />
+                            <div style={{ height:4,background:"var(--bg-card)",borderRadius:999,overflow:"hidden" }}>
+                              <div style={{ height:"100%",width:`${pct}%`,background:c,borderRadius:999 }} />
                             </div>
                           </div>
                         )
@@ -262,23 +357,23 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
                 </div>
               </div>
 
-              {/* Tab filter leads */}
-              <div style={{ display:"flex", gap:4, padding:4, background:"var(--bg-card2)", borderRadius:10, border:"1px solid var(--border)", marginBottom:12 }}>
+              {/* Tab filter */}
+              <div style={{ display:"flex",gap:4,padding:4,background:"var(--bg-card2)",borderRadius:9,border:"1px solid var(--border)",marginBottom:10 }}>
                 {([
-                  { k:"all"    as const, l:`Semua (${leads.length})`        },
-                  { k:"deal"   as const, l:`Deal (${wonLeads.length})`      },
-                  { k:"recycle"as const, l:`Recycle (${recycleLeads.length})` },
+                  { k:"all"     as const, l:`Semua (${stats.total})`        },
+                  { k:"deal"    as const, l:`Deal (${stats.won})`           },
+                  { k:"recycle" as const, l:`Recycle (${stats.lost})`      },
                 ]).map((t) => (
                   <button key={t.k} onClick={() => setTab(t.k)} style={{
-                    flex:1, padding:"7px 10px",
-                    background: tab === t.k ? "var(--bg-card)" : "transparent",
-                    border:"none", borderRadius:7,
-                    fontSize:12, fontWeight: tab === t.k ? 700 : 500,
-                    color: tab === t.k
-                      ? t.k === "deal" ? "var(--success)" : t.k === "recycle" ? "var(--danger)" : "var(--primary)"
+                    flex:1,padding:"6px 8px",
+                    background: tab===t.k ? "var(--bg-card)" : "transparent",
+                    border:"none",borderRadius:6,
+                    fontSize:11,fontWeight:tab===t.k?700:500,
+                    color: tab===t.k
+                      ? t.k==="deal" ? "var(--success)" : t.k==="recycle" ? "var(--danger)" : "var(--primary)"
                       : "var(--text-muted)",
-                    cursor:"pointer", transition:"all .15s",
-                    boxShadow: tab === t.k ? "var(--shadow-xs)" : "none",
+                    cursor:"pointer",transition:"all .15s",
+                    boxShadow:tab===t.k?"var(--shadow-xs)":"none",
                   }}>
                     {t.l}
                   </button>
@@ -286,10 +381,10 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
               </div>
 
               {/* Lead list */}
-              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
                 {filteredLeads.length === 0 ? (
-                  <div style={{ textAlign:"center", padding:"24px 0", color:"var(--text-muted)", fontSize:13 }}>
-                    Tidak ada data
+                  <div style={{ textAlign:"center",padding:"24px 0",color:"var(--text-muted)",fontSize:12 }}>
+                    Tidak ada lead
                   </div>
                 ) : filteredLeads.map((lead: any) => {
                   const sc     = STATUS_COLOR[lead.status] ?? "#94a3b8"
@@ -297,30 +392,27 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
                   const isDeal = lead.status === "DEAL"
                   return (
                     <div key={lead.id} style={{
-                      display:"flex", alignItems:"center", gap:12,
-                      padding:"11px 14px",
-                      background: isDeal ? "rgba(16,185,129,0.05)" : "var(--bg-card2)",
-                      borderRadius:10,
-                      border:`1px solid ${isDeal ? "rgba(16,185,129,0.15)" : "var(--border)"}`,
+                      display:"flex",alignItems:"center",gap:10,
+                      padding:"10px 13px",
+                      background:isDeal?"rgba(16,185,129,0.04)":"var(--bg-card2)",
+                      borderRadius:9,
+                      border:`1px solid ${isDeal?"rgba(16,185,129,0.14)":"var(--border)"}`,
                     }}>
-                      <div style={{ width:7, height:7, borderRadius:"50%", background:sc, flexShrink:0 }} />
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:12, fontWeight:600, color:"var(--text-primary)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      <div style={{ width:7,height:7,borderRadius:"50%",background:sc,flexShrink:0 }} />
+                      <div style={{ flex:1,minWidth:0 }}>
+                        <div style={{ fontSize:12,fontWeight:600,color:"var(--text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>
                           {lead.title}
                         </div>
-                        <div style={{ fontSize:10, color:"var(--text-muted)" }}>
-                          {lead.clientName}{lead.clientCompany ? ` — ${lead.clientCompany}` : ""}
+                        <div style={{ fontSize:10,color:"var(--text-muted)" }}>
+                          {lead.clientName}{lead.clientCompany?` — ${lead.clientCompany}`:""}
                         </div>
                       </div>
-                      <span style={{
-                        fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:999,
-                        background:sc+"18", color:sc, flexShrink:0,
-                      }}>
+                      <span style={{ fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:999,background:sc+"18",color:sc,flexShrink:0,whiteSpace:"nowrap" }}>
                         {sl}
                       </span>
-                      {lead.value && (
-                        <span style={{ fontSize:11, fontWeight:700, color: isDeal ? "var(--success)" : "var(--text-muted)", flexShrink:0 }}>
-                          {formatRp(Number(lead.value))}
+                      {lead.value !== null && (
+                        <span style={{ fontSize:11,fontWeight:700,color:isDeal?"var(--success)":"var(--text-muted)",flexShrink:0 }}>
+                          {formatRp(lead.value)}
                         </span>
                       )}
                     </div>
@@ -329,9 +421,20 @@ function SalesDetailModal({ userId, userName, userRole, onClose }: {
               </div>
             </>
           )}
+
+          {/* Empty state */}
+          {!loading && !error && !data && (
+            <div style={{ textAlign:"center",padding:"40px 0",color:"var(--text-muted)",fontSize:13 }}>
+              Tidak ada data untuk periode ini
+            </div>
+          )}
         </div>
       </div>
-      <style>{`@keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
+
+      <style>{`
+        @keyframes scaleIn  { from{transform:scale(.95);opacity:0} to{transform:scale(1);opacity:1} }
+        @keyframes shimmer  { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+      `}</style>
     </div>
   )
 }
