@@ -18,38 +18,29 @@ export default async function DashboardLayout({
       {/* Mobile navigation (visible only on mobile) */}
       <MobileNav />
 
-      <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-page)" }}>
-        {/* Sidebar — hidden on mobile via CSS */}
-        <div className="sidebar-desktop" style={{ width: 240, flexShrink: 0 }}>
-          <Sidebar />
-        </div>
+     <div className="dashboard-layout">
 
-        {/* Main content */}
-        <div
-  className="main-with-sidebar"
-  style={{
-    flex:          1,
-    display:       "flex",
-    flexDirection: "column",
-    minHeight:     "100vh",
-    minWidth:      0,
-    transition:    "all .3s ease",
-  }}
->
-          <div className="hide-mobile">
-            <Header />
-          </div>
-          <main
-            style={{
-              flex:    1,
-              padding: "20px 24px 32px",
-              minWidth: 0,
-            }}
-          >
-            {children}
-          </main>
-        </div>
-      </div>
+  {/* Sidebar */}
+  <aside className="dashboard-sidebar sidebar-desktop">
+    <Sidebar />
+  </aside>
+
+  {/* Main */}
+  <div className="dashboard-main">
+
+    {/* Header */}
+    <div className="hide-mobile">
+      <Header />
+    </div>
+
+    {/* Page Content */}
+    <main className="dashboard-content">
+      {children}
+    </main>
+
+  </div>
+
+</div>
     </SessionProvider>
   )
 }

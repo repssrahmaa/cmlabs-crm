@@ -594,3 +594,158 @@ canvas {
     padding: 12px;
   }
 }
+
+/* =========================================================
+   DASHBOARD ROOT LAYOUT
+========================================================= */
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+
+  overflow: hidden;
+
+  background: var(--bg-page);
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.dashboard-sidebar {
+  width: 240px;
+  min-width: 240px;
+
+  flex-shrink: 0;
+
+  transition: all .3s ease;
+
+  border-right: 1px solid var(--border);
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   MAIN AREA
+========================================================= */
+
+.dashboard-main {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 100vh;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.dashboard-content {
+  flex: 1;
+
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: auto;
+
+  padding: 20px 24px 32px;
+}
+
+/* =========================================================
+   GLOBAL FLEX FIX
+========================================================= */
+
+.flex-fix {
+  min-width: 0;
+}
+
+/* =========================================================
+   RESPONSIVE GRID
+========================================================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 992px) {
+
+  .dashboard-sidebar {
+    width: 84px;
+    min-width: 84px;
+  }
+
+  .dashboard-content {
+    padding: 18px;
+  }
+
+  /* hide sidebar text */
+  .sidebar-label,
+  .sidebar-title,
+  .sidebar-user-info,
+  .sidebar-footer-text {
+    display: none;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    min-width: 100%;
+
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dashboard-content {
+    padding: 14px;
+  }
+}
+
+/* =========================================================
+   GLOBAL OVERFLOW FIX
+========================================================= */
+
+* {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
