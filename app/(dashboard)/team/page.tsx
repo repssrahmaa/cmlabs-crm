@@ -27,7 +27,10 @@ const IconChevronRight = () => (
 function CTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background:"var(--bg-card)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px", boxShadow:"var(--shadow-lg)", minWidth:130 }}>
+    <div
+  className="section-card responsive-card"
+  style={{
+    background:"var(--bg-card)", border:"1px solid var(--border)", borderRadius:10, padding:"10px 14px", boxShadow:"var(--shadow-lg)", minWidth:130 }}>
       <p style={{ margin:"0 0 6px", fontSize:10, color:"var(--text-muted)", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{label}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} style={{ display:"flex", justifyContent:"space-between", gap:12, marginBottom:3 }}>
@@ -166,7 +169,7 @@ function SalesDetailModal({
                   </div>
                 ))}
               </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div className="grid-responsive-2">
                 {[0,1].map((i) => (
                   <div key={i} style={{ background:"var(--bg-card2)", borderRadius:10, padding:14, border:"1px solid var(--border)", height:130 }}>
                     <Sk w="50%" h={10} />
@@ -436,7 +439,10 @@ export default function TeamPage() {
       {/* Charts */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }} className="grid-2">
         {/* Role distribution */}
-        <div style={{ background:"var(--bg-card)", borderRadius:14, padding:"16px 18px", border:"1px solid var(--border)", boxShadow:"var(--shadow-xs)" }}>
+        <div
+  className="section-card responsive-card"
+  style={{
+    background:"var(--bg-card)", borderRadius:14, padding:"16px 18px", border:"1px solid var(--border)", boxShadow:"var(--shadow-xs)" }}>
           <h3 style={{ margin:"0 0 3px", fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>Distribusi Role Tim</h3>
           <p style={{ margin:"0 0 12px", fontSize:11, color:"var(--text-muted)" }}>Komposisi berdasarkan role</p>
           <div style={{ display:"flex", alignItems:"center", gap:14, flexWrap:"wrap" }}>
@@ -460,7 +466,10 @@ export default function TeamPage() {
         </div>
 
         {/* Lead per sales bar chart */}
-        <div style={{ background:"var(--bg-card)", borderRadius:14, padding:"16px 18px", border:"1px solid var(--border)", boxShadow:"var(--shadow-xs)" }}>
+        <div
+  className="section-card responsive-card"
+  style={{
+    background:"var(--bg-card)", borderRadius:14, padding:"16px 18px", border:"1px solid var(--border)", boxShadow:"var(--shadow-xs)" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12, flexWrap:"wrap", gap:8 }}>
             <div>
               <h3 style={{ margin:"0 0 2px", fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>Lead per Sales</h3>
@@ -507,7 +516,10 @@ export default function TeamPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background:"var(--bg-card)", borderRadius:14, border:"1px solid var(--border)", overflow:"hidden", boxShadow:"var(--shadow-xs)" }}>
+      <div
+  className="section-card responsive-card"
+  style={{
+    background:"var(--bg-card)", borderRadius:14, border:"1px solid var(--border)", overflow:"hidden", boxShadow:"var(--shadow-xs)" }}>
         <div style={{ overflowX:"auto" }}>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>

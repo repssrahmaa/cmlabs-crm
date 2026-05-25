@@ -108,19 +108,21 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
       >
         <div
           onClick={(e) => e.stopPropagation()}
+          className="modal-responsive"
           style={{
             background:   "var(--bg-card)",          // ← CSS var
             color:        "var(--text-primary)",      // ← CSS var
             border:       "1px solid var(--border)",  // ← CSS var
             borderRadius: 16,
             boxShadow:    "var(--shadow-xl)",
-            width:        "100%", maxWidth: 580,
-            maxHeight:    "92vh", overflowY: "auto",
             padding:      26,
           }}
         >
           {/* Header */}
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+          <div
+  className="modal-header-responsive"
+  style={{ marginBottom:20 }}
+>
             <div style={{ flex:1, minWidth:0, marginRight:12 }}>
               {/* Status + Priority badges */}
               <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" }}>
@@ -199,7 +201,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
               {/* Client Info */}
               <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Klien</p>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
+                <div className="info-grid">
                   {[
                     { l:"Nama",       v:lead.clientName },
                     { l:"Jabatan",    v:lead.clientPosition ?? "-" },
@@ -219,7 +221,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
               {/* Deal Info */}
               <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Deal</p>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 16px" }}>
+                <div className="info-grid">
                   {[
                     { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
                     { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
@@ -300,7 +302,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                 <input type="text" required value={form.title} onChange={set("title")} style={inputStyle} />
               </FormField>
 
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div className="grid-responsive-2">
                 <FormField label="Nama Klien" required>
                   <input type="text" required value={form.clientName} onChange={set("clientName")} style={inputStyle} />
                 </FormField>
@@ -309,7 +311,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                 </FormField>
               </div>
 
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div className="grid-responsive-2">
                 <FormField label="Email Klien">
                   <input type="email" value={form.clientEmail} onChange={set("clientEmail")} style={inputStyle} />
                 </FormField>
@@ -318,7 +320,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                 </FormField>
               </div>
 
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              <div className="grid-responsive-2">
                 <FormField label="Perusahaan">
                   <input type="text" value={form.clientCompany} onChange={set("clientCompany")} style={inputStyle} />
                 </FormField>
@@ -327,7 +329,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                 </FormField>
               </div>
 
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
+              <div className="grid-responsive-3">
                 <FormField label="Nilai (Rp)">
                   <input type="number" min={0} value={form.value} onChange={set("value")} style={inputStyle} />
                 </FormField>
@@ -355,7 +357,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
                 minHeight={80}
               />
 
-              <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+              <div className="button-group-responsive">
                 <button type="button" onClick={() => setMode("view")} style={{
                   padding:"9px 18px", background:"var(--bg-card2)",
                   border:"1px solid var(--border)", borderRadius:9,
@@ -386,3 +388,4 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
     </>
   )
 }
+

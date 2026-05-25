@@ -249,6 +249,7 @@ function SidebarContent({
         <NavItem href="/dashboard" label="Dashboard"  Icon={NavIcons.Dashboard}  isActive={isActive("/dashboard", true)} onClick={onNavClick} />
         <NavItem href="/leads"     label="Leads"      Icon={NavIcons.Leads}      isActive={isActive("/leads")}           onClick={onNavClick} />
 
+
         {(canAccessForecasting || canAccessReports) && (
           <NavSection label="Analitik" />
         )}
