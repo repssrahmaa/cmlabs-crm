@@ -249,10 +249,6 @@ function SidebarContent({
         <NavItem href="/dashboard" label="Dashboard"  Icon={NavIcons.Dashboard}  isActive={isActive("/dashboard", true)} onClick={onNavClick} />
         <NavItem href="/leads"     label="Leads"      Icon={NavIcons.Leads}      isActive={isActive("/leads")}           onClick={onNavClick} />
 
-        {is("SUPER_ADMIN","SALES_MANAGER","ACCOUNT_EXECUTIVE","EXECUTIVE") && (
-          <NavItem href="/mails" label="Komunikasi" Icon={NavIcons.Mail} isActive={isActive("/mails")} onClick={onNavClick} />
-        )}
-
         {(canAccessForecasting || canAccessReports) && (
           <NavSection label="Analitik" />
         )}
