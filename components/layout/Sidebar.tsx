@@ -305,12 +305,17 @@ export default function Sidebar() {
           gap:           0,
         }}>
           {/* Theme toggle */}
-          <div style={{ padding: "10px 12px 6px" }}>
+        <div
+  className="theme-toggle-wrap"
+  style={{ padding: "10px 12px 6px" }}
+>
             <ThemeToggle />
           </div>
 
           {/* User card */}
-          <div style={{
+          <div
+  className="user-card"
+  style={{
             margin:       "4px 10px 8px",
             padding:      "10px 12px",
             background:   "rgba(255,255,255,0.04)",
@@ -318,7 +323,9 @@ export default function Sidebar() {
             borderRadius: 10,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
+              <div
+  className="user-avatar"
+  style={{
                 width:          32, height: 32, borderRadius: 8, flexShrink: 0,
                 background:     `linear-gradient(135deg, ${userRoleColor}30, ${userRoleColor}15)`,
                 border:         `1px solid ${userRoleColor}40`,
@@ -346,6 +353,7 @@ export default function Sidebar() {
           {/* Logout */}
           <div style={{ padding: "0 10px 14px" }}>
             <button
+  className="logout-btn"
               onClick={() => signOut({ callbackUrl: "/login" })}
               style={{
                 display:      "flex", alignItems: "center", gap: 8,
@@ -397,34 +405,87 @@ export default function Sidebar() {
           .sidebar-desktop { width: 180px !important; }
         }
 
-        /* Tablet kecil 641–768px : icon only (64px) */
-        @media (max-width: 768px) {
-          .sidebar-desktop {
-            width: 64px !important;
-          }
-          /* Sembunyikan semua label teks */
-          .nav-label,
-          .brand-text,
-          .user-info,
-          .logout-label,
-          .nav-section {
-            display: none !important;
-          }
-          /* Nav item: center icon */
-          .nav-item {
-            justify-content: center !important;
-            padding: 10px 0 !important;
-          }
-          /* Logout button: center icon */
-          .sidebar-desktop button {
-            justify-content: center !important;
-            padding: 10px 0 !important;
-          }
-          /* User card: center avatar */
-          .sidebar-desktop .user-card-wrap {
-            justify-content: center !important;
-          }
-        }
+        /* Tablet kecil 641–768px : compact icon sidebar */
+@media (max-width: 768px) {
+  .sidebar-desktop {
+    width: 72px !important;
+    padding-top: 4px;
+  }
+
+  /* Hide text */
+  .nav-label,
+  .brand-text,
+  .user-info,
+  .logout-label,
+  .nav-section {
+    display: none !important;
+  }
+
+  /* Nav items */
+  .nav-item {
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 12px 0 !important;
+    border-radius: 12px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Navigation spacing */
+  .sidebar-desktop nav {
+    padding: 8px 6px !important;
+  }
+
+  /* Theme toggle wrapper */
+  .sidebar-desktop .theme-toggle-wrap {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+  }
+
+  /* Force theme button compact */
+  .sidebar-desktop .theme-toggle-wrap button {
+    width: 42px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+    justify-content: center !important;
+  }
+
+  /* User card compact */
+  .sidebar-desktop .user-card {
+    margin: 6px auto !important;
+    padding: 8px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Avatar only */
+  .sidebar-desktop .user-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 !important;
+  }
+
+  /* Logout compact */
+  .sidebar-desktop .logout-btn {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 12px !important;
+  }
+}
 
         /* Mobile ≤640px : hidden completely */
         @media (max-width: 640px) {
