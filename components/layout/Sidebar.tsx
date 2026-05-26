@@ -4,7 +4,6 @@ import Link               from "next/link"
 import { usePathname }    from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import { useRoleGuard }   from "@/hooks/useRoleGuard"
-import ThemeToggle        from "@/components/layout/ThemeToggle"
 
 // ── SVG Icons ──────────────────────────────────────────────────
 const NavIcons = {
@@ -304,13 +303,7 @@ export default function Sidebar() {
           flexDirection: "column",
           gap:           0,
         }}>
-          {/* Theme toggle */}
-        <div
-  className="theme-toggle-wrap"
-  style={{ padding: "10px 12px 6px" }}
->
-  <ThemeToggle />
-</div>
+          
           {/* User card */}
           <div
   className="user-card"
@@ -406,33 +399,7 @@ export default function Sidebar() {
 
         /* Tablet kecil 641–768px : compact icon sidebar */
 @media (max-width: 768px) {
-/* Theme toggle compact */
-.theme-toggle-wrap {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 8px 0 !important;
-}
 
-/* Hide text inside ThemeToggle */
-.theme-toggle-wrap span {
-  display: none !important;
-}
-
-/* Force button jadi square icon */
-.theme-toggle-wrap button {
-  width: 42px !important;
-  height: 42px !important;
-  min-width: 42px !important;
-  padding: 0 !important;
-
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-
-  border-radius: 12px !important;
-}
-  
   .sidebar-desktop {
     width: 72px !important;
     padding-top: 4px;
