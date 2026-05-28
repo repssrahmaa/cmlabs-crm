@@ -40,7 +40,6 @@ export interface Activity {
   description?: string | null
   isDone:      boolean
   dueDate?:    string | null
-  meetLink?:   string | null   // ← BARU
   meetStart?:  string | null   // ← BARU
   meetEnd?:    string | null   // ← BARU
   meetInvites?: string[]       // ← BARU

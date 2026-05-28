@@ -104,19 +104,43 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
     <>
       <div
         onClick={onClose}
-        style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+        style={{
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.6)",
+  zIndex: 100,
+
+  display: "flex",
+  justifyContent: "center",
+
+  overflowY: "auto",
+  padding: "24px 16px",
+
+  alignItems: "flex-start",
+}}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="modal-responsive"
-          style={{
-            background:   "var(--bg-card)",          // ← CSS var
-            color:        "var(--text-primary)",      // ← CSS var
-            border:       "1px solid var(--border)",  // ← CSS var
-            borderRadius: 16,
-            boxShadow:    "var(--shadow-xl)",
-            padding:      26,
-          }}
+         className="modal-responsive"
+style={{
+  background: "var(--bg-card)",
+  color: "var(--text-primary)",
+  border: "1px solid var(--border)",
+  borderRadius: 16,
+  boxShadow: "var(--shadow-xl)",
+
+  width: "100%",
+  maxWidth: 920,
+
+  maxHeight: "calc(100vh - 48px)",
+  overflowY: "auto",
+
+  padding: 26,
+
+  margin: "auto 0",
+
+  scrollbarWidth: "thin",
+}}
         >
           {/* Header */}
           <div

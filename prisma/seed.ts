@@ -1,11 +1,10 @@
 import { PrismaClient, ActivityType, LeadStatus, LeadPriority } from "@prisma/client"
-import { UAT_ACCOUNTS } from "@/lib/uat/uatSteps"
 import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 
 const SALT_ROUNDS = 10
-const DEFAULT_PASSWORD = "Test1234!"
+const DEFAULT_PASSWORD = "Demo123!"
 
 // ── Helper: hash password ──────────────────────────────────────
 async function hashPassword(plain: string): Promise<string> {
@@ -99,49 +98,6 @@ async function main() {
   })
   console.log(`  ✓ ACCOUNT_EXECUTIVE → ${accountExecutive.email}`)
 
-  const viewer = await prisma.user.upsert({
-    where:  { email: "viewer@cmlabs.co" },
-    update: {
-      name:     "Viewer User",
-      password: hashedPassword,
-      role:     "VIEWER",
-      isActive: true,
-    },
-    create: {
-      name:     "Viewer User",
-      email:    "viewer@cmlabs.co",
-      password: hashedPassword,
-      role:     "VIEWER",
-      phone:    "081100000005",
-      isActive: true,
-    },
-  })
-  console.log(`  ✓ VIEWER         → ${viewer.email}`)
-
-  async function seedUATAccounts() {
-  console.log("Seeding 34 UAT accounts...")
-
-  for (const acc of UAT_ACCOUNTS) {
-    const hashed = await hashPassword(acc.password)
-    
-    await prisma.user.upsert({
-      where:  { email: acc.email },
-      update: {},
-      create: {
-        name:     acc.name,
-        email:    acc.email,
-        password: hashed,
-        role:     acc.role,
-        isActive: true,
-        phone:    null,
-      },
-    })
-    console.log(`  Created: ${acc.no} — ${acc.email} (${acc.role})`)
-  }
-
-  console.log("34 UAT accounts seeded successfully!")
-}
-await seedUATAccounts()
   // ────────────────────────────────────────────────────────────
   // 2. LEADS — 3 leads dengan assignment berbeda
   // ────────────────────────────────────────────────────────────
@@ -360,11 +316,10 @@ await seedUATAccounts()
   console.log("   ┌─────────────────────────────┬──────────────────┬───────────────────┐")
   console.log("   │ Email                       │ Password         │ Role              │")
   console.log("   ├─────────────────────────────┼──────────────────┼───────────────────┤")
-  console.log("   │ super_admin@cmlabs.co       │ Test1234!        │ SUPER_ADMIN       │")
-  console.log("   │ executive@cmlabs.co         │ Test1234!        │ EXECUTIVE         │")
-  console.log("   │ sales_mgr@cmlabs.co         │ Test1234!        │ SALES_MANAGER     │")
-  console.log("   │ ae@cmlabs.co                │ Test1234!        │ ACCOUNT_EXECUTIVE │")
-  console.log("   │ viewer@cmlabs.co            │ Test1234!        │ VIEWER            │")
+  console.log("   │ super_admin@cmlabs.co       │ Demo123!        │ SUPER_ADMIN       │")
+  console.log("   │ executive@cmlabs.co         │ Demo123!        │ EXECUTIVE         │")
+  console.log("   │ sales_mgr@cmlabs.co         │ Demo123!        │ SALES_MANAGER     │")
+  console.log("   │ ae@cmlabs.co                │ Demo123!        │ ACCOUNT_EXECUTIVE │")
   console.log("   └─────────────────────────────┴──────────────────┴───────────────────┘")
 }
 

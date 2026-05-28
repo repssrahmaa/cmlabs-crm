@@ -122,11 +122,6 @@ model Activity {
   leadId      String
   userId      String
   metadata    Json?
-  meetLink    String?      
-  meetEventId String?      
-  meetStart   DateTime?    
-  meetEnd     DateTime?    
-  meetInvites String[]     
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

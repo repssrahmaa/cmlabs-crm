@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { UATProvider } from "@/lib/uat/uatContext"
-import UATBubble      from "@/components/uat/UATBubble"
 
 export const metadata: Metadata = {
   title:       "CMLabs CRM",
@@ -25,11 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body>
-        <UATProvider>
-          {children}
-          {/* Bubble persist di semua halaman */}
-          <UATBubble />
-        </UATProvider>
+        {children}
       </body>
     </html>
   )
