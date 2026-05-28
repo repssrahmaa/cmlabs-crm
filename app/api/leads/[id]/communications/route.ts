@@ -8,7 +8,6 @@ import type { RoleType } from "@/lib/permissions"
 
 // Schema sederhana — tidak discriminated union
 const activitySchema = z.object({
-  type:       z.enum(["INTERNAL_NOTE","EMAIL_SENT","EMAIL_RECEIVED","CALL","MEETING","TASK","NOTE"]),
   title:      z.string().min(1, "Judul tidak boleh kosong"),
   content:    z.string().optional().nullable(),
   isDone:     z.boolean().optional(),
@@ -57,24 +56,5 @@ export async function POST(
 
   const d = parsed.data
 
-  const activity = await prisma.activity.create({
-    data: {
-      type:        d.type,
-      title:       d.title,
-      content:     d.content ?? null,
-      isDone:      d.isDone ?? (d.type === "INTERNAL_NOTE" || d.type === "EMAIL_SENT"),
-      dueDate:     d.dueDate     ? new Date(d.dueDate)    : null,
-      meetLink:    d.meetLink    ?? null,
-      meetStart:   d.meetStart   ? new Date(d.meetStart)  : null,
-      meetEnd:     d.meetEnd     ? new Date(d.meetEnd)     : null,
-      meetInvites: d.meetInvites ?? [],
-      leadId,
-      userId: session.user.id,
-    },
-    include: {
-      user: { select: { id: true, name: true } },
-    },
-  })
 
-  return NextResponse.json(activity, { status: 201 })
 }
