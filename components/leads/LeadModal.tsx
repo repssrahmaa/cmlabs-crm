@@ -71,6 +71,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
           ? "Anda hanya dapat mengubah lead yang ditugaskan kepada Anda."
           : "Anda tidak memiliki akses untuk mengubah lead ini."
       )
+      
       return
     }
     setMode("edit")
@@ -129,90 +130,165 @@ style={{
   borderRadius: 16,
   boxShadow: "var(--shadow-xl)",
 
-  width: "100%",
-  maxWidth: 920,
+  maxWidth: "920px",
+width: "100%",
+maxHeight: "90vh",
+overflowY: "auto",
 
-  maxHeight: "calc(100vh - 48px)",
-  overflowY: "auto",
-
-  padding: 26,
+  padding: 22,
 
   margin: "auto 0",
 
   scrollbarWidth: "thin",
 }}
         >
-          {/* Header */}
-          <div
+{/* Header */}
+<div
   className="modal-header-responsive"
-  style={{ marginBottom:20 }}
+  style={{
+    marginBottom: 18,
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 14,
+  }}
 >
-            <div style={{ flex:1, minWidth:0, marginRight:12 }}>
-              {/* Status + Priority badges */}
-              <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" }}>
-                <span style={{
-                  fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999,
-                  background:sc+"20", color:sc,
-                }}>
-                  {sl}
-                </span>
-                <span style={{
-                  fontSize:10, fontWeight:700, padding:"3px 10px", borderRadius:999,
-                  background:(PRIORITY_COLOR[lead.priority]??"")+20,
-                  color: PRIORITY_COLOR[lead.priority] ?? "var(--text-muted)",
-                }}>
-                  {PRIORITY_LABEL[lead.priority] ?? lead.priority}
-                </span>
-              </div>
-              <h2 style={{ margin:0, fontSize:17, fontWeight:700, color:"var(--text-primary)", lineHeight:1.3 }}>
-                {lead.title}
-              </h2>
-            </div>
-            <div style={{ display:"flex", gap:6, flexShrink:0 }}>
-              {canDeleteLead && (
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  title="Hapus lead"
-                  style={{
-                    width:32, height:32, borderRadius:8,
-                    background:"var(--danger-pale)",
-                    border:"1px solid rgba(239,68,68,0.2)",
-                    color:"var(--danger)", cursor:"pointer",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                  }}
-                >
-                  <IconTrash />
-                </button>
-              )}
-              <button
-                onClick={handleEditClick}
-                title="Edit lead"
-                style={{
-                  width:32, height:32, borderRadius:8,
-                  background: mode==="edit" ? "var(--primary)" : "var(--bg-card2)",
-                  border:`1px solid ${mode==="edit" ? "var(--primary)" : "var(--border)"}`,
-                  color: mode==="edit" ? "#fff" : "var(--text-secondary)",
-                  cursor:"pointer",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                }}
-              >
-                <IconEdit />
-              </button>
-              <button
-                onClick={onClose}
-                style={{
-                  width:32, height:32, borderRadius:8,
-                  background:"var(--bg-card2)", border:"1px solid var(--border)",
-                  color:"var(--text-muted)", cursor:"pointer",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                }}
-              >
-                <IconX />
-              </button>
-            </div>
-          </div>
+  {/* LEFT */}
+  <div style={{ flex: 1, minWidth: 0 }}>
+    
+    {/* Status + Priority */}
+    <div
+      style={{
+        display: "flex",
+        gap: 6,
+        marginBottom: 8,
+        flexWrap: "wrap",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          padding: "3px 10px",
+          borderRadius: 999,
+          background: sc + "20",
+          color: sc,
+        }}
+      >
+        {sl}
+      </span>
 
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          padding: "3px 10px",
+          borderRadius: 999,
+          background:
+            (PRIORITY_COLOR[lead.priority] ?? "#94a3b8") + "20",
+          color:
+            PRIORITY_COLOR[lead.priority] ??
+            "var(--text-muted)",
+        }}
+      >
+        {PRIORITY_LABEL[lead.priority] ?? lead.priority}
+      </span>
+    </div>
+
+    {/* Title */}
+    <h2
+      style={{
+        margin: 0,
+        fontSize: 16,
+        fontWeight: 700,
+        color: "var(--text-primary)",
+        lineHeight: 1.35,
+      }}
+    >
+      {lead.title}
+    </h2>
+  </div>
+
+  {/* RIGHT ACTIONS */}
+  <div
+    style={{
+      display: "flex",
+      gap: 8,
+      flexShrink: 0,
+      alignItems: "center",
+    }}
+  >
+    {canDeleteLead && (
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        title="Hapus lead"
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 10,
+          background: "var(--danger-pale)",
+          border: "1px solid rgba(239,68,68,0.18)",
+          color: "var(--danger)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <IconTrash />
+      </button>
+    )}
+
+    <button
+      onClick={handleEditClick}
+      title="Edit lead"
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 10,
+        background:
+          mode === "edit"
+            ? "var(--primary)"
+            : "var(--bg-card2)",
+        border: `1px solid ${
+          mode === "edit"
+            ? "var(--primary)"
+            : "var(--border)"
+        }`,
+        color:
+          mode === "edit"
+            ? "#fff"
+            : "var(--text-secondary)",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <IconEdit />
+    </button>
+
+    <button
+      onClick={onClose}
+      title="Tutup"
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 10,
+        background: "var(--bg-card2)",
+        border: "1px solid var(--border)",
+        color: "var(--text-muted)",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <IconX />
+    </button>
+  </div>
+</div>
           {error && (
             <div style={{ marginBottom:16, padding:"10px 14px", background:"var(--danger-pale)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, fontSize:13, color:"var(--danger)" }}>
               {error}
@@ -226,19 +302,45 @@ style={{
               <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Klien</p>
                 <div className="info-grid">
-                  {[
-                    { l:"Nama",       v:lead.clientName },
-                    { l:"Jabatan",    v:lead.clientPosition ?? "-" },
-                    { l:"Email",      v:lead.clientEmail    ?? "-" },
-                    { l:"Telepon",    v:lead.clientPhone    ?? "-" },
-                    { l:"Perusahaan", v:lead.clientCompany  ?? "-" },
-                    { l:"Sumber",     v:lead.source         ?? "-" },
-                  ].map((r) => (
-                    <div key={r.l}>
-                      <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:2, fontWeight:600 }}>{r.l}</div>
-                      <div style={{ fontSize:13, color:"var(--text-primary)", fontWeight:500 }}>{r.v}</div>
-                    </div>
-                  ))}
+{[
+  { l:"Nama",       v:lead.clientName },
+  { l:"Jabatan",    v:lead.clientPosition ?? "-" },
+  { l:"Email",      v:lead.clientEmail ?? "-" },
+  { l:"Telepon",    v:lead.clientPhone ?? "-" },
+  { l:"Perusahaan", v:lead.clientCompany ?? "-" },
+  { l:"Sumber",     v:lead.source ?? "-" },
+].map((r) => (
+  <div
+    key={r.l}
+    style={{
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 8,
+      fontSize: 13,
+      lineHeight: 1.6,
+    }}
+  >
+    <span
+      style={{
+        minWidth: 95,
+        fontWeight: 700,
+        color: "var(--text-muted)",
+        flexShrink: 0,
+      }}
+    >
+      {r.l}:
+    </span>
+
+    <span
+      style={{
+        color: "var(--text-primary)",
+        wordBreak: "break-word",
+      }}
+    >
+      {r.v}
+    </span>
+  </div>
+))}
                 </div>
               </div>
 
@@ -247,12 +349,12 @@ style={{
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Deal</p>
                 <div className="info-grid">
                   {[
-                    { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
-                    { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
-                    { l:"Dibuat",   v: lead.createdBy?.name  ?? "-" },
-                    { l:"Aktivitas",v: String(lead._count.activities) },
-                  ].map((r) => (
-                    <div key={r.l}>
+  { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
+  { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
+  { l:"Dibuat",   v: lead.createdBy?.name  ?? "-" },
+  { l:"Aktivitas",v: String(lead._count.activities) },
+].map((r) => (
+  <div key={r.l}>
                       <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:2, fontWeight:600 }}>{r.l}</div>
                       <div style={{ fontSize:13, color:"var(--text-primary)", fontWeight:500 }}>{r.v}</div>
                     </div>
@@ -413,3 +515,62 @@ style={{
   )
 }
 
+<style jsx>{`
+  .modal-responsive {
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .modal-responsive {
+      padding: 18px !important;
+      border-radius: 14px !important;
+      max-height: calc(100vh - 24px) !important;
+    }
+
+    .modal-header-responsive {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 14px !important;
+    }
+
+    .grid-responsive-2,
+    .grid-responsive-3,
+    .info-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .button-group-responsive {
+      flex-direction: column-reverse !important;
+    }
+
+    .button-group-responsive button {
+      width: 100%;
+    }
+  }
+    .modal-responsive {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .modal-responsive {
+    padding: 16px !important;
+    border-radius: 12px !important;
+    max-height: 95vh !important;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+`}</style>
