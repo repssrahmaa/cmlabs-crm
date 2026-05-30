@@ -191,76 +191,48 @@ export default function LoginPage() {
     codeTx:  D ? "#6ea8f7"      : "#0047B3",
   }
 
-const inp = (focused: boolean): React.CSSProperties => ({
-  width: "100%",
-  height: 48,
-
-  padding: "0 42px 0 14px",
-
-  borderRadius: 12,
-  outline: "none",
-
-  fontSize: 13.5,
-  fontWeight: 500,
-
-  transition: "all 0.2s ease",
-
-  color: isDark ? "#f8fafc" : "#0f172a",
-
-  background: isDark
-    ? "#0f172a"
-    : "#ffffff",
-
-  border: focused
-    ? `1px solid ${isDark ? "#3b82f6" : "#2563eb"}`
-    : `1px solid ${
-        isDark
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(15,23,42,0.08)"
-      }`,
-
-  boxShadow: focused
-    ? isDark
-      ? "0 0 0 4px rgba(59,130,246,0.12)"
-      : "0 0 0 4px rgba(37,99,235,0.10)"
-    : "none",
-
-  boxSizing: "border-box",
-
-  WebkitTextFillColor: isDark ? "#f8fafc" : "#0f172a",
-})
+  const inp = (f: boolean): React.CSSProperties => ({
+    width:"100%", padding:"12px 40px 12px 16px",
+    border:`1.5px solid ${f ? "#0047B3" : T.inputBd}`,
+    borderRadius:10, fontSize:13.5, color:T.inputTx,
+    background: f ? (D ? "#132233" : "#fff") : T.inputBg,
+    fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",
+    outline:"none", boxSizing:"border-box" as const,
+    boxShadow: f ? "0 0 0 3px rgba(0,71,179,0.12)" : "none",
+    transition:"all 0.15s",
+  })
 
   return (
     <>
-<style>{`
-  *{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-  }
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        input::placeholder{color:#A8BFDA;font-size:13.5px;}
 
-  input::placeholder{
-    color: ${isDark
-      ? "rgba(255,255,255,0.35)"
-      : "rgba(15,23,42,0.35)"};
-    font-size:13px;
-  }
+        .lp-submit{width:100%;padding:13px;background:#0047B3;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-0.01em;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s,transform 0.1s;}
+        .lp-submit:hover:not(:disabled){background:#003A96;}
+        .lp-submit:active{transform:scale(0.99);}
+        .lp-submit.loading{background:#2F6FD4;cursor:not-allowed;}
+        .lp-submit.success{background:#0B7B4A;cursor:not-allowed;}
 
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active{
-    -webkit-box-shadow: 0 0 0 1000px ${
-      isDark ? "#0f172a" : "#ffffff"
-    } inset !important;
+        .lp-google{width:100%;padding:11px;background:${D?"#0f1e32":"#fff"};color:${D?"#c5daf5":"#374151"};border:1.5px solid ${D?"#1c3150":"#E8EEF8"};border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.15s,background 0.15s;}
+        .lp-google:hover{border-color:#4B8FF5;}
 
-    -webkit-text-fill-color: ${
-      isDark ? "#f8fafc" : "#0f172a"
-    } !important;
+        .lp-check{width:16px;height:16px;flex-shrink:0;border:1.5px solid ${D?"#1c3150":"#C8D8EC"};border-radius:4px;background:${D?"#0f1e32":"#FAFCFF"};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+        .lp-check.on{background:#0047B3;border-color:#0047B3;}
 
-    transition: background-color 5000s ease-in-out 0s;
-  }
-`}</style>
+        .lp-demo-item{padding:9px 11px;background:${D?"#0f1e32":"#F4F8FE"};border:1.5px solid ${D?"#1c3150":"#DDEAF8"};border-radius:8px;cursor:pointer;text-align:left;transition:all 0.12s;font-family:'Plus Jakarta Sans',system-ui,sans-serif;width:100%;}
+        .lp-demo-item:hover{background:${D?"#132233":"#EDF3FC"};border-color:${D?"#2a4a6e":"#B5D0F5"};}
+        .lp-demo-item.sel{border-color:var(--dc);background:var(--db);}
+
+        .lp-pw-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;display:flex;padding:4px;transition:color 0.15s;}
+
+        @keyframes lp-spin{to{transform:rotate(360deg);}}
+        .lp-spin{width:15px;height:15px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;animation:lp-spin 0.7s linear infinite;}
+
+        @media(max-width:820px){.lp-left{display:none!important;}}
+        @media(max-width:480px){.lp-right{padding:36px 20px!important;}}
+      `}</style>
 
       <div style={{ minHeight:"100vh", background:T.page, display:"flex", alignItems:"center", justifyContent:"center", padding:"32px 16px", position:"relative", overflow:"hidden", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif" }}>
 
@@ -413,152 +385,21 @@ const inp = (focused: boolean): React.CSSProperties => ({
               <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:12 }}>
 
                 {/* Email */}
-<div style={{ position:"relative" }}>
-  <input
-    type="email"
-    required
-    autoComplete="email"
-    value={email}
-    onChange={e => setEmail(e.target.value)}
-    placeholder="Email"
-    onFocus={() => setFocus("email")}
-    onBlur={() => setFocus(null)}
-    style={{
-      width: "100%",
-      height: 46,
-      padding: "0 42px 0 14px",
-      borderRadius: 12,
-      outline: "none",
-      fontSize: 13,
-      transition: "all 0.2s ease",
-
-      color: focus === "email"
-  ? "#3b82f6"
-  : isDark
-    ? "rgba(255,255,255,0.35)"
-    : "rgba(15,23,42,0.35)",
-
-      background: isDark
-        ? "rgba(15,23,42,0.78)"
-        : "#ffffff",
-
-      border:
-        focus === "email"
-          ? `1px solid ${isDark ? "#3b82f6" : "#2563eb"}`
-          : `1px solid ${
-              isDark
-                ? "rgba(255,255,255,0.08)"
-                : "rgba(15,23,42,0.08)"
-            }`,
-
-      boxShadow:
-        focus === "email"
-          ? isDark
-            ? "0 0 0 4px rgba(59,130,246,0.14)"
-            : "0 0 0 4px rgba(37,99,235,0.10)"
-          : "none",
-
-      boxSizing: "border-box",
-    }}
-  />
-
-  <div
-  style={{
-    position:"absolute",
-    right:13,
-    top:"50%",
-    transform:"translateY(-50%)",
-    color:
-      focus === "email"
-        ? "#3b82f6"
-        : isDark
-          ? "rgba(255,255,255,0.35)"
-          : "rgba(15,23,42,0.35)",
-    display:"flex",
-    pointerEvents:"none"
-  }}
->
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2"/>
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-    </svg>
-  </div>
-</div>
+                <div style={{ position:"relative" }}>
+                  <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp(focus==="email")} onFocus={() => setFocus("email")} onBlur={() => setFocus(null)}/>
+                  <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color:T.muted, display:"flex", pointerEvents:"none" }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  </div>
+                </div>
 
                 {/* Password */}
-<div style={{ position:"relative" }}>
-  <input
-    type={showPw ? "text" : "password"}
-    required
-    autoComplete="current-password"
-    value={password}
-    onChange={e => setPassword(e.target.value)}
-    placeholder="Password"
-    onFocus={() => setFocus("password")}
-    onBlur={() => setFocus(null)}
-    style={{
-      width: "100%",
-      height: 46,
-      padding: "0 42px 0 14px",
-      borderRadius: 12,
-      outline: "none",
-      fontSize: 13,
-      transition: "all 0.2s ease",
-
-      color:
-    focus === "password" || showPw
-      ? "#3b82f6"
-      : isDark
-        ? "rgba(255,255,255,0.35)"
-        : "rgba(15,23,42,0.35)",
-        
-      background: isDark
-        ? "rgba(15,23,42,0.78)"
-        : "#ffffff",
-
-      border:
-        focus === "password"
-          ? `1px solid ${isDark ? "#3b82f6" : "#2563eb"}`
-          : `1px solid ${
-              isDark
-                ? "rgba(255,255,255,0.08)"
-                : "rgba(15,23,42,0.08)"
-            }`,
-
-      boxShadow:
-        focus === "password"
-          ? isDark
-            ? "0 0 0 4px rgba(59,130,246,0.14)"
-            : "0 0 0 4px rgba(37,99,235,0.10)"
-          : "none",
-
-      boxSizing: "border-box",
-    }}
-  />
-
-  <button
-    type="button"
-    className="lp-pw-btn"
-    onClick={() => setShowPw(!showPw)}
-    style={{
-      position:"absolute",
-      right:13,
-      top:"50%",
-      transform:"translateY(-50%)",
-      border:"none",
-      background:"transparent",
-      cursor:"pointer",
-      display:"flex",
-      alignItems:"center",
-
-      color: showPw
-        ? "#3b82f6"
-        : isDark
-          ? "rgba(255,255,255,0.32)"
-          : "rgba(15,23,42,0.35)"
-    }}
-    aria-label="Toggle password"
-  >
+                <div style={{ position:"relative" }}>
+                  <input type={showPw?"text":"password"} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" style={inp(focus==="password")} onFocus={() => setFocus("password")} onBlur={() => setFocus(null)}/>
+                  <button type="button" className="lp-pw-btn" onClick={() => setShowPw(!showPw)} style={{ color: showPw?"#0047B3":T.muted }} aria-label="Toggle password">
+                    {showPw
+                      ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
                   </button>
                 </div>
 
@@ -579,7 +420,7 @@ const inp = (focused: boolean): React.CSSProperties => ({
                 {/* Submit */}
                 <button type="submit" className={`lp-submit${status==="loading"?" loading":status==="success"?" success":""}`} disabled={status!=="idle"} style={{ marginTop:4 }}>
                   {status==="loading" ? <><div className="lp-spin"/> Loading </>
-                   : status==="success" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> Berhasil! </>
+                   : status==="success" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> Berhasil — Mengalihkan...</>
                    : <>Login <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
                   }
                 </button>
