@@ -4,13 +4,13 @@ import { signIn }              from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useRouter }           from "next/navigation"
 
-// ─── Types ───────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────
 type DemoRole    = "SUPER_ADMIN" | "SALES_MANAGER" | "ACCOUNT_EXEC" | "EXECUTIVE"
 type LoginStatus = "idle" | "loading" | "success"
 
 const DEMO_ACCOUNTS: {
-  role: DemoRole; label: string; pos: string; email: string
-  color: string;  bg: string
+  role: DemoRole; label: string; pos: string
+  email: string; color: string; bg: string
 }[] = [
   { role:"SUPER_ADMIN",   label:"Super Admin",   pos:"Developer Tim",  email:"super_admin@cmlabs.co", color:"#C0292B", bg:"rgba(192,41,43,0.08)"  },
   { role:"SALES_MANAGER", label:"Sales Manager", pos:"Leader Divisi",  email:"sales_mgr@cmlabs.co",  color:"#0047B3", bg:"rgba(0,71,179,0.08)"   },
@@ -19,100 +19,102 @@ const DEMO_ACCOUNTS: {
 ]
 const DEMO_PASSWORD = "Demo123!"
 
-// ─── Floating decorative blobs ───────────────────────────────────
-interface BlobProps {
-  x: string; y: string; w: number; h: number
-  color: string; rotate: string; shape: "drop" | "circle"
-}
+// ─── Logo CMLabs (base64 embedded) ───────────────────────────────
+const LOGO = "data:image/jpeg;base64,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"
+
+// ─── Decorative blobs ─────────────────────────────────────────────
+interface BlobProps { x:string; y:string; w:number; h:number; color:string; rotate:string; shape:"drop"|"circle" }
 const BLOBS: BlobProps[] = [
-  { x:"11%",  y:"7%",  w:14, h:20, color:"#F4C842", rotate:"-30deg", shape:"drop"   },
-  { x:"27%",  y:"4%",  w:10, h:10, color:"#E05C8A", rotate:"0deg",   shape:"circle" },
-  { x:"61%",  y:"3%",  w:12, h:12, color:"#F4C842", rotate:"0deg",   shape:"circle" },
-  { x:"79%",  y:"6%",  w:18, h:24, color:"#E05C8A", rotate:"20deg",  shape:"drop"   },
-  { x:"89%",  y:"13%", w:22, h:30, color:"#4B8FF5", rotate:"-15deg", shape:"drop"   },
-  { x:"3%",   y:"54%", w:10, h:10, color:"#F4C842", rotate:"0deg",   shape:"circle" },
-  { x:"4%",   y:"71%", w:16, h:22, color:"#8B5CF6", rotate:"20deg",  shape:"drop"   },
-  { x:"91%",  y:"59%", w:12, h:12, color:"#4ADE80", rotate:"0deg",   shape:"circle" },
-  { x:"86%",  y:"79%", w:20, h:28, color:"#4ADE80", rotate:"-10deg", shape:"drop"   },
-  { x:"17%",  y:"87%", w:10, h:10, color:"#F4C842", rotate:"0deg",   shape:"circle" },
-  { x:"71%",  y:"90%", w:12, h:12, color:"#F4C842", rotate:"0deg",   shape:"circle" },
+  { x:"10%", y:"7%",  w:14, h:20, color:"#F4C842", rotate:"-30deg", shape:"drop"   },
+  { x:"27%", y:"4%",  w:10, h:10, color:"#E05C8A", rotate:"0deg",   shape:"circle" },
+  { x:"61%", y:"3%",  w:12, h:12, color:"#F4C842", rotate:"0deg",   shape:"circle" },
+  { x:"79%", y:"6%",  w:18, h:24, color:"#E05C8A", rotate:"20deg",  shape:"drop"   },
+  { x:"90%", y:"12%", w:22, h:30, color:"#4B8FF5", rotate:"-15deg", shape:"drop"   },
+  { x:"3%",  y:"54%", w:10, h:10, color:"#F4C842", rotate:"0deg",   shape:"circle" },
+  { x:"4%",  y:"70%", w:16, h:22, color:"#8B5CF6", rotate:"20deg",  shape:"drop"   },
+  { x:"91%", y:"58%", w:12, h:12, color:"#4ADE80", rotate:"0deg",   shape:"circle" },
+  { x:"86%", y:"79%", w:20, h:28, color:"#4ADE80", rotate:"-10deg", shape:"drop"   },
+  { x:"17%", y:"87%", w:10, h:10, color:"#F4C842", rotate:"0deg",   shape:"circle" },
+  { x:"71%", y:"90%", w:12, h:12, color:"#F4C842", rotate:"0deg",   shape:"circle" },
 ]
-
-function Blob({ x, y, w, h, color, rotate, shape }: BlobProps) {
-  return (
-    <div style={{
-      position: "absolute", left: x, top: y,
-      width: w, height: h, background: color,
-      borderRadius: shape === "circle" ? "50%" : "50% 50% 50% 10%",
-      transform: `rotate(${rotate})`, opacity: 0.85, pointerEvents: "none",
-    }}/>
-  )
+function Blob({ x,y,w,h,color,rotate,shape }: BlobProps) {
+  return <div style={{ position:"absolute", left:x, top:y, width:w, height:h, background:color, borderRadius:shape==="circle"?"50%":"50% 50% 50% 10%", transform:`rotate(${rotate})`, opacity:0.85, pointerEvents:"none" }}/>
 }
 
-// ─── Left panel flat illustration ───────────────────────────────
-function LeftIllustration() {
+// ─── Illustration ─────────────────────────────────────────────────
+function Illustration() {
   return (
-    <svg width="300" height="280" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Back card */}
-      <rect x="30" y="60" width="170" height="110" rx="14" fill="white" opacity="0.15"/>
-      <rect x="30" y="60" width="170" height="110" rx="14" stroke="white" strokeWidth="0.8" opacity="0.3"/>
-      {/* Main food card */}
-      <rect x="18" y="46" width="175" height="118" rx="14" fill="white"/>
-      <rect x="18" y="46" width="175" height="52" rx="14" fill="#FFD54F"/>
-      <rect x="18" y="84" width="175" height="14" fill="#FFD54F"/>
-      {/* Person */}
-      <circle cx="80" cy="68" r="16" fill="#F4A261"/>
-      <rect x="64" y="80" width="32" height="22" rx="6" fill="#2563EB"/>
-      <rect x="56" y="84" width="12" height="8" rx="4" fill="#F4A261"/>
-      <rect x="88" y="84" width="12" height="8" rx="4" fill="#F4A261"/>
-      {/* Content lines */}
-      <rect x="28" y="104" width="6" height="6" rx="1" fill="#4B8FF5"/>
-      <rect x="38" y="106" width="60" height="4" rx="2" fill="#CBD5E1"/>
-      <rect x="28" y="115" width="6" height="6" rx="1" fill="#34D399"/>
-      <rect x="38" y="117" width="80" height="4" rx="2" fill="#CBD5E1"/>
-      <rect x="28" y="126" width="6" height="6" rx="1" fill="#F59E0B"/>
-      <rect x="38" y="128" width="50" height="4" rx="2" fill="#CBD5E1"/>
-      <rect x="28" y="92" width="100" height="7" rx="3" fill="#1E293B"/>
-      <rect x="28" y="86" width="60" height="5" rx="2" fill="rgba(30,41,59,0.4)"/>
-      {/* Bottom bar */}
-      <rect x="18" y="152" width="175" height="12" rx="6" fill="white"/>
-      <circle cx="32" cy="158" r="5" fill="#4B8FF5" opacity="0.4"/>
-      <rect x="42" y="155" width="70" height="4" rx="2" fill="#E2E8F0"/>
-      {/* Right card */}
-      <rect x="150" y="110" width="140" height="148" rx="14" fill="white"/>
-      {[0,1,2].map((i) => (
-        <g key={i} transform={`translate(0, ${i * 38})`}>
-          <circle cx="173" cy="135" r="14" fill={["#FFB347","#74C0FC","#69DB7C"][i]}/>
-          <rect x="195" y="130" width="60" height="5" rx="2.5" fill="#1E293B"/>
-          <rect x="195" y="139" width="40" height="4" rx="2" fill="#CBD5E1"/>
-          <rect x="257" y="130" width="22" height="14" rx="4" fill={["#FEF3C7","#DBEAFE","#D1FAE5"][i]}/>
-          <rect x="259" y="134" width="18" height="6" rx="2" fill={["#F59E0B","#3B82F6","#10B981"][i]}/>
-        </g>
-      ))}
-      <rect x="160" y="116" width="80" height="7" rx="3" fill="#1E293B"/>
-      <rect x="160" y="112" width="50" height="4" rx="2" fill="rgba(30,41,59,0.35)"/>
-      {/* Icon chip */}
-      <rect x="168" y="82" width="36" height="36" rx="10" fill="white"/>
-      <rect x="168" y="82" width="36" height="36" rx="10" stroke="rgba(0,71,179,0.15)" strokeWidth="1"/>
-      <path d="M180 94 h12 M180 100 h8 M180 106 h10" stroke="#4B8FF5" strokeWidth="2" strokeLinecap="round"/>
+    <svg width="280" height="256" viewBox="0 0 280 256" fill="none">
+      {/* Card belakang (shadow) */}
+      <rect x="14" y="30" width="168" height="118" rx="14" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.20)" strokeWidth="1"/>
+
+      {/* Card utama kiri */}
+      <rect x="8" y="20" width="172" height="122" rx="14" fill="white"/>
+      {/* Banner kuning */}
+      <rect x="8" y="20" width="172" height="58" rx="14" fill="#FFD54F"/>
+      <rect x="8" y="64" width="172" height="14" fill="#FFD54F"/>
+      {/* Avatar orang */}
+      <circle cx="76" cy="43" r="15" fill="#F4A261"/>
+      <rect x="62" y="55" width="28" height="20" rx="6" fill="#2563EB"/>
+      <rect x="54" y="59" width="10" height="7" rx="3.5" fill="#F4A261"/>
+      <rect x="82" y="59" width="10" height="7" rx="3.5" fill="#F4A261"/>
+      {/* Label di banner */}
+      <rect x="18" y="62" width="56" height="5" rx="2" fill="rgba(30,41,59,0.35)"/>
+      {/* Title */}
+      <rect x="18" y="82" width="96" height="7" rx="3" fill="#1E293B"/>
+      {/* Rows */}
+      <rect x="18" y="96" width="6" height="6" rx="1" fill="#4B8FF5"/>
+      <rect x="28" y="98" width="58" height="4" rx="2" fill="#CBD5E1"/>
+      <rect x="18" y="107" width="6" height="6" rx="1" fill="#34D399"/>
+      <rect x="28" y="109" width="76" height="4" rx="2" fill="#CBD5E1"/>
+      <rect x="18" y="118" width="6" height="6" rx="1" fill="#F59E0B"/>
+      <rect x="28" y="120" width="48" height="4" rx="2" fill="#CBD5E1"/>
+      {/* Bottom strip */}
+      <rect x="8" y="134" width="172" height="8" rx="4" fill="#EFF6FF"/>
+      <circle cx="24" cy="138" r="4" fill="#4B8FF5" opacity="0.45"/>
+      <rect x="32" y="136" width="68" height="4" rx="2" fill="#DBEAFE"/>
+
+      {/* Card kanan (daftar profil) */}
+      <rect x="116" y="96" width="156" height="152" rx="14" fill="white"/>
+      {/* Title card kanan */}
+      <rect x="128" y="108" width="76" height="7" rx="3" fill="#1E293B"/>
+      <rect x="128" y="104" width="48" height="4" rx="2" fill="rgba(30,41,59,0.32)"/>
+      {/* Row 1 */}
+      <circle cx="141" cy="131" r="12" fill="#FFB347"/>
+      <rect x="158" y="125" width="62" height="6" rx="3" fill="#1E293B"/>
+      <rect x="158" y="135" width="40" height="4" rx="2" fill="#CBD5E1"/>
+      <rect x="226" y="124" width="36" height="18" rx="5" fill="#FEF3C7"/>
+      <rect x="230" y="129" width="28" height="8" rx="3" fill="#F59E0B"/>
+      {/* Row 2 */}
+      <circle cx="141" cy="169" r="12" fill="#74C0FC"/>
+      <rect x="158" y="163" width="62" height="6" rx="3" fill="#1E293B"/>
+      <rect x="158" y="173" width="40" height="4" rx="2" fill="#CBD5E1"/>
+      <rect x="226" y="162" width="36" height="18" rx="5" fill="#DBEAFE"/>
+      <rect x="230" y="167" width="28" height="8" rx="3" fill="#3B82F6"/>
+      {/* Row 3 */}
+      <circle cx="141" cy="207" r="12" fill="#69DB7C"/>
+      <rect x="158" y="201" width="62" height="6" rx="3" fill="#1E293B"/>
+      <rect x="158" y="211" width="40" height="4" rx="2" fill="#CBD5E1"/>
+      <rect x="226" y="200" width="36" height="18" rx="5" fill="#D1FAE5"/>
+      <rect x="230" y="205" width="28" height="8" rx="3" fill="#10B981"/>
+
+      {/* Floating chip */}
+      <rect x="136" y="62" width="38" height="38" rx="10" fill="white" filter="url(#shadow)"/>
+      <rect x="136" y="62" width="38" height="38" rx="10" stroke="rgba(0,71,179,0.14)" strokeWidth="1"/>
+      <line x1="147" y1="74" x2="165" y2="74" stroke="#4B8FF5" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="147" y1="81" x2="161" y2="81" stroke="#4B8FF5" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="147" y1="88" x2="157" y2="88" stroke="#93C5FD" strokeWidth="2" strokeLinecap="round"/>
+
+      <defs>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="rgba(0,60,160,0.15)"/>
+        </filter>
+      </defs>
     </svg>
   )
 }
 
-// ─── CMLabs stacked-lines logo ───────────────────────────────────
-function CMLogo({ size = 52 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 44 44" fill="none">
-      <rect width="44" height="44" rx="12" fill="#EEF4FF"/>
-      <rect x="1" y="1" width="42" height="42" rx="11" stroke="#DDEAF8" strokeWidth="1"/>
-      <rect x="13" y="13" width="18" height="4" rx="2" fill="#0047B3"/>
-      <rect x="13" y="20" width="14" height="4" rx="2" fill="#4B8FF5"/>
-      <rect x="13" y="27" width="10" height="4" rx="2" fill="#93C5FD"/>
-    </svg>
-  )
-}
-
-// ─── Google icon ─────────────────────────────────────────────────
+// ─── Google icon ──────────────────────────────────────────────────
 function GoogleIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24">
@@ -124,7 +126,7 @@ function GoogleIcon() {
   )
 }
 
-// ─── Main page component ─────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter()
 
@@ -133,219 +135,169 @@ export default function LoginPage() {
   const [showPw,      setShowPw]      = useState(false)
   const [remembered,  setRemembered]  = useState(false)
   const [error,       setError]       = useState("")
-  const [loginStatus, setLoginStatus] = useState<LoginStatus>("idle")
+  const [status,      setStatus]      = useState<LoginStatus>("idle")
   const [activeRole,  setActiveRole]  = useState<DemoRole | null>(null)
   const [showDemo,    setShowDemo]    = useState(false)
-  const [focusField,  setFocusField]  = useState<"email" | "password" | null>(null)
+  const [focus,       setFocus]       = useState<"email"|"password"|null>(null)
+  const [isDark,      setIsDark]      = useState(false)
 
+  // Restore theme preference
   useEffect(() => {
-    const found = DEMO_ACCOUNTS.find(
-      (a) => a.email.toLowerCase() === email.trim().toLowerCase()
-    )
+    if (localStorage.getItem("theme") === "dark") setIsDark(true)
+  }, [])
+
+  function toggleTheme() {
+    setIsDark(p => {
+      localStorage.setItem("theme", !p ? "dark" : "light")
+      return !p
+    })
+  }
+
+  // Auto-detect demo role from email
+  useEffect(() => {
+    const found = DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === email.trim().toLowerCase())
     setActiveRole(found?.role ?? null)
   }, [email])
 
-  function quickFill(acc: (typeof DEMO_ACCOUNTS)[0]) {
-    setEmail(acc.email)
-    setPassword(DEMO_PASSWORD)
-    setActiveRole(acc.role)
-    setError("")
+  function quickFill(acc: typeof DEMO_ACCOUNTS[0]) {
+    setEmail(acc.email); setPassword(DEMO_PASSWORD)
+    setActiveRole(acc.role); setError("")
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email || !password) { setError("Harap isi email dan kata sandi."); return }
-    setError("")
-    setLoginStatus("loading")
+    setError(""); setStatus("loading")
     const res = await signIn("credentials", { email, password, redirect: false })
-    if (res?.error) {
-      setLoginStatus("idle")
-      setError("Email atau password tidak valid.")
-    } else {
-      setLoginStatus("success")
-      setTimeout(() => router.push("/dashboard"), 1000)
-    }
+    if (res?.error) { setStatus("idle"); setError("Email atau password tidak valid.") }
+    else { setStatus("success"); setTimeout(() => router.push("/dashboard"), 1000) }
   }
 
-  const detectedAcc = activeRole
-    ? DEMO_ACCOUNTS.find((a) => a.role === activeRole) ?? null
-    : null
+  const detected = activeRole ? DEMO_ACCOUNTS.find(a => a.role === activeRole) ?? null : null
 
-  const inputStyle = (focused: boolean): React.CSSProperties => ({
-    width: "100%",
-    padding: "13px 42px 13px 16px",
-    border: `1.5px solid ${focused ? "#0047B3" : "#E8EEF8"}`,
-    borderRadius: 10,
-    fontSize: 13.5,
-    color: "#1E293B",
-    background: focused ? "#fff" : "#FAFCFF",
-    fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-    outline: "none",
-    boxSizing: "border-box" as const,
-    boxShadow: focused ? "0 0 0 3px rgba(0,71,179,0.09)" : "none",
-    transition: "all 0.15s",
+  // ── Color tokens ─────────────────────────────────────────────
+  const D = isDark
+  const T = {
+    page:    D ? "#060c18"      : "#EFF4FC",
+    card:    D ? "#0d1a2e"      : "#ffffff",
+    leftBg:  D ? "linear-gradient(145deg,#003894,#002060)" : "linear-gradient(145deg,#0055D4,#003A96)",
+    inputBg: D ? "#0f1e32"      : "#FAFCFF",
+    inputBd: D ? "#1c3150"      : "#E8EEF8",
+    inputTx: D ? "#ddeaf8"      : "#1E293B",
+    heading: D ? "#e8f2fc"      : "#0A1628",
+    body:    D ? "#6890b0"      : "#7A95B4",
+    muted:   D ? "#304f6a"      : "#A8BFDA",
+    divider: D ? "#14263d"      : "#EEF2FA",
+    codeBg:  D ? "rgba(0,71,179,0.18)" : "#EEF4FF",
+    codeBd:  D ? "rgba(0,71,179,0.35)" : "#C5D8F5",
+    codeTx:  D ? "#6ea8f7"      : "#0047B3",
+  }
+
+  const inp = (f: boolean): React.CSSProperties => ({
+    width:"100%", padding:"12px 40px 12px 16px",
+    border:`1.5px solid ${f ? "#0047B3" : T.inputBd}`,
+    borderRadius:10, fontSize:13.5, color:T.inputTx,
+    background: f ? (D ? "#132233" : "#fff") : T.inputBg,
+    fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",
+    outline:"none", boxSizing:"border-box" as const,
+    boxShadow: f ? "0 0 0 3px rgba(0,71,179,0.12)" : "none",
+    transition:"all 0.15s",
   })
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        input::placeholder { color: #A8BFDA; font-size: 13.5px; }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        input::placeholder{color:#A8BFDA;font-size:13.5px;}
 
-        .lp-btn-main {
-          width: 100%; padding: 13px;
-          background: #0047B3; color: #fff;
-          border: none; border-radius: 10px;
-          font-size: 14px; font-weight: 700; cursor: pointer;
-          font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-          letter-spacing: -0.01em;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          transition: background 0.15s, transform 0.1s;
-        }
-        .lp-btn-main:hover:not(:disabled) { background: #003A96; }
-        .lp-btn-main:active { transform: scale(0.99); }
-        .lp-btn-main.success { background: #0B7B4A; cursor: not-allowed; }
-        .lp-btn-main.loading { background: #2F6FD4; cursor: not-allowed; }
+        .lp-submit{width:100%;padding:13px;background:#0047B3;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',system-ui,sans-serif;letter-spacing:-0.01em;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s,transform 0.1s;}
+        .lp-submit:hover:not(:disabled){background:#003A96;}
+        .lp-submit:active{transform:scale(0.99);}
+        .lp-submit.loading{background:#2F6FD4;cursor:not-allowed;}
+        .lp-submit.success{background:#0B7B4A;cursor:not-allowed;}
 
-        .lp-btn-google {
-          width: 100%; padding: 11px;
-          background: #fff; color: #374151;
-          border: 1.5px solid #E8EEF8; border-radius: 10px;
-          font-size: 13px; font-weight: 600; cursor: pointer;
-          font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          transition: border-color 0.15s, background 0.15s;
-        }
-        .lp-btn-google:hover { border-color: #B5D0F5; background: #FAFCFF; }
+        .lp-google{width:100%;padding:11px;background:${D?"#0f1e32":"#fff"};color:${D?"#c5daf5":"#374151"};border:1.5px solid ${D?"#1c3150":"#E8EEF8"};border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.15s,background 0.15s;}
+        .lp-google:hover{border-color:#4B8FF5;}
 
-        .lp-check-box {
-          width: 16px; height: 16px; flex-shrink: 0;
-          border: 1.5px solid #C8D8EC; border-radius: 4px;
-          background: #FAFCFF; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          transition: all 0.15s;
-        }
-        .lp-check-box.on { background: #0047B3; border-color: #0047B3; }
+        .lp-check{width:16px;height:16px;flex-shrink:0;border:1.5px solid ${D?"#1c3150":"#C8D8EC"};border-radius:4px;background:${D?"#0f1e32":"#FAFCFF"};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+        .lp-check.on{background:#0047B3;border-color:#0047B3;}
 
-        .lp-demo-row {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 10px; border-radius: 8px; cursor: pointer;
-          border: 1.5px solid transparent; background: transparent;
-          text-align: left; width: 100%;
-          font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-          transition: all 0.12s;
-        }
-        .lp-demo-row:hover { background: #F0F6FF; border-color: #C5D8F5; }
-        .lp-demo-row.active { border-color: var(--dc); background: var(--db); }
+        .lp-demo-item{padding:9px 11px;background:${D?"#0f1e32":"#F4F8FE"};border:1.5px solid ${D?"#1c3150":"#DDEAF8"};border-radius:8px;cursor:pointer;text-align:left;transition:all 0.12s;font-family:'Plus Jakarta Sans',system-ui,sans-serif;width:100%;}
+        .lp-demo-item:hover{background:${D?"#132233":"#EDF3FC"};border-color:${D?"#2a4a6e":"#B5D0F5"};}
+        .lp-demo-item.sel{border-color:var(--dc);background:var(--db);}
 
-        @keyframes lp-spin { to { transform: rotate(360deg); } }
-        .lp-spin {
-          width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
-          border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-          animation: lp-spin 0.7s linear infinite;
-        }
+        .lp-pw-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;display:flex;padding:4px;transition:color 0.15s;}
 
-        @media (max-width: 840px) { .lp-left-panel { display: none !important; } }
-        @media (max-width: 500px) {
-          .lp-right-panel { padding: 36px 24px !important; }
-        }
+        @keyframes lp-spin{to{transform:rotate(360deg);}}
+        .lp-spin{width:15px;height:15px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;animation:lp-spin 0.7s linear infinite;}
+
+        @media(max-width:820px){.lp-left{display:none!important;}}
+        @media(max-width:480px){.lp-right{padding:36px 20px!important;}}
       `}</style>
 
-      {/* Page wrapper with blobs */}
-      <div style={{
-        minHeight: "100vh",
-        background: "#EFF4FC",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "32px 16px",
-        position: "relative", overflow: "hidden",
-        fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-      }}>
-        {BLOBS.map((b, i) => <Blob key={i} {...b}/>)}
+      <div style={{ minHeight:"100vh", background:T.page, display:"flex", alignItems:"center", justifyContent:"center", padding:"32px 16px", position:"relative", overflow:"hidden", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif" }}>
 
-        {/* Card */}
-        <div style={{
-          display: "flex", width: "100%", maxWidth: 860,
-          minHeight: 560, borderRadius: 20, overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,60,160,0.14), 0 4px 16px rgba(0,0,0,0.06)",
-          position: "relative", zIndex: 2,
-        }}>
+        {BLOBS.map((b,i) => <Blob key={i} {...b}/>)}
 
-          {/* ── LEFT PANEL ────────────────────────────────────── */}
-          <div className="lp-left-panel" style={{
-            width: 360, flexShrink: 0,
-            background: "linear-gradient(145deg, #0055D4 0%, #0047B3 55%, #003A96 100%)",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "56px 32px 40px",
-            position: "relative", overflow: "hidden",
-          }}>
+        {/* ── Theme toggle ── */}
+        <button onClick={toggleTheme} style={{ position:"fixed", top:18, right:18, zIndex:100, display:"flex", alignItems:"center", gap:6, padding:"6px 13px", background:D?"rgba(14,23,36,0.85)":"rgba(255,255,255,0.90)", border:`1px solid ${D?"rgba(255,255,255,0.10)":"rgba(0,0,0,0.10)"}`, borderRadius:999, fontSize:12, fontWeight:600, color:D?"#8ba3bf":"#3d5166", cursor:"pointer", backdropFilter:"blur(10px)", transition:"all 0.2s" }}>
+          {D
+            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          }
+          {D ? "Light Mode" : "Dark Mode"}
+        </button>
+
+        {/* ── Main card ── */}
+        <div style={{ display:"flex", width:"100%", maxWidth:860, minHeight:560, borderRadius:20, overflow:"hidden", boxShadow:D?"0 20px 60px rgba(0,0,0,0.55),0 4px 16px rgba(0,0,0,0.35)":"0 20px 60px rgba(0,60,160,0.13),0 4px 16px rgba(0,0,0,0.06)", position:"relative", zIndex:2 }}>
+
+          {/* ══ LEFT PANEL ══════════════════════════════════════ */}
+          <div className="lp-left" style={{ width:360, flexShrink:0, background:T.leftBg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"56px 32px 40px", position:"relative", overflow:"hidden" }}>
             {/* Orbs */}
             <div style={{ position:"absolute", top:-80, right:-80, width:280, height:280, borderRadius:"50%", background:"rgba(255,255,255,0.05)", pointerEvents:"none" }}/>
             <div style={{ position:"absolute", bottom:-60, left:-60, width:220, height:220, borderRadius:"50%", background:"rgba(255,255,255,0.04)", pointerEvents:"none" }}/>
 
-            {/* Branding */}
-            <div style={{ position:"absolute", top:28, left:28, display:"flex", alignItems:"center", gap:10, zIndex:2 }}>
-              <div style={{ width:32, height:32, background:"rgba(255,255,255,0.15)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                <svg width="18" height="18" viewBox="0 0 44 44" fill="none">
-                  <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="white"/>
-                  <rect x="5" y="17" width="16" height="5" rx="2.5" fill="rgba(255,255,255,0.7)"/>
-                  <rect x="5" y="26" width="12" height="5" rx="2.5" fill="rgba(255,255,255,0.5)"/>
-                </svg>
-              </div>
+            {/* Brand */}
+            <div style={{ position:"absolute", top:26, left:26, display:"flex", alignItems:"center", gap:9, zIndex:2 }}>
+              <img src={LOGO} alt="CMLabs" style={{ width:30, height:30, borderRadius:7, objectFit:"cover", flexShrink:0 }}/>
               <div>
-                <div style={{ fontSize:15, fontWeight:800, color:"#fff", letterSpacing:"-0.02em" }}>CMLabs</div>
-                <div style={{ fontSize:9, color:"rgba(255,255,255,0.50)", letterSpacing:"0.10em", textTransform:"uppercase" }}>Internal System</div>
+                <div style={{ fontSize:14, fontWeight:800, color:"#fff", letterSpacing:"-0.02em" }}>CMLabs</div>
+                <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.48)", letterSpacing:"0.10em", textTransform:"uppercase" }}>Internal System</div>
               </div>
             </div>
 
-            {/* Mini blobs inside left panel */}
-            <div style={{ position:"absolute", top:72, right:28, width:10, height:14, borderRadius:"50% 50% 50% 10%", background:"#FFD54F", transform:"rotate(20deg)", opacity:0.8, pointerEvents:"none" }}/>
-            <div style={{ position:"absolute", top:90, right:54, width:7,  height:7,  borderRadius:"50%", background:"#FF7EB3", opacity:0.7, pointerEvents:"none" }}/>
-            <div style={{ position:"absolute", bottom:80, left:24, width:8,  height:8,  borderRadius:"50%", background:"#7DD3FC", opacity:0.7, pointerEvents:"none" }}/>
-            <div style={{ position:"absolute", bottom:58, left:48, width:12, height:16, borderRadius:"50% 50% 50% 10%", background:"#86EFAC", transform:"rotate(-20deg)", opacity:0.7, pointerEvents:"none" }}/>
+            {/* Accent blobs inside panel */}
+            <div style={{ position:"absolute", top:72, right:26, width:10, height:14, borderRadius:"50% 50% 50% 10%", background:"#FFD54F", transform:"rotate(20deg)", opacity:0.8, pointerEvents:"none" }}/>
+            <div style={{ position:"absolute", top:90, right:52, width:7, height:7, borderRadius:"50%", background:"#FF7EB3", opacity:0.7, pointerEvents:"none" }}/>
+            <div style={{ position:"absolute", bottom:80, left:22, width:8, height:8, borderRadius:"50%", background:"#7DD3FC", opacity:0.7, pointerEvents:"none" }}/>
+            <div style={{ position:"absolute", bottom:58, left:46, width:12, height:16, borderRadius:"50% 50% 50% 10%", background:"#86EFAC", transform:"rotate(-20deg)", opacity:0.7, pointerEvents:"none" }}/>
 
-            {/* Illustration */}
             <div style={{ position:"relative", zIndex:2, marginTop:16 }}>
-              <LeftIllustration/>
+              <Illustration/>
             </div>
 
-            {/* Caption */}
-            <div style={{ position:"relative", zIndex:2, textAlign:"center", marginTop:16 }}>
+            <div style={{ position:"relative", zIndex:2, textAlign:"center", marginTop:18 }}>
               <h2 style={{ fontSize:20, fontWeight:800, color:"#fff", letterSpacing:"-0.03em", lineHeight:1.3, margin:"0 0 10px" }}>
                 Sales CRM &amp;<br/>Management System
               </h2>
-              <p style={{ fontSize:12, color:"rgba(200,220,255,0.70)", lineHeight:1.75, margin:0 }}>
+              <p style={{ fontSize:12, color:"rgba(200,220,255,0.68)", lineHeight:1.75, margin:0 }}>
                 Platform terpusat untuk pipeline, analitik,<br/>dan dokumen tim internal CMLabs.
               </p>
             </div>
 
-            {/* Dot indicator */}
-            <div style={{ display:"flex", gap:6, marginTop:20, position:"relative", zIndex:2 }}>
+            <div style={{ display:"flex", gap:6, marginTop:22, position:"relative", zIndex:2 }}>
               <div style={{ width:20, height:5, borderRadius:3, background:"rgba(255,255,255,0.85)" }}/>
-              <div style={{ width:5,  height:5, borderRadius:3, background:"rgba(255,255,255,0.35)" }}/>
-              <div style={{ width:5,  height:5, borderRadius:3, background:"rgba(255,255,255,0.35)" }}/>
+              <div style={{ width:5,  height:5, borderRadius:3, background:"rgba(255,255,255,0.32)" }}/>
+              <div style={{ width:5,  height:5, borderRadius:3, background:"rgba(255,255,255,0.32)" }}/>
             </div>
           </div>
 
-          {/* ── RIGHT PANEL ───────────────────────────────────── */}
-          <div className="lp-right-panel" style={{
-            flex: 1, background: "#fff",
-            display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            padding: "48px 52px",
-            position: "relative", overflowY: "auto",
-          }}>
+          {/* ══ RIGHT PANEL ═════════════════════════════════════ */}
+          <div className="lp-right" style={{ flex:1, background:T.card, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"48px 52px", position:"relative", overflowY:"auto" }}>
 
             {/* Internal badge */}
-            <div style={{
-              position:"absolute", top:22, right:22,
-              padding:"4px 12px",
-              background:"#EEF4FF", border:"1px solid #C5D8F5", borderRadius:20,
-              fontSize:10, fontWeight:700, color:"#1565C0",
-              letterSpacing:"0.06em", textTransform:"uppercase",
-              display:"flex", alignItems:"center", gap:5,
-            }}>
+            <div style={{ position:"absolute", top:22, right:22, padding:"4px 12px", background:D?"rgba(0,71,179,0.18)":"#EEF4FF", border:`1px solid ${D?"rgba(0,71,179,0.35)":"#C5D8F5"}`, borderRadius:20, fontSize:10, fontWeight:700, color:D?"#6ea8f7":"#1565C0", letterSpacing:"0.06em", textTransform:"uppercase", display:"flex", alignItems:"center", gap:5 }}>
               <div style={{ width:5, height:5, borderRadius:"50%", background:"#0047B3" }}/>
               Internal Only
             </div>
@@ -353,236 +305,122 @@ export default function LoginPage() {
             <div style={{ width:"100%", maxWidth:340 }}>
 
               {/* Logo + heading */}
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", marginBottom:28 }}>
-                <CMLogo size={52}/>
-                <h1 style={{ fontSize:26, fontWeight:800, color:"#0A1628", letterSpacing:"-0.03em", margin:"16px 0 8px", textAlign:"center" }}>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", marginBottom:24 }}>
+                <img src={LOGO} alt="CMLabs" style={{ width:52, height:52, borderRadius:13, objectFit:"cover" }}/>
+                <h1 style={{ fontSize:25, fontWeight:800, color:T.heading, letterSpacing:"-0.03em", margin:"14px 0 7px", textAlign:"center" }}>
                   Selamat Datang!
                 </h1>
-                <p style={{ fontSize:13, color:"#7A95B4", textAlign:"center", lineHeight:1.65, margin:0 }}>
+                <p style={{ fontSize:13, color:T.body, textAlign:"center", lineHeight:1.65, margin:0 }}>
                   Masuk ke sistem internal CMLabs.<br/>Akses khusus personel yang diotorisasi.
                 </p>
               </div>
 
               {/* Role chip */}
-              {detectedAcc && (
-                <div style={{
-                  display:"flex", alignItems:"center", gap:8,
-                  padding:"7px 12px", marginBottom:14,
-                  borderRadius:"0 8px 8px 0",
-                  borderLeft:`3px solid ${detectedAcc.color}`,
-                  background: detectedAcc.bg,
-                }}>
-                  <div style={{ width:6, height:6, borderRadius:"50%", background:detectedAcc.color, flexShrink:0 }}/>
-                  <span style={{ fontSize:12, fontWeight:700, color:detectedAcc.color }}>{detectedAcc.label}</span>
-                  <span style={{ fontSize:12, color:"#7A95B4" }}>— {detectedAcc.pos}</span>
+              {detected && (
+                <div style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 12px", marginBottom:14, borderRadius:"0 8px 8px 0", borderLeft:`3px solid ${detected.color}`, background:detected.bg }}>
+                  <div style={{ width:6, height:6, borderRadius:"50%", background:detected.color, flexShrink:0 }}/>
+                  <span style={{ fontSize:12, fontWeight:700, color:detected.color }}>{detected.label}</span>
+                  <span style={{ fontSize:12, color:T.body }}>— {detected.pos}</span>
                 </div>
               )}
 
               {/* Error */}
               {error && (
-                <div style={{
-                  display:"flex", gap:8, alignItems:"center",
-                  padding:"9px 13px", marginBottom:14,
-                  background:"#FFF0F0", border:"1px solid #FBC8C8",
-                  borderRadius:8, fontSize:12.5, color:"#C0292B",
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
+                <div style={{ display:"flex", gap:8, alignItems:"center", padding:"9px 13px", marginBottom:14, background:D?"rgba(192,41,43,0.12)":"#FFF0F0", border:`1px solid ${D?"rgba(192,41,43,0.30)":"#FBC8C8"}`, borderRadius:8, fontSize:12.5, color:D?"#f87171":"#C0292B" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   {error}
                 </div>
               )}
 
-              {/* Form */}
               <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:12 }}>
 
                 {/* Email */}
                 <div style={{ position:"relative" }}>
-                  <input
-                    type="email" required autoComplete="email"
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    style={inputStyle(focusField === "email")}
-                    onFocus={() => setFocusField("email")}
-                    onBlur={() => setFocusField(null)}
-                  />
-                  <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color:"#A8BFDA", display:"flex", pointerEvents:"none" }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2"/>
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                    </svg>
+                  <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp(focus==="email")} onFocus={() => setFocus("email")} onBlur={() => setFocus(null)}/>
+                  <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color:T.muted, display:"flex", pointerEvents:"none" }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                   </div>
                 </div>
 
                 {/* Password */}
                 <div style={{ position:"relative" }}>
-                  <input
-                    type={showPw ? "text" : "password"} required autoComplete="current-password"
-                    value={password} onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    style={inputStyle(focusField === "password")}
-                    onFocus={() => setFocusField("password")}
-                    onBlur={() => setFocusField(null)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    style={{
-                      position:"absolute", right:11, top:"50%", transform:"translateY(-50%)",
-                      background:"none", border:"none", cursor:"pointer",
-                      color: showPw ? "#0047B3" : "#A8BFDA",
-                      display:"flex", padding:4, transition:"color 0.15s",
-                    }}
-                    aria-label={showPw ? "Sembunyikan password" : "Tampilkan password"}
-                  >
-                    {showPw ? (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                        <line x1="1" y1="1" x2="23" y2="23"/>
-                      </svg>
-                    ) : (
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    )}
+                  <input type={showPw?"text":"password"} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" style={inp(focus==="password")} onFocus={() => setFocus("password")} onBlur={() => setFocus(null)}/>
+                  <button type="button" className="lp-pw-btn" onClick={() => setShowPw(!showPw)} style={{ color: showPw?"#0047B3":T.muted }} aria-label="Toggle password">
+                    {showPw
+                      ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
                   </button>
                 </div>
 
-                {/* Remember + Forgot */}
+                {/* Remember me */}
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"2px 0" }}>
                   <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", userSelect:"none" }}>
-                    <div
-                      className={`lp-check-box${remembered ? " on" : ""}`}
-                      onClick={() => setRemembered(!remembered)}
-                      role="checkbox" aria-checked={remembered} tabIndex={0}
-                      onKeyDown={(e) => e.key === " " && setRemembered(!remembered)}
-                    >
-                      {remembered && (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                      )}
+                    <div className={`lp-check${remembered?" on":""}`} onClick={() => setRemembered(!remembered)} role="checkbox" aria-checked={remembered} tabIndex={0} onKeyDown={e => e.key===" " && setRemembered(!remembered)}>
+                      {remembered && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
                     </div>
-                    <span style={{ fontSize:12, color:"#7A95B4" }}>Tetap masuk</span>
+                    <span style={{ fontSize:12, color:T.body }}>Tetap masuk</span>
                   </label>
-                  <button
-                    type="button"
-                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:12, color:"#0047B3", fontWeight:600, fontFamily:"inherit", padding:0 }}
-                  >
-                    Lupa Password?
-                  </button>
+                  {/* Tidak ada lupa password — Super Admin yang reset */}
+                  <span style={{ fontSize:11.5, color:T.muted, fontStyle:"italic" }}>
+                    Hubungi Super Admin jika lupa password
+                  </span>
                 </div>
 
                 {/* Submit */}
-                <button
-                  type="submit"
-                  className={`lp-btn-main${loginStatus === "success" ? " success" : loginStatus === "loading" ? " loading" : ""}`}
-                  disabled={loginStatus !== "idle"}
-                  style={{ marginTop:4 }}
-                >
-                  {loginStatus === "loading" ? (
-                    <><div className="lp-spin"/> Memverifikasi...</>
-                  ) : loginStatus === "success" ? (
-                    <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      Berhasil — Mengalihkan...
-                    </>
-                  ) : (
-                    "Login"
-                  )}
+                <button type="submit" className={`lp-submit${status==="loading"?" loading":status==="success"?" success":""}`} disabled={status!=="idle"} style={{ marginTop:4 }}>
+                  {status==="loading" ? <><div className="lp-spin"/> Memverifikasi...</>
+                   : status==="success" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> Berhasil — Mengalihkan...</>
+                   : <>Login <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
+                  }
                 </button>
               </form>
 
               {/* Divider */}
               <div style={{ position:"relative", textAlign:"center", margin:"16px 0" }}>
-                <div style={{ position:"absolute", left:0, top:"50%", width:"100%", height:1, background:"#EEF2FA" }}/>
-                <span style={{ position:"relative", background:"#fff", padding:"0 10px", fontSize:11, color:"#A8BFDA", fontWeight:500 }}>atau</span>
+                <div style={{ position:"absolute", left:0, top:"50%", width:"100%", height:1, background:T.divider }}/>
+                <span style={{ position:"relative", background:T.card, padding:"0 10px", fontSize:11, color:T.muted, fontWeight:500 }}>atau</span>
               </div>
 
               {/* Google SSO */}
-              <button type="button" className="lp-btn-google">
-                <GoogleIcon/>
-                Masuk dengan Google Workspace
+              <button type="button" className="lp-google">
+                <GoogleIcon/> Masuk dengan Google Workspace
               </button>
 
-              {/* Demo accounts section */}
-              <div style={{ marginTop:20, borderTop:"1px solid #EEF2FA", paddingTop:16 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowDemo(!showDemo)}
-                  style={{
-                    width:"100%", background:"none", border:"none", cursor:"pointer",
-                    display:"flex", alignItems:"center", justifyContent:"space-between",
-                    padding:"0 2px",
-                    fontFamily:"'Plus Jakarta Sans', system-ui, sans-serif",
-                  }}
-                >
-                  <span style={{ fontSize:11.5, fontWeight:600, color:"#7A95B4" }}>Akun Demo</span>
+              {/* Demo accounts */}
+              <div style={{ marginTop:20, borderTop:`1px solid ${T.divider}`, paddingTop:16 }}>
+                <button type="button" onClick={() => setShowDemo(!showDemo)} style={{ width:"100%", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 2px", fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif" }}>
+                  <span style={{ fontSize:11.5, fontWeight:600, color:T.body }}>Akun Demo</span>
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <code style={{
-                      fontSize:10.5, fontWeight:600, padding:"2px 8px", borderRadius:4,
-                      background:"#EEF4FF", border:"1px solid #C5D8F5",
-                      color:"#0047B3", fontFamily:"'DM Mono', monospace",
-                    }}>
+                    <code style={{ fontSize:10.5, fontWeight:600, padding:"2px 8px", borderRadius:4, background:T.codeBg, border:`1px solid ${T.codeBd}`, color:T.codeTx, fontFamily:"'DM Mono',monospace" }}>
                       {DEMO_PASSWORD}
                     </code>
-                    <svg
-                      width="12" height="12" viewBox="0 0 24 24" fill="none"
-                      stroke="#A8BFDA" strokeWidth="2.5" strokeLinecap="round"
-                      style={{ transform: showDemo ? "rotate(180deg)" : "rotate(0deg)", transition:"transform 0.15s" }}
-                    >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2.5" strokeLinecap="round" style={{ transform:showDemo?"rotate(180deg)":"rotate(0)", transition:"transform 0.15s" }}>
                       <polyline points="6 9 12 15 18 9"/>
                     </svg>
                   </div>
                 </button>
 
                 {showDemo && (
-                  <div style={{ display:"flex", flexDirection:"column", gap:4, marginTop:10 }}>
-                    {DEMO_ACCOUNTS.map((acc) => (
-                      <button
-                        key={acc.role}
-                        type="button"
-                        onClick={() => quickFill(acc)}
-                        className={`lp-demo-row${activeRole === acc.role ? " active" : ""}`}
-                        style={{ ["--dc" as string]: acc.color, ["--db" as string]: acc.bg } as React.CSSProperties}
-                      >
-                        <div style={{ width:3, height:28, borderRadius:2, background:acc.color, flexShrink:0 }}/>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:11.5, fontWeight:700, color:"#1E293B" }}>{acc.label}</div>
-                          <div style={{ fontSize:10.5, color:"#94A3B8", fontFamily:"'DM Mono', monospace" }}>{acc.email}</div>
-                        </div>
-                        {activeRole === acc.role && (
-                          <div style={{ width:16, height:16, borderRadius:"50%", background:acc.color, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                          </div>
-                        )}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:10 }}>
+                    {DEMO_ACCOUNTS.map(acc => (
+                      <button key={acc.role} type="button" onClick={() => quickFill(acc)} className={`lp-demo-item${activeRole===acc.role?" sel":""}`} style={{ ["--dc" as string]:acc.color, ["--db" as string]:acc.bg } as React.CSSProperties}>
+                        <div style={{ fontSize:11, fontWeight:700, color:acc.color, marginBottom:3 }}>{acc.label}</div>
+                        <div style={{ fontSize:10, color:T.muted, fontFamily:"'DM Mono',monospace" }}>{acc.email.split("@")[0]}</div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              <p style={{ textAlign:"center", fontSize:11.5, color:"#94A3B8", marginTop:20, lineHeight:1.6 }}>
+              <p style={{ textAlign:"center", fontSize:11, color:T.muted, marginTop:18, lineHeight:1.65 }}>
                 Sistem ini hanya untuk personel CMLabs<br/>yang telah mendapat otorisasi administrator.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Copyright */}
-        <p style={{
-          position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)",
-          fontSize:11, color:"rgba(0,60,140,0.35)", whiteSpace:"nowrap",
-          zIndex:2, letterSpacing:"0.01em",
-        }}>
+        <p style={{ position:"absolute", bottom:12, left:"50%", transform:"translateX(-50%)", fontSize:11, color:D?"rgba(100,140,180,0.38)":"rgba(0,60,140,0.28)", whiteSpace:"nowrap", zIndex:2 }}>
           &copy; {new Date().getFullYear()} CMLabs &mdash; Confidential Internal System
         </p>
       </div>
