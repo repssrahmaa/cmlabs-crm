@@ -419,29 +419,140 @@ input::placeholder {
               <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:12 }}>
 
                 {/* Email */}
-                <div style={{ position:"relative" }}>
-                  <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp(focus==="email")} onFocus={() => setFocus("email")} onBlur={() => setFocus(null)}/>
-                  <div style={{ position:"absolute", right:13, top:"50%", transform:"translateY(-50%)", color: isDark
-  ? "rgba(255,255,255,0.28)"
-  : "rgba(15,23,42,0.35)", display:"flex", pointerEvents:"none" }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                  </div>
-                </div>
+<div style={{ position:"relative" }}>
+  <input
+    type="email"
+    required
+    autoComplete="email"
+    value={email}
+    onChange={e => setEmail(e.target.value)}
+    placeholder="Email"
+    onFocus={() => setFocus("email")}
+    onBlur={() => setFocus(null)}
+    style={{
+      width: "100%",
+      height: 46,
+      padding: "0 42px 0 14px",
+      borderRadius: 12,
+      outline: "none",
+      fontSize: 13,
+      transition: "all 0.2s ease",
+
+      color: isDark ? "#f8fafc" : "#0f172a",
+
+      background: isDark
+        ? "rgba(15,23,42,0.78)"
+        : "#ffffff",
+
+      border:
+        focus === "email"
+          ? `1px solid ${isDark ? "#3b82f6" : "#2563eb"}`
+          : `1px solid ${
+              isDark
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(15,23,42,0.08)"
+            }`,
+
+      boxShadow:
+        focus === "email"
+          ? isDark
+            ? "0 0 0 4px rgba(59,130,246,0.14)"
+            : "0 0 0 4px rgba(37,99,235,0.10)"
+          : "none",
+
+      boxSizing: "border-box",
+    }}
+  />
+
+  <div
+    style={{
+      position:"absolute",
+      right:13,
+      top:"50%",
+      transform:"translateY(-50%)",
+      color: isDark
+        ? "rgba(255,255,255,0.32)"
+        : "rgba(15,23,42,0.35)",
+      display:"flex",
+      pointerEvents:"none"
+    }}
+  >
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+    </svg>
+  </div>
+</div>
 
                 {/* Password */}
-                <div style={{ position:"relative" }}>
-                  <input type={showPw?"text":"password"} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" style={inp(focus==="password")} onFocus={() => setFocus("password")} onBlur={() => setFocus(null)}/>
-                  <button type="button" className="lp-pw-btn" onClick={() => setShowPw(!showPw)}style={{
-  color: showPw
-    ? "#3b82f6"
-    : isDark
-      ? "rgba(255,255,255,0.28)"
-      : "rgba(15,23,42,0.35)"
-}} aria-label="Toggle password">
-                    {showPw
-                      ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                      : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    }
+<div style={{ position:"relative" }}>
+  <input
+    type={showPw ? "text" : "password"}
+    required
+    autoComplete="current-password"
+    value={password}
+    onChange={e => setPassword(e.target.value)}
+    placeholder="Password"
+    onFocus={() => setFocus("password")}
+    onBlur={() => setFocus(null)}
+    style={{
+      width: "100%",
+      height: 46,
+      padding: "0 42px 0 14px",
+      borderRadius: 12,
+      outline: "none",
+      fontSize: 13,
+      transition: "all 0.2s ease",
+
+      color: isDark ? "#f8fafc" : "#0f172a",
+
+      background: isDark
+        ? "rgba(15,23,42,0.78)"
+        : "#ffffff",
+
+      border:
+        focus === "password"
+          ? `1px solid ${isDark ? "#3b82f6" : "#2563eb"}`
+          : `1px solid ${
+              isDark
+                ? "rgba(255,255,255,0.08)"
+                : "rgba(15,23,42,0.08)"
+            }`,
+
+      boxShadow:
+        focus === "password"
+          ? isDark
+            ? "0 0 0 4px rgba(59,130,246,0.14)"
+            : "0 0 0 4px rgba(37,99,235,0.10)"
+          : "none",
+
+      boxSizing: "border-box",
+    }}
+  />
+
+  <button
+    type="button"
+    className="lp-pw-btn"
+    onClick={() => setShowPw(!showPw)}
+    style={{
+      position:"absolute",
+      right:13,
+      top:"50%",
+      transform:"translateY(-50%)",
+      border:"none",
+      background:"transparent",
+      cursor:"pointer",
+      display:"flex",
+      alignItems:"center",
+
+      color: showPw
+        ? "#3b82f6"
+        : isDark
+          ? "rgba(255,255,255,0.32)"
+          : "rgba(15,23,42,0.35)"
+    }}
+    aria-label="Toggle password"
+  >
                   </button>
                 </div>
 
