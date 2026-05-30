@@ -3,6 +3,7 @@
 import { signIn }              from "next-auth/react"
 import { useState, useEffect } from "react"
 import { useRouter }           from "next/navigation"
+import Image from "next/image"
 
 // ─── Types ────────────────────────────────────────────────────────
 type DemoRole    = "SUPER_ADMIN" | "SALES_MANAGER" | "ACCOUNT_EXEC" | "EXECUTIVE"
@@ -18,9 +19,6 @@ const DEMO_ACCOUNTS: {
   { role:"EXECUTIVE",     label:"Executive",     pos:"Head / C-Level", email:"executive@cmlabs.co",  color:"#5E35B1", bg:"rgba(94,53,177,0.08)"   },
 ]
 const DEMO_PASSWORD = "Demo123!"
-
-// ─── Logo CMLabs (base64 embedded) ───────────────────────────────
-const LOGO = "data:image/jpeg;base64,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"
 
 // ─── Decorative blobs ─────────────────────────────────────────────
 interface BlobProps { x:string; y:string; w:number; h:number; color:string; rotate:string; shape:"drop"|"circle" }
@@ -259,13 +257,55 @@ export default function LoginPage() {
             <div style={{ position:"absolute", bottom:-60, left:-60, width:220, height:220, borderRadius:"50%", background:"rgba(255,255,255,0.04)", pointerEvents:"none" }}/>
 
             {/* Brand */}
-            <div style={{ position:"absolute", top:26, left:26, display:"flex", alignItems:"center", gap:9, zIndex:2 }}>
-              <img src={LOGO} alt="CMLabs" style={{ width:30, height:30, borderRadius:7, objectFit:"cover", flexShrink:0 }}/>
-              <div>
-                <div style={{ fontSize:14, fontWeight:800, color:"#fff", letterSpacing:"-0.02em" }}>CMLabs</div>
-                <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.48)", letterSpacing:"0.10em", textTransform:"uppercase" }}>Internal System</div>
-              </div>
-            </div>
+<div
+  style={{
+    position: "absolute",
+    top: 26,
+    left: 26,
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    zIndex: 2,
+  }}
+>
+  <Image
+    src="/logo-cmlabs.png"
+    alt="CMLabs"
+    width={30}
+    height={30}
+    style={{
+      borderRadius: 7,
+      objectFit: "cover",
+      flexShrink: 0,
+      background: "#fff",
+    }}
+    priority
+  />
+
+  <div>
+    <div
+      style={{
+        fontSize: 14,
+        fontWeight: 800,
+        color: "#fff",
+        letterSpacing: "-0.02em",
+      }}
+    >
+      CMLabs
+    </div>
+
+    <div
+      style={{
+        fontSize: 8.5,
+        color: "rgba(255,255,255,0.48)",
+        letterSpacing: "0.10em",
+        textTransform: "uppercase",
+      }}
+    >
+      Internal System
+    </div>
+  </div>
+</div>
 
             {/* Accent blobs inside panel */}
             <div style={{ position:"absolute", top:72, right:26, width:10, height:14, borderRadius:"50% 50% 50% 10%", background:"#FFD54F", transform:"rotate(20deg)", opacity:0.8, pointerEvents:"none" }}/>
@@ -306,7 +346,17 @@ export default function LoginPage() {
 
               {/* Logo + heading */}
               <div style={{ display:"flex", flexDirection:"column", alignItems:"center", marginBottom:24 }}>
-                <img src={LOGO} alt="CMLabs" style={{ width:52, height:52, borderRadius:13, objectFit:"cover" }}/>
+               <Image
+  src="/logo-cmlabs.png"
+  alt="CMLabs"
+  width={30}
+  height={30}
+  style={{
+    borderRadius: 7,
+    objectFit: "cover",
+    flexShrink: 0,
+  }}
+/>
                 <h1 style={{ fontSize:25, fontWeight:800, color:T.heading, letterSpacing:"-0.03em", margin:"14px 0 7px", textAlign:"center" }}>
                   Selamat Datang!
                 </h1>
