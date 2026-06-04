@@ -1,6 +1,4 @@
 import { prisma } from "@/lib/prisma"
-import { sendEmail } from "@/lib/mail/mailService"
-import { buildHtmlEmail } from "@/lib/mail/emailTemplates"
 import { ActivityType } from "@prisma/client"
 
 // ── Types ─────────────────────────────────────────────
@@ -10,14 +8,6 @@ export interface CreateNoteInput {
   userId:  string
   title:   string
   content: string
-}
-
-export interface CreateEmailInput {
-  leadId:    string
-  userId:    string
-  toAddress: string
-  subject:   string
-  body:      string
 }
 
 export interface CreateCallInput {
@@ -40,103 +30,13 @@ export async function createInternalNote(input: CreateNoteInput) {
       isDone:  true, // notes are always "done"
     },
     include: {
-      user:  { select: { id: true, name: true, avatar: true } },
-      email: true,
+      user:  { select: { id: true, name: true, avatar: true } }
     },
   })
 
   return activity
 }
 
-// ── 2. Send Email (Create Activity + Send) ────────────
-export async function sendEmailFromLead(input: CreateEmailInput) {
-  // Ambil data lead dan user untuk template
-  const [lead, user] = await Promise.all([
-    prisma.lead.findUnique({
-      where:  { id: input.leadId },
-      select: { title: true, clientName: true },
-    }),
-    prisma.user.findUnique({
-      where:  { id: input.userId },
-      select: { name: true, email: true },
-    }),
-  ])
-
-  if (!lead || !user) {
-    throw new Error("Lead atau user tidak ditemukan")
-  }
-
-  // Build HTML email
-  const htmlBody = buildHtmlEmail({
-    clientName:  lead.clientName,
-    senderName:  user.name,
-    subject:     input.subject,
-    body:        input.body,
-    leadTitle:   lead.title,
-    companyName: "CMLabs",
-  })
-
-  // 1. Buat Activity dulu (status PENDING)
-  const activity = await prisma.activity.create({
-    data: {
-      leadId:  input.leadId,
-      userId:  input.userId,
-      type:    ActivityType.EMAIL_SENT,
-      title:   input.subject,
-      content: input.body,
-      isDone:  false, // akan di-update setelah send
-      metadata: {
-        toAddress:   input.toAddress,
-        fromAddress: user.email,
-        subject:     input.subject,
-      },
-      email: {
-        create: {
-          toAddress:   input.toAddress,
-          fromAddress: user.email,
-          subject:     input.subject,
-          body:        input.body,
-          htmlBody,
-          status:      "PENDING",
-        },
-      },
-    },
-    include: {
-      user:  { select: { id: true, name: true, avatar: true } },
-      email: true,
-    },
-  })
-
-  // 2. Kirim email
-  const result = await sendEmail({
-    to:      input.toAddress,
-    from:    user.email,
-    subject: input.subject,
-    body:    input.body,
-    html:    htmlBody,
-  })
-
-  // 3. Update status berdasarkan hasil
-  const updatedEmail = await prisma.email.update({
-    where: { activityId: activity.id },
-    data:  {
-      status:   result.success ? "SENT" : "FAILED",
-      sentAt:   result.success ? new Date() : null,
-      errorLog: result.error ?? null,
-    },
-  })
-
-  // 4. Update activity isDone
-  await prisma.activity.update({
-    where: { id: activity.id },
-    data:  { isDone: result.success },
-  })
-
-  return {
-    activity: { ...activity, email: updatedEmail },
-    emailResult: result,
-  }
-}
 
 // ── 3. Create Call/Meeting/Task ───────────────────────
 export async function createCallActivity(input: CreateCallInput) {
@@ -151,8 +51,7 @@ export async function createCallActivity(input: CreateCallInput) {
       isDone:      false,
     },
     include: {
-      user:  { select: { id: true, name: true, avatar: true } },
-      email: true,
+      user:  { select: { id: true, name: true, avatar: true } }
     },
   })
 
@@ -164,8 +63,7 @@ export async function getLeadTimeline(leadId: string) {
   const activities = await prisma.activity.findMany({
     where:   { leadId },
     include: {
-      user:  { select: { id: true, name: true, avatar: true, role: true } },
-      email: true,
+      user:  { select: { id: true, name: true, avatar: true, role: true } }
     },
     orderBy: { createdAt: "desc" },
   })
@@ -179,8 +77,7 @@ export async function markActivityDone(activityId: string, isDone: boolean) {
     where: { id: activityId },
     data:  { isDone },
     include: {
-      user:  { select: { id: true, name: true } },
-      email: true,
+      user:  { select: { id: true, name: true } }
     },
   })
 }

@@ -21,8 +21,6 @@ model User {
   activities                    Activity[]
   assignedLeads                 Lead[]     @relation("AssignedLeads")
   createdLeads                  Lead[]     @relation("CreatedLeads")
-  mails_mails_receiverIdTousers mails[]    @relation("mails_receiverIdTousers")
-  mails_mails_senderIdTousers   mails[]    @relation("mails_senderIdTousers")
 
   @@map("users")
 }
@@ -48,7 +46,6 @@ model Lead {
   documents     Document[]
   assignedTo    User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
   createdBy     User         @relation("CreatedLeads", fields: [createdById], references: [id])
-  mails         mails[]
 
   @@map("leads")
 }
@@ -68,7 +65,6 @@ model Activity {
   userId      String
   lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
   user        User         @relation(fields: [userId], references: [id])
-  email       Email?
 
   @@map("activities")
 }
@@ -125,11 +121,6 @@ enum ActivityType {
   EMAIL_RECEIVED
 }
 
-enum MailStatus {
-  DRAFT
-  SENT
-  ARCHIVED
-}
 
 enum DocumentType {
   INVOICE
@@ -142,10 +133,4 @@ enum DocumentStatus {
   DRAFT
   FINALIZED
   SENT
-}
-
-enum EmailStatus {
-  PENDING
-  SENT
-  FAILED
 }

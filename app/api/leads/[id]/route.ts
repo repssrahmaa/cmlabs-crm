@@ -48,8 +48,7 @@ export async function GET(
       createdBy:  { select: { id: true, name: true } },
       activities: {
         include: {
-          user:  { select: { id: true, name: true, avatar: true } },
-          email: true,
+          user:  { select: { id: true, name: true, avatar: true } }
         },
         orderBy: { createdAt: "desc" },
       },
