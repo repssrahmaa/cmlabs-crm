@@ -73,22 +73,6 @@ model Activity {
   @@map("activities")
 }
 
-model Email {
-  id          String      @id @default(cuid())
-  activityId  String      @unique
-  toAddress   String
-  fromAddress String
-  subject     String
-  body        String
-  htmlBody    String?
-  status      EmailStatus @default(PENDING)
-  sentAt      DateTime?
-  errorLog    String?
-  createdAt   DateTime    @default(now())
-  activity    Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
-  @@map("emails")
-}
 
 model Document {
   id        String         @id @default(cuid())
@@ -105,20 +89,6 @@ model Document {
   @@map("documents")
 }
 
-model mails {
-  id                            String     @id
-  subject                       String
-  body                          String
-  status                        MailStatus @default(DRAFT)
-  sentAt                        DateTime?
-  createdAt                     DateTime   @default(now())
-  senderId                      String
-  receiverId                    String
-  leadId                        String?
-  leads                         Lead?      @relation(fields: [leadId], references: [id])
-  users_mails_receiverIdTousers User       @relation("mails_receiverIdTousers", fields: [receiverId], references: [id])
-  users_mails_senderIdTousers   User       @relation("mails_senderIdTousers", fields: [senderId], references: [id])
-}
 
 enum Role {
   SUPER_ADMIN
