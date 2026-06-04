@@ -7,6 +7,119 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                            String     @id @default(cuid())
+  name                          String
+  email                         String     @unique
+  password                      String
+  role                          Role       @default(ACCOUNT_EXECUTIVE)
+  avatar                        String?
+  phone                         String?
+  isActive                      Boolean    @default(true)
+  createdAt                     DateTime   @default(now())
+  updatedAt                     DateTime   @updatedAt
+  activities                    Activity[]
+  assignedLeads                 Lead[]     @relation("AssignedLeads")
+  createdLeads                  Lead[]     @relation("CreatedLeads")
+  mails_mails_receiverIdTousers mails[]    @relation("mails_receiverIdTousers")
+  mails_mails_senderIdTousers   mails[]    @relation("mails_senderIdTousers")
+
+  @@map("users")
+}
+
+model Lead {
+  id            String       @id @default(cuid())
+  title         String
+  clientName    String
+  clientEmail   String?
+  clientPhone   String?
+  clientCompany String?
+  status        LeadStatus   @default(APPROACH)
+  priority      LeadPriority @default(MEDIUM)
+  value         Decimal?     @db.Decimal(15, 2)
+  description   String?
+  source        String?
+  closedAt      DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  assignedToId  String?
+  createdById   String
+  activities    Activity[]
+  documents     Document[]
+  assignedTo    User?        @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  createdBy     User         @relation("CreatedLeads", fields: [createdById], references: [id])
+  mails         mails[]
+
+  @@map("leads")
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  title       String
+  content     String?
+  description String?
+  dueDate     DateTime?
+  isDone      Boolean      @default(false)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  leadId      String
+  userId      String
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
+  email       Email?
+
+  @@map("activities")
+}
+
+model Email {
+  id          String      @id @default(cuid())
+  activityId  String      @unique
+  toAddress   String
+  fromAddress String
+  subject     String
+  body        String
+  htmlBody    String?
+  status      EmailStatus @default(PENDING)
+  sentAt      DateTime?
+  errorLog    String?
+  createdAt   DateTime    @default(now())
+  activity    Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@map("emails")
+}
+
+model Document {
+  id        String         @id @default(cuid())
+  type      DocumentType
+  title     String
+  content   Json
+  status    DocumentStatus @default(DRAFT)
+  fileUrl   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  leadId    String
+  lead      Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model mails {
+  id                            String     @id
+  subject                       String
+  body                          String
+  status                        MailStatus @default(DRAFT)
+  sentAt                        DateTime?
+  createdAt                     DateTime   @default(now())
+  senderId                      String
+  receiverId                    String
+  leadId                        String?
+  leads                         Lead?      @relation(fields: [leadId], references: [id])
+  users_mails_receiverIdTousers User       @relation("mails_receiverIdTousers", fields: [receiverId], references: [id])
+  users_mails_senderIdTousers   User       @relation("mails_senderIdTousers", fields: [senderId], references: [id])
+}
+
 enum Role {
   SUPER_ADMIN
   EXECUTIVE
@@ -16,14 +129,15 @@ enum Role {
 }
 
 enum LeadStatus {
-  APPROACH      
-  COLD_LEAD     
-  DECK_REQUEST 
-  MEETING      
-  DEAL         
-  RECYCLE      
+  APPROACH
+  COLD_LEAD
+  NEEDS_IDENTIFIED
+  DECK_REQUEST
+  MEETING
+  CONTRACT_SENT
+  DEAL
+  RECYCLE
 }
-
 
 enum LeadPriority {
   LOW
@@ -32,13 +146,13 @@ enum LeadPriority {
 }
 
 enum ActivityType {
+  NOTE
+  CALL
+  MEETING
+  TASK
   INTERNAL_NOTE
   EMAIL_SENT
   EMAIL_RECEIVED
-  CALL
-  MEETING        
-  TASK
-  NOTE
 }
 
 enum MailStatus {
@@ -64,106 +178,4 @@ enum EmailStatus {
   PENDING
   SENT
   FAILED
-}
-
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(ACCOUNT_EXECUTIVE)
-  avatar    String?
-  phone     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  assignedLeads Lead[]     @relation("AssignedLeads")
-  createdLeads  Lead[]     @relation("CreatedLeads")
-  activities    Activity[]
-
-  @@map("users")
-}
-
-model Lead {
-  id             String      @id @default(cuid())
-  title          String
-  clientName     String
-  clientEmail    String?
-  clientPhone    String?
-  clientCompany  String?
-  value          Decimal?
-  source         String?
-  description    String?
-  status         LeadStatus  @default(APPROACH)
-  priority       LeadPriority @default(MEDIUM)
-  assignedToId   String?
-  createdById    String
-  closedAt       DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  assignedTo  User?       @relation("AssignedLeads", fields: [assignedToId], references: [id])
-  createdBy   User        @relation("CreatedLeads",  fields: [createdById],  references: [id])
-  activities  Activity[]
-  documents   Document[]
-
-  @@map("leads")
-}
-
-model Activity {
-  id          String       @id @default(cuid())
-  type        ActivityType
-  title       String
-  content     String?
-  description String?
-  isDone      Boolean      @default(false)
-  dueDate     DateTime?
-  leadId      String
-  userId      String
-  metadata    Json?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  lead  Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId],  references: [id])
-  email Email?
-
-  @@map("activities")
-}
-
-model Email {
-  id          String      @id @default(cuid())
-  activityId  String      @unique
-  toAddress   String
-  fromAddress String
-  subject     String
-  body        String
-  htmlBody    String?
-  status      EmailStatus @default(PENDING)
-  sentAt      DateTime?
-  errorLog    String?
-  createdAt   DateTime    @default(now())
-
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
-  @@map("emails")
-}
-
-
-model Document {
-  id        String         @id @default(cuid())
-  type      DocumentType
-  title     String
-  content   Json
-  status    DocumentStatus @default(DRAFT)
-  fileUrl   String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  leadId String
-
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-
-  @@map("documents")
 }
