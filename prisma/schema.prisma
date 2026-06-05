@@ -32,6 +32,7 @@ model Lead {
   clientEmail   String?
   clientPhone   String?
   clientCompany String?
+   clientPosition  String?
   status        LeadStatus   @default(APPROACH)
   priority      LeadPriority @default(MEDIUM)
   value         Decimal?     @db.Decimal(15, 2)

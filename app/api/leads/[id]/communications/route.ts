@@ -54,7 +54,48 @@ export async function POST(
   )
 }
 
-  const d = parsed.data
+const d = parsed.data
 
+try {
+  const activity = await prisma.activity.create({
+    data: {
+      leadId,
+      userId: session.user.id,
 
+      type: "NOTE",
+
+      title: d.title,
+
+      content: d.content ?? null,
+
+      dueDate: d.dueDate
+        ? new Date(d.dueDate)
+        : null,
+
+      isDone: d.isDone ?? false,
+
+      metadata: {
+        meetLink: d.meetLink ?? null,
+        meetStart: d.meetStart ?? null,
+        meetEnd: d.meetEnd ?? null,
+        meetInvites: d.meetInvites ?? [],
+      },
+    },
+  })
+
+  return NextResponse.json({
+    success: true,
+    data: activity,
+  })
+} catch (error) {
+  console.error("CREATE ACTIVITY ERROR:", error)
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Gagal membuat activity",
+    },
+    { status: 500 }
+  )
+}
 }

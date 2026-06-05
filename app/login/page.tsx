@@ -471,7 +471,7 @@ export default function LoginPage() {
         </div>
 
         <p style={{ position:"absolute", bottom:12, left:"50%", transform:"translateX(-50%)", fontSize:11, color:D?"rgba(100,140,180,0.38)":"rgba(0,60,140,0.28)", whiteSpace:"nowrap", zIndex:2 }}>
-          &copy; {new Date().getFullYear()} CMLabs &mdash; Confidential Internal System
+          &copy; {new Date().getFullYear()} CMLabs &mdash; CRM CMLABS
         </p>
       </div>
     </>

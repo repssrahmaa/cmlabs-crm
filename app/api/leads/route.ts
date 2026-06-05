@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
         clientEmail:   parsed.data.clientEmail   ?? null,
         clientPhone:   parsed.data.clientPhone   ?? null,
         clientCompany: parsed.data.clientCompany ?? null,
+        clientPosition: body.clientPosition,
         value:         parsed.data.value         ?? null,
         source:        parsed.data.source        ?? null,
         description:   parsed.data.description   ?? null,

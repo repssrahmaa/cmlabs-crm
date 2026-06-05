@@ -12,18 +12,35 @@ const updateLeadSchema = z.object({
   clientEmail:   z.union([z.string().email(), z.string().max(0), z.null()]).optional(),
   clientPhone:   z.string().optional().nullable(),
   clientCompany: z.string().optional().nullable(),
-  status:        z.enum(["APPROACH","COLD_LEAD","NEEDS_IDENTIFIED","DECK_REQUEST","MEETING","CONTRACT_SENT","DEAL","RECYCLE"]).optional(),
-  priority:      z.enum(["LOW","MEDIUM","HIGH"]).optional(),
-  value:         z.union([
+  clientPosition:z.string().optional().nullable(),
+
+  status:        z.enum([
+    "APPROACH",
+    "COLD_LEAD",
+    "NEEDS_IDENTIFIED",
+    "DECK_REQUEST",
+    "MEETING",
+    "CONTRACT_SENT",
+    "DEAL",
+    "RECYCLE"
+  ]).optional(),
+
+  priority: z.enum([
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ]).optional(),
+
+  value: z.union([
     z.number(),
     z.string().transform((v) => v === "" ? undefined : Number(v)),
     z.null(),
   ]).optional(),
+
   source:        z.string().optional().nullable(),
   description:   z.string().optional().nullable(),
   assignedToId:  z.string().optional().nullable(),
 })
-
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
