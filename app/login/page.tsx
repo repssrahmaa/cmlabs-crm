@@ -206,7 +206,7 @@ const inp = (f: boolean): React.CSSProperties => ({
   borderRadius: 10,
   fontSize: 13.5,
 
-  color: D ? "#F9FAFB" : "#111827",
+  color: D ? "#F9FAFB" : "#E5E7EB",
 
   // FIX LIGHT MODE
   backgroundColor: D ? "#0F172A" : "#FFFFFF",
