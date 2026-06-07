@@ -191,16 +191,47 @@ export default function LoginPage() {
     codeTx:  D ? "#6ea8f7"      : "#0047B3",
   }
 
-  const inp = (f: boolean): React.CSSProperties => ({
-    width:"100%", padding:"12px 40px 12px 16px",
-    border:`1.5px solid ${f ? "#0047B3" : T.inputBd}`,
-    borderRadius:10, fontSize:13.5, color:T.inputTx,
-    background: f ? (D ? "#132233" : "#fff") : T.inputBg,
-    fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",
-    outline:"none", boxSizing:"border-box" as const,
-    boxShadow: f ? "0 0 0 3px rgba(0,71,179,0.12)" : "none",
-    transition:"all 0.15s",
-  })
+const inp = (f: boolean): React.CSSProperties => ({
+  width: "100%",
+  padding: "12px 40px 12px 16px",
+
+  border: `1.5px solid ${
+    f
+      ? "#0047B3"
+      : D
+        ? "#2B3A4D"
+        : "#D1D5DB"
+  }`,
+
+  borderRadius: 10,
+  fontSize: 13.5,
+
+  color: D ? "#F9FAFB" : "#111827",
+
+  background: f
+    ? (D ? "#132233" : "#FFFFFF")
+    : (D ? "#0F172A" : "#FFFFFF"),
+
+  fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif",
+
+  outline: "none",
+  boxSizing: "border-box",
+
+  boxShadow: f
+    ? "0 0 0 3px rgba(0,71,179,0.12)"
+    : "none",
+
+  transition: "all 0.15s",
+
+  // FIX chrome autofill
+  WebkitBoxShadow: D
+    ? "0 0 0 1000px #0F172A inset"
+    : "0 0 0 1000px #FFFFFF inset",
+
+  WebkitTextFillColor: D
+    ? "#F9FAFB"
+    : "#111827",
+});
 
   return (
     <>
