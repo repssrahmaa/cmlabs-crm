@@ -142,7 +142,6 @@ body {
   --table-row-alt:   #0b1420;
 
   --input-bg:     #131f30;
-  --input-border: #1a2d42;
   --input-text:   #e8f0f8;
   --input-ph:     #2e4560;
 
@@ -383,12 +382,3 @@ button:focus-visible, a:focus-visible {
 .stagger > *:nth-child(6) { animation-delay: 0.30s; }
 .stagger > *:nth-child(7) { animation-delay: 0.35s; }
 .stagger > *:nth-child(8) { animation-delay: 0.40s; }
-
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #111827 !important;
-  transition: background-color 9999s ease-in-out 0s;
-}
