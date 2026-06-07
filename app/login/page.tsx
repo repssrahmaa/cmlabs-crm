@@ -197,10 +197,10 @@ const inp = (f: boolean): React.CSSProperties => ({
 
   border: `1.5px solid ${
     f
-      ? "#0047B3"
-      : D
-        ? "#2B3A4D"
-        : "#D1D5DB"
+       ? "#0047B3"
+    : D
+      ? "#E5E7EB"
+      : "#E5E7EB"
   }`,
 
   borderRadius: 10,
