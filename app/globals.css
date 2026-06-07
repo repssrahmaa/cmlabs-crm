@@ -71,10 +71,10 @@ body {
   --table-head-bg:   #f4f6f9;
   --table-row-alt:   #f9fafb;
 
-  --input-bg:     #ffffff;
-  --input-border: #dde3ec;
-  --input-text:   #0d1f2d;
-  --input-ph:     #94a3b8;
+ --input-bg:     #ffffff;
+--input-text:   #0d1f2d;
+--input-ph:     #94a3b8;
+--input-border: #dbe4f0;
 
   --hero-a: #0c1220;
   --hero-b: #112140;
@@ -143,6 +143,7 @@ body {
 
   --input-bg:     #131f30;
   --input-text:   #e8f0f8;
+  --input-border: #22344a;
   --input-ph:     #2e4560;
 
   --hero-a: #060b11;
@@ -166,7 +167,7 @@ input, select, textarea {
   background: var(--input-bg) !important;
   color: var(--input-text) !important;
 
-  border: 1.5px solid var(--border) !important;
+ border: 1.5px solid var(--input-border) !important;
 
   outline: none;
 
