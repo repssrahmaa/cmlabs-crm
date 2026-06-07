@@ -179,19 +179,7 @@ input, select, textarea {
   -webkit-appearance: none;
   appearance: none;
 }
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
-  -webkit-text-fill-color: var(--input-text) !important;
-  caret-color: var(--input-text) !important;
 
-  border: 1.5px solid var(--border) !important;
-
-  transition: background-color 9999s ease-in-out 0s;
-}
 
 input::placeholder, textarea::placeholder {
   color: var(--input-ph) !important;
