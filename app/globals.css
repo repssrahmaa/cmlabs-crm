@@ -164,10 +164,10 @@ a:hover { opacity: 0.85; }
 input, select, textarea {
   font-family: inherit;
 
-  background: var(--input-bg) !important;
-  color: var(--input-text) !important;
+  background: var(--input-bg);
+  color: var(--input-text);
 
- border: 1.5px solid var(--input-border) !important;
+  border: 1.5px solid var(--input-border);
 
   outline: none;
 
