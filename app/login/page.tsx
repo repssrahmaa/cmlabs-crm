@@ -208,9 +208,8 @@ const inp = (f: boolean): React.CSSProperties => ({
 
   color: D ? "#F9FAFB" : "#111827",
 
-  background: f
-    ? (D ? "#132233" : "#FFFFFF")
-    : (D ? "#0F172A" : "#FFFFFF"),
+  // FIX LIGHT MODE
+  backgroundColor: D ? "#0F172A" : "#FFFFFF",
 
   fontFamily: "'Plus Jakarta Sans',system-ui,sans-serif",
 
@@ -223,7 +222,10 @@ const inp = (f: boolean): React.CSSProperties => ({
 
   transition: "all 0.15s",
 
-  // FIX chrome autofill
+  appearance: "none",
+  WebkitAppearance: "none",
+
+  // CHROME AUTOFILL FIX
   WebkitBoxShadow: D
     ? "0 0 0 1000px #0F172A inset"
     : "0 0 0 1000px #FFFFFF inset",
@@ -231,6 +233,8 @@ const inp = (f: boolean): React.CSSProperties => ({
   WebkitTextFillColor: D
     ? "#F9FAFB"
     : "#111827",
+
+  caretColor: D ? "#fff" : "#111827",
 });
 
   return (
