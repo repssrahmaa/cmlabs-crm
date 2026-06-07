@@ -72,6 +72,7 @@ body {
   --table-row-alt:   #f9fafb;
 
   --input-bg:     #ffffff;
+  --input-border: #dde3ec;
   --input-text:   #0d1f2d;
   --input-ph:     #94a3b8;
 
@@ -161,12 +162,36 @@ a:hover { opacity: 0.85; }
 
 input, select, textarea {
   font-family: inherit;
-  background:   var(--input-bg) !important;
-  color:        var(--input-text) !important;
-  border-color: var(--input-border) !important;
+
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+
+  border: 1.5px solid var(--border) !important;
+
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+
+  -webkit-appearance: none;
+  appearance: none;
 }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+  caret-color: var(--input-text) !important;
+
+  border: 1.5px solid var(--border) !important;
+
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 input::placeholder, textarea::placeholder {
   color: var(--input-ph) !important;
 }
