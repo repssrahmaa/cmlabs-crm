@@ -180,7 +180,7 @@ export default function LoginPage() {
     card:    D ? "#0d1a2e"      : "#ffffff",
     leftBg:  D ? "linear-gradient(145deg,#003894,#002060)" : "linear-gradient(145deg,#0055D4,#003A96)",
     inputBg: D ? "#0f1e32"      : "#FAFCFF",
-    inputBd: D ? "#1c3150"      : "#E8EEF8",
+    inputBd: D ? "#2B3A4D" : "#D1D5DB",
     inputTx: D ? "#ddeaf8"      : "#1E293B",
     heading: D ? "#e8f2fc"      : "#0A1628",
     body:    D ? "#6890b0"      : "#7A95B4",
@@ -195,18 +195,12 @@ const inp = (f: boolean): React.CSSProperties => ({
   width: "100%",
   padding: "12px 40px 12px 16px",
 
-  border: `1.5px solid ${
-    f
-       ? "#0047B3"
-    : D
-      ? "#E5E7EB"
-      : "#E5E7EB"
-  }`,
+  border:`1.5px solid ${f ? "#0047B3" : T.inputBd}`,
 
   borderRadius: 10,
   fontSize: 13.5,
 
-  color: D ? "#F9FAFB" : "#E5E7EB",
+  color: D ? "#F9FAFB" : "#111827",
 
   // FIX LIGHT MODE
   backgroundColor: D ? "#0F172A" : "#FFFFFF",
