@@ -224,6 +224,10 @@ const inp = (f: boolean): React.CSSProperties => ({
   appearance: "none",
   WebkitAppearance: "none",
 
+  // AUTOFILL FIX
+  WebkitBoxShadow: `0 0 0 1000px ${T.inputBg} inset`,
+  WebkitTextFillColor: T.inputTx,
+
   caretColor: T.inputTx,
 })
 
