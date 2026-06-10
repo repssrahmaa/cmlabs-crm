@@ -53,7 +53,6 @@ export async function GET(
   const { id } = await context.params
   const role   = session.user.role as RoleType
 
-  // Semua role yang punya akses read bisa lihat detail lead manapun
   if (!hasPermission(role, "read", "lead")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }

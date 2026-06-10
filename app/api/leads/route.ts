@@ -23,7 +23,7 @@ const createLeadSchema = z.object({
   assignedToId:  z.string().optional().nullable(),
 })
 
-// GET /api/leads — SEMUA ROLE LIHAT SEMUA LEAD
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user) {
@@ -42,8 +42,7 @@ export async function GET(req: NextRequest) {
     const search  = searchParams.get("search")
     const priority = searchParams.get("priority")
 
-    // ✅ Tidak ada filter by assignedToId — semua role lihat semua lead
-    const leads = await prisma.lead.findMany({
+     const leads = await prisma.lead.findMany({
       where: {
         ...(status   ? { status:   status as any   } : {}),
         ...(priority ? { priority: priority as any } : {}),
@@ -122,7 +121,7 @@ export async function POST(req: NextRequest) {
         clientEmail:   parsed.data.clientEmail   ?? null,
         clientPhone:   parsed.data.clientPhone   ?? null,
         clientCompany: parsed.data.clientCompany ?? null,
-        clientPosition: body.clientPosition,
+        clientPosition: body.clientPosition ?? null,
         value:         parsed.data.value         ?? null,
         source:        parsed.data.source        ?? null,
         description:   parsed.data.description   ?? null,

@@ -200,7 +200,6 @@ export default function Sidebar() {
       ? pathname === href
       : pathname === href || pathname.startsWith(href + "/")
 
-  // Khusus /reports/personal jangan highlight /reports
   const reportsActive = isActive("/reports") && !isActive("/reports/personal")
   const personalActive = isActive("/reports/personal")
 
@@ -250,7 +249,6 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* ── Navigation ─────────────────────────────── */}
         <nav style={{ flex: 1, padding: "4px 10px", overflowY: "auto", overflowX: "hidden" }}>
 
           <NavSection label="Menu Utama" />
@@ -260,12 +258,9 @@ export default function Sidebar() {
           {(showForecasting || showReports) && (
             <NavSection label="Analitik" />
           )}
-
           {showForecasting && (
             <NavItem href="/forecasting" label="Forecasting"       Icon={NavIcons.Forecast}     isActive={isActive("/forecasting")} />
           )}
-
-          {/* Laporan & Dokumen — hanya highlight ketika BUKAN di /reports/personal */}
           {showReports && (
             <NavItem
               href="/reports"
@@ -274,8 +269,6 @@ export default function Sidebar() {
               isActive={reportsActive}
             />
           )}
-
-          {/* Performa Saya — item terpisah, di bawah Laporan */}
           {showPersonal && (
             <NavItem
               href="/reports/personal"
@@ -292,7 +285,6 @@ export default function Sidebar() {
           )}
           <NavItem href="/profile"   label="Profil Saya" Icon={NavIcons.Profile} isActive={isActive("/profile", true)} />
 
-          {/* ── PANDUAN UAT DIHAPUS ── */}
         </nav>
 
         {/* ── Footer ─────────────────────────────────── */}

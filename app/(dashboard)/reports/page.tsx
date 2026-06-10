@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRoleGuard }       from "@/hooks/useRoleGuard"
 import { useRealtimeDashboard }from "@/hooks/useRealtimeDashboard"
 import {
@@ -784,11 +784,50 @@ function CreateDocModal({ leads, onSubmit, onClose }: {
   onSubmit: (d: any) => Promise<void>
   onClose:  () => void
 }) {
-  const [leadId,  setLeadId]  = useState("")
-  const [type,    setType]    = useState("INVOICE")
-  const [title,   setTitle]   = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState("")
+  const [leadId,      setLeadId]      = useState("")
+  const [leadSearch,  setLeadSearch]  = useState("")
+  const [dropOpen,    setDropOpen]    = useState(false)
+  const [type,        setType]        = useState("INVOICE")
+  const [title,       setTitle]       = useState("")
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState("")
+  const searchRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setDropOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const filteredLeads = useMemo(() =>
+    leads.filter((l) => {
+      const q = leadSearch.toLowerCase()
+      return (
+        l.title?.toLowerCase().includes(q) ||
+        l.clientName?.toLowerCase().includes(q) ||
+        l.clientCompany?.toLowerCase().includes(q)
+      )
+    }),
+    [leads, leadSearch]
+  )
+
+  const selectedLead = leads.find((l) => l.id === leadId)
+
+  function selectLead(l: any) {
+    setLeadId(l.id)
+    setLeadSearch("")
+    setDropOpen(false)
+  }
+
+  function clearLead() {
+    setLeadId("")
+    setLeadSearch("")
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -831,13 +870,93 @@ function CreateDocModal({ leads, onSubmit, onClose }: {
         </div>
         {error && <div style={{ marginBottom: 14, padding: "10px 14px", background: "var(--danger-pale)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "var(--danger)" }}>{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+          {/* ── Lead Search Combobox ── */}
           <div>
             <label style={lStyle}>Lead *</label>
-            <select value={leadId} onChange={(e) => setLeadId(e.target.value)} required style={iStyle}>
-              <option value="">-- Pilih Lead --</option>
-              {leads.map((l) => <option key={l.id} value={l.id}>{l.title} — {l.clientName}</option>)}
-            </select>
+            <div ref={searchRef} style={{ position: "relative" }}>
+              {selectedLead ? (
+                /* Selected state */
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "9px 12px",
+                  background: "var(--input-bg)",
+                  border: "1px solid var(--primary)",
+                  borderRadius: 9,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {selectedLead.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      {selectedLead.clientName}{selectedLead.clientCompany ? ` — ${selectedLead.clientCompany}` : ""}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearLead}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 18, lineHeight: 1, padding: "0 2px", flexShrink: 0 }}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ) : (
+                /* Search input */
+                <div style={{ position: "relative" }}>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--text-muted)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+                  >
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input
+                    type="text"
+                    value={leadSearch}
+                    onChange={(e) => { setLeadSearch(e.target.value); setDropOpen(true) }}
+                    onFocus={() => setDropOpen(true)}
+                    placeholder="Cari lead atau nama klien..."
+                    autoComplete="off"
+                    style={{ ...iStyle, paddingLeft: 34 }}
+                  />
+                </div>
+              )}
+
+              {/* Dropdown */}
+              {dropOpen && !selectedLead && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 200,
+                  background: "var(--bg-card)", border: "1px solid var(--border)",
+                  borderRadius: 10, boxShadow: "var(--shadow-xl)",
+                  maxHeight: 220, overflowY: "auto",
+                }}>
+                  {filteredLeads.length === 0 ? (
+                    <div style={{ padding: "14px 14px", fontSize: 12, color: "var(--text-muted)", textAlign: "center" }}>
+                      Lead tidak ditemukan
+                    </div>
+                  ) : filteredLeads.map((l) => (
+                    <div
+                      key={l.id}
+                      onMouseDown={() => selectLead(l)}
+                      style={{
+                        padding: "10px 14px", cursor: "pointer",
+                        borderBottom: "1px solid var(--border-light)",
+                        transition: "background 0.12s",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-hover)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{l.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
+                        {l.clientName}{l.clientCompany ? ` — ${l.clientCompany}` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
           <div>
             <label style={lStyle}>Tipe Dokumen *</label>
             <select value={type} onChange={(e) => setType(e.target.value)} style={iStyle}>

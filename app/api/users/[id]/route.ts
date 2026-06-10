@@ -72,7 +72,6 @@ export async function PUT(
     data.password = await bcrypt.hash(parsed.data.password, 10)
   }
 
-  // User biasa hanya bisa update data diri sendiri (bukan role/isActive)
   if (isSelf && !hasPermission(role, "update", "user")) {
     delete data.role
     delete data.isActive

@@ -124,7 +124,6 @@ function GoogleIcon() {
   )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter()
 
@@ -139,7 +138,6 @@ export default function LoginPage() {
   const [focus,       setFocus]       = useState<"email"|"password"|null>(null)
   const [isDark,      setIsDark]      = useState(false)
 
-  // Restore theme preference
   useEffect(() => {
     if (localStorage.getItem("theme") === "dark") setIsDark(true)
   }, [])
@@ -151,7 +149,6 @@ export default function LoginPage() {
     })
   }
 
-  // Auto-detect demo role from email
   useEffect(() => {
     const found = DEMO_ACCOUNTS.find(a => a.email.toLowerCase() === email.trim().toLowerCase())
     setActiveRole(found?.role ?? null)
@@ -173,7 +170,6 @@ export default function LoginPage() {
 
   const detected = activeRole ? DEMO_ACCOUNTS.find(a => a.role === activeRole) ?? null : null
 
-  // ── Color tokens ─────────────────────────────────────────────
   const D = isDark
   const T = {
     page:    D ? "#060c18"      : "#EFF4FC",
