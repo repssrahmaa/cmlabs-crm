@@ -7,7 +7,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts"
-
+import { LabelList } from "recharts"
 const MONTHS   = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
 const CUR_YEAR = new Date().getFullYear()
 const YEARS    = Array.from({ length: 5 }, (_, i) => String(CUR_YEAR - i))
@@ -354,17 +354,35 @@ export default function TeamPage() {
 
   useEffect(() => { fetchSalesChart() }, [fetchSalesChart])
 
-  const roleDistrib = Object.entries(
-    users.reduce((acc: any, u) => { acc[u.role]=(acc[u.role]??0)+1; return acc }, {})
-  ).map(([r, count]) => ({
-    name: { SUPER_ADMIN:"Super Admin", EXECUTIVE:"Executive", SALES_MANAGER:"Sales Mgr", ACCOUNT_EXECUTIVE:"AE", VIEWER:"Viewer" }[r] ?? r,
-    value: count as number,
-    color: { SUPER_ADMIN:"#dc2626", EXECUTIVE:"#7c3aed", SALES_MANAGER:"#3b82f6", ACCOUNT_EXECUTIVE:"#10b981", VIEWER:"#94a3b8" }[r] ?? "#94a3b8",
-  }))
+const roleDistrib = Object.entries(
+  users.reduce((acc: any, u) => {
+    acc[u.role] = (acc[u.role] ?? 0) + 1
+    return acc
+  }, {})
+).map(([r, count]) => ({
+  name: {
+    SUPER_ADMIN: "Super Admin",
+    EXECUTIVE: "Executive",
+    SALES_MANAGER: "Sales Manager",
+    ACCOUNT_EXECUTIVE: "Account Executive",
+  }[r] ?? r,
+  value: count as number,
+  color: {
+    SUPER_ADMIN: "#dc2626",
+    EXECUTIVE: "#7c3aed",
+    SALES_MANAGER: "#3b82f6",
+    ACCOUNT_EXECUTIVE: "#10b981",
+  }[r] ?? "#94a3b8",
+}))
 
-  const salesBarData = salesChartData.map((u: any) => ({
-    name: u.name.split(" ")[0],
-    leads: u.total, deal: u.won, recycle: u.lost,
+const salesBarData = [...salesChartData]
+  .sort((a, b) => b.total - a.total)
+  .slice(0, 5)
+  .map((u) => ({
+    name: u.name,
+    leads: u.total,
+    deal: u.won,
+    recycle: u.lost,
   }))
 
   async function handleSubmit(e: React.FormEvent) {
@@ -383,14 +401,18 @@ export default function TeamPage() {
     } finally { setSaving(false) }
   }
 
-  const ROLE_LABEL: Record<string, string> = {
-    SUPER_ADMIN:"Super Admin", EXECUTIVE:"Executive",
-    SALES_MANAGER:"Sales Manager", ACCOUNT_EXECUTIVE:"Account Executive", VIEWER:"Viewer",
-  }
-  const ROLE_COLOR: Record<string, string> = {
-    SUPER_ADMIN:"#dc2626", EXECUTIVE:"#7c3aed", SALES_MANAGER:"#3b82f6",
-    ACCOUNT_EXECUTIVE:"#10b981", VIEWER:"#94a3b8",
-  }
+const ROLE_LABEL: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  EXECUTIVE: "Executive",
+  SALES_MANAGER: "Sales Manager",
+  ACCOUNT_EXECUTIVE: "Account Executive",
+}
+const ROLE_COLOR: Record<string, string> = {
+  SUPER_ADMIN: "#dc2626",
+  EXECUTIVE: "#7c3aed",
+  SALES_MANAGER: "#3b82f6",
+  ACCOUNT_EXECUTIVE: "#10b981",
+}
 
   if (loading) return (
     <div style={{ display:"flex", justifyContent:"center", alignItems:"center", height:"60vh" }}>
@@ -407,8 +429,15 @@ export default function TeamPage() {
       )}
 
       {/* Header Stats */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12 }} className="grid-cols-5">
-        {["SUPER_ADMIN","EXECUTIVE","SALES_MANAGER","ACCOUNT_EXECUTIVE","VIEWER"].map((r) => {
+      <div
+  style={{
+    display:"grid",
+    gridTemplateColumns:"repeat(4,1fr)",
+    gap:12
+}}
+className="grid-cols-4"
+>
+        {["SUPER_ADMIN","EXECUTIVE","SALES_MANAGER","ACCOUNT_EXECUTIVE"].map((r) => {
           const count = users.filter((u) => u.role === r).length
           const c     = ROLE_COLOR[r]
           return (
@@ -472,13 +501,31 @@ export default function TeamPage() {
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartLoading ? [] : salesBarData} margin={{ top:2, right:4, left:-10, bottom:0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="name" tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} />
+              <XAxis
+    dataKey="name"
+    interval={0}
+    angle={-15}
+    textAnchor="end"
+    height={55}
+    tick={{
+        fontSize:10,
+        fill:"var(--chart-text)"
+    }}
+    axisLine={false}
+    tickLine={false}
+/>
               <YAxis tick={{ fontSize:10, fill:"var(--chart-text)" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip content={<CTooltip />} />
               <Legend wrapperStyle={{ fontSize:11, color:"var(--text-secondary)" }} />
               <Bar dataKey="leads"   name="Total Lead" fill="#3b82f6" radius={[4,4,0,0]} maxBarSize={26} />
               <Bar dataKey="deal"    name="Deal"       fill="#10b981" radius={[4,4,0,0]} maxBarSize={26} />
               <Bar dataKey="recycle" name="Recycle"    fill="#ef4444" radius={[4,4,0,0]} maxBarSize={26} />
+              <LabelList
+        dataKey="leads"
+        position="top"
+        fontSize={10}
+        fill="var(--text-primary)"
+    />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -633,7 +680,6 @@ export default function TeamPage() {
                     <option value="EXECUTIVE">Executive</option>
                     <option value="SALES_MANAGER">Sales Manager</option>
                     <option value="ACCOUNT_EXECUTIVE">Account Executive</option>
-                    <option value="VIEWER">Viewer</option>
                   </select>
                 </div>
               )}
@@ -659,10 +705,10 @@ export default function TeamPage() {
 
       <style>{`
         @media (max-width: 640px) {
-          .grid-cols-5 { grid-template-columns: repeat(3,1fr) !important; }
+          .grid-cols-4 { grid-template-columns: repeat(3,1fr) !important; }
         }
         @media (max-width: 400px) {
-          .grid-cols-5 { grid-template-columns: repeat(2,1fr) !important; }
+          .grid-cols-4 { grid-template-columns: repeat(2,1fr) !important; }
         }
       `}</style>
     </div>
