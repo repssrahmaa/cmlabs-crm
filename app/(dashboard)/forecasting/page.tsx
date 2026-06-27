@@ -255,7 +255,7 @@ export default function ForecastingPage() {
         {/* ── Monthly History Chart ── */}
         <div style={{ background: "var(--bg-card)", borderRadius: 16, padding: 24, border: "1px solid var(--border)", boxShadow: "var(--shadow-xs)" }}>
           <div style={{ marginBottom: 16 }}>
-            <h3 style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Tren Revenue & Pipeline (12 Bulan)</h3>
+            <h3 style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>Tren Revenue & Pipeline</h3>
             <p style={{ margin: 0, fontSize: 11, color: "var(--text-muted)" }}>Perbandingan revenue deal confirmed vs nilai pipeline aktif</p>
           </div>
           <ResponsiveContainer width="100%" height={240}>
@@ -267,9 +267,37 @@ export default function ForecastingPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)"/>
               <XAxis dataKey="monthShort" tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false}/>
               <YAxis tick={{ fontSize: 10, fill: "var(--chart-text)" }} axisLine={false} tickLine={false} tickFormatter={v => formatRp(v)}/>
-              <Tooltip contentStyle={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }} formatter={(value) => [formatRp(Number(value ?? 0)), "Revenue"]}/>
-              <Area type="monotone" dataKey="revenue"       name="Revenue Deal"   stroke="#10b981" strokeWidth={2.5} fill="url(#fgRev)"  dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }}/>
-              <Area type="monotone" dataKey="pipelineValue" name="Pipeline Aktif" stroke="#4B9EF3" strokeWidth={2.5} fill="url(#fgPipe)" dot={{ r: 3, fill: "#4B9EF3", strokeWidth: 0 }}/>
+              <Tooltip
+  contentStyle={{
+    background: "var(--bg-card)",
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    fontSize: 12,
+  }}
+  formatter={(value, name) => [
+    formatRp(Number(value ?? 0)),
+    name,
+  ]}
+/>
+              <Area
+  type="monotone"
+  dataKey="revenue"
+  name="Deal Confirmed"
+  stroke="#10b981"
+  strokeWidth={2.5}
+  fill="url(#fgRev)"
+  dot={{ r: 3, fill: "#10b981", strokeWidth: 0 }}
+/>
+
+<Area
+  type="monotone"
+  dataKey="pipelineValue"
+  name="Pipeline Aktif"
+  stroke="#4B9EF3"
+  strokeWidth={2.5}
+  fill="url(#fgPipe)"
+  dot={{ r: 3, fill: "#4B9EF3", strokeWidth: 0 }}
+/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
