@@ -156,6 +156,22 @@ export default function ForecastingPage() {
   const years  = Array.from({ length: 5 }, (_, i) => String(new Date().getFullYear() - i))
   const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
 
+  // ── useMemo MUST be before any conditional return (Rules of Hooks) ──
+  const filteredLeads = useMemo(() => {
+    const rawLeads: any[] = data?.leads ?? []
+    const q = leadSearch.trim().toLowerCase()
+    return rawLeads.filter((l: any) => {
+      const passStatus = statusFilter === "ALL" || l.status === statusFilter
+      const passSearch = !q || (
+        l.title?.toLowerCase().includes(q) ||
+        l.clientName?.toLowerCase().includes(q) ||
+        l.clientCompany?.toLowerCase().includes(q) ||
+        l.assignedTo?.toLowerCase().includes(q)
+      )
+      return passStatus && passSearch
+    })
+  }, [data, statusFilter, leadSearch])
+
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
       <div style={{ width: 40, height: 40, borderRadius: "50%", border: "3px solid var(--border)", borderTopColor: "var(--primary)", animation: "spin .7s linear infinite" }}/>
@@ -173,21 +189,6 @@ export default function ForecastingPage() {
   )
 
   const { summary, leads, forecastByStatus, monthlyHistory, probabilityGuide } = data
-
-  // ── Apply status + search filter ──
-  const filteredLeads = useMemo(() => {
-    const q = leadSearch.trim().toLowerCase()
-    return leads.filter((l: any) => {
-      const passStatus = statusFilter === "ALL" || l.status === statusFilter
-      const passSearch = !q || (
-        l.title?.toLowerCase().includes(q) ||
-        l.clientName?.toLowerCase().includes(q) ||
-        l.clientCompany?.toLowerCase().includes(q) ||
-        l.assignedTo?.toLowerCase().includes(q)
-      )
-      return passStatus && passSearch
-    })
-  }, [leads, statusFilter, leadSearch])
 
   return (
     <>
