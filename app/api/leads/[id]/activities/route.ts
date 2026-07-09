@@ -27,7 +27,7 @@ export async function GET(
   const activities = await prisma.activity.findMany({
     where:   { leadId: id },
     include: {
-      user: { select: { id: true, name: true, avatar: true } },
+      user: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
   })
@@ -65,7 +65,7 @@ export async function POST(
       userId:  session.user.id,
     },
     include: {
-      user: { select: { id: true, name: true, avatar: true } },
+      user: { select: { id: true, name: true } },
     },
   })
 

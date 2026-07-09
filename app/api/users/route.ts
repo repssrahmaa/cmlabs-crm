@@ -36,7 +36,6 @@ export async function GET() {
       email:     true,
       role:      true,
       phone:     true,
-      avatar:    true,
       isActive:  true,
       createdAt: true,
       _count: { select: { assignedLeads: true } },

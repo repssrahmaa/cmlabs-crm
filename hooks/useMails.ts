@@ -9,8 +9,8 @@ export interface Mail {
   status:    string
   sentAt:    string | null
   createdAt: string
-  sender:    { id: string; name: string; avatar: string | null; role: string }
-  receiver:  { id: string; name: string; avatar: string | null; role: string }
+  sender:    { id: string; name: string| null; role: string }
+  receiver:  { id: string; name: string| null; role: string }
   lead:      { id: string; title: string; status: string } | null
 }
 

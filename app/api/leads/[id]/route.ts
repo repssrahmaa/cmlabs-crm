@@ -60,11 +60,11 @@ export async function GET(
   const lead = await prisma.lead.findUnique({
     where: { id },
     include: {
-      assignedTo: { select: { id: true, name: true, avatar: true, role: true } },
+      assignedTo: { select: { id: true, name: true, role: true } },
       createdBy:  { select: { id: true, name: true } },
       activities: {
         include: {
-          user:  { select: { id: true, name: true, avatar: true } }
+          user:  { select: { id: true, name: true} }
         },
         orderBy: { createdAt: "desc" },
       },
@@ -153,7 +153,7 @@ export async function PUT(
     where: { id },
     data:  dataToUpdate,
     include: {
-      assignedTo: { select: { id: true, name: true, avatar: true } },
+      assignedTo: { select: { id: true, name: true } },
       createdBy:  { select: { id: true, name: true } },
       _count:     { select: { activities: true } },
     },

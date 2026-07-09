@@ -12,7 +12,7 @@ interface Activity {
   dueDate:     string | null
   isDone:      boolean
   createdAt:   string
-  user:        { id: string; name: string; avatar: string | null }
+  user:        { id: string; name: string | null }
 }
 
 interface Props {

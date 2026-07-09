@@ -99,7 +99,7 @@ export default function LeadCard({ lead, index, onClick }: Props) {
                 fontSize:       9, fontWeight: 700,
                 color:          "#fff",
               }}>
-                {lead.assignedTo.name.charAt(0).toUpperCase()}
+                {lead.assignedTo?.name?.charAt(0).toUpperCase() ?? "?"}
               </div>
             )}
           </div>

@@ -30,7 +30,7 @@ export async function createInternalNote(input: CreateNoteInput) {
       isDone:  true, // notes are always "done"
     },
     include: {
-      user:  { select: { id: true, name: true, avatar: true } }
+      user:  { select: { id: true, name: true} }
     },
   })
 
@@ -51,7 +51,7 @@ export async function createCallActivity(input: CreateCallInput) {
       isDone:      false,
     },
     include: {
-      user:  { select: { id: true, name: true, avatar: true } }
+      user:  { select: { id: true, name: true} }
     },
   })
 
@@ -63,7 +63,7 @@ export async function getLeadTimeline(leadId: string) {
   const activities = await prisma.activity.findMany({
     where:   { leadId },
     include: {
-      user:  { select: { id: true, name: true, avatar: true, role: true } }
+      user:  { select: { id: true, name: true, role: true } }
     },
     orderBy: { createdAt: "desc" },
   })

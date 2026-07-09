@@ -486,7 +486,7 @@ className="grid-cols-4"
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12, flexWrap:"wrap", gap:8 }}>
             <div>
               <h3 style={{ margin:"0 0 2px", fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>Lead per Sales</h3>
-              <p style={{ margin:0, fontSize:11, color:"var(--text-muted)" }}>Jumlah lead yang ditangani</p>
+              <p style={{ margin:0, fontSize:11, color:"var(--text-muted)" }}>Top 5 Lead Terbanyak</p>
             </div>
             <div style={{ display:"flex", gap:5 }}>
               <select value={year} onChange={(e) => setYear(e.target.value)} style={{ padding:"4px 8px", background:"var(--bg-card2)", color:"var(--text-secondary)", border:"1px solid var(--border)", borderRadius:6, fontSize:10, cursor:"pointer" }}>

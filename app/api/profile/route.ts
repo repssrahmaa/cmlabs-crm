@@ -22,7 +22,7 @@ export async function GET() {
     where: { id: session.user.id },
     select: {
       id: true, name: true, email: true,
-      role: true, phone: true, avatar: true,
+      role: true, phone: true,
       createdAt: true,
       _count: { select: { assignedLeads: true, activities: true } },
     },

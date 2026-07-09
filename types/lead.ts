@@ -27,7 +27,7 @@ export interface Lead {
   closedAt?:      string | null
   createdAt:      string
   updatedAt:      string
-  assignedTo?:    { id: string; name: string; avatar?: string | null; role: string } | null
+  assignedTo?:    { id: string; name: string| null; role: string } | null
   createdBy?:     { id: string; name: string } | null
   _count:         { activities: number }
 }
@@ -47,7 +47,7 @@ export interface Activity {
   userId:      string
   leadId:      string
   createdAt:   string
-  user?:       { id: string; name: string; avatar?: string | null }
+  user?:       { id: string; name: string | null }
 }
 
 export type ActivityType =

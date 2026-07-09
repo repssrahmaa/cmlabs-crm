@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
         } : {}),
       },
       include: {
-        assignedTo: { select: { id: true, name: true, avatar: true, role: true } },
+        assignedTo: { select: { id: true, name: true, role: true } },
         createdBy:  { select: { id: true, name: true } },
         _count:     { select: { activities: true } },
       },
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
         createdById:   session.user.id,
       },
       include: {
-        assignedTo: { select: { id: true, name: true, avatar: true } },
+        assignedTo: { select: { id: true, name: true} },
         createdBy:  { select: { id: true, name: true } },
         _count:     { select: { activities: true } },
       },

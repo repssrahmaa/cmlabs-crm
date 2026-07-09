@@ -51,7 +51,6 @@ function Illustration() {
       {/* Banner kuning */}
       <rect x="8" y="20" width="172" height="58" rx="14" fill="#FFD54F"/>
       <rect x="8" y="64" width="172" height="14" fill="#FFD54F"/>
-      {/* Avatar orang */}
       <circle cx="76" cy="43" r="15" fill="#F4A261"/>
       <rect x="62" y="55" width="28" height="20" rx="6" fill="#2563EB"/>
       <rect x="54" y="59" width="10" height="7" rx="3.5" fill="#F4A261"/>
