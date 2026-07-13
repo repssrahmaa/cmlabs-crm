@@ -158,12 +158,21 @@ export default function LoginPage() {
     setActiveRole(acc.role); setError("")
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+// SESUDAH
+async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email || !password) { setError("Harap isi email dan kata sandi."); return }
     setError(""); setStatus("loading")
     const res = await signIn("credentials", { email, password, redirect: false })
-    if (res?.error) { setStatus("idle"); setError("Email atau password tidak valid.") }
+    if (res?.error) {
+      setStatus("idle")
+      const code = (res as any).code
+      setError(
+        code === "account_inactive"
+          ? "Akun Anda telah dinonaktifkan. Hubungi Super Admin untuk mengaktifkan kembali."
+          : "Email atau password tidak valid."
+      )
+    }
     else { setStatus("success"); setTimeout(() => router.push("/dashboard"), 1000) }
   }
 

@@ -34,7 +34,7 @@ interface TimelineActivity {
   dueDate:     string | null
   createdAt:   string
   metadata:    any
-  user:        { id: string; name: string; avatar: string | null; role: string }
+  user:        { id: string; name: string | null; role: string }
   email:       EmailRecord | null
 }
 

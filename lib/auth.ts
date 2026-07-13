@@ -1,4 +1,4 @@
-import NextAuth from "next-auth"
+import NextAuth, { CredentialsSignin } from "next-auth"
 import type { DefaultSession } from "next-auth"
 import type { DefaultJWT } from "next-auth/jwt"
 import Credentials from "next-auth/providers/credentials"
@@ -31,6 +31,11 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
+// Error kustom supaya "akun nonaktif" bisa dibedakan dari "kredensial salah"
+class AccountInactiveError extends CredentialsSignin {
+  code = "account_inactive"
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   pages: {
@@ -57,23 +62,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        console.log("CREDENTIALS:", credentials)
         const parsed = loginSchema.safeParse(credentials)
-         console.log("PARSED:", parsed)
         if (!parsed.success) return null
 
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         })
- console.log("USER:", user)
-        if (!user)          return null
-        if (!user.isActive) return null
+        if (!user) return null
+        if (!user.isActive) throw new AccountInactiveError()
 
         const match = await bcrypt.compare(
           parsed.data.password,
           user.password
         )
-        console.log("PASSWORD MATCH:", match)
         if (!match) return null
 
         return {

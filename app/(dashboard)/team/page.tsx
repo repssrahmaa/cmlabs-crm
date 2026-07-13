@@ -414,6 +414,38 @@ const ROLE_COLOR: Record<string, string> = {
   ACCOUNT_EXECUTIVE: "#10b981",
 }
 
+async function handleToggleActive(id: string, current: boolean) {
+  if (!confirm(current ? "Nonaktifkan anggota ini?" : "Aktifkan anggota ini?")) return
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method:  "PUT",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ isActive: !current }),
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error ?? "Gagal mengubah status")
+    }
+    await fetchUsers()
+  } catch (err: any) {
+    alert(err.message)
+  }
+}
+
+async function handleDelete(id: string) {
+  if (!confirm("Hapus anggota ini? Tindakan ini permanen.")) return
+  try {
+    const res = await fetch(`/api/users/${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error ?? "Gagal menghapus")
+    }
+    await fetchUsers()
+  } catch (err: any) {
+    alert(err.message)
+  }
+}
+
   if (loading) return (
     <div style={{ display:"flex", justifyContent:"center", alignItems:"center", height:"60vh" }}>
       <div style={{ width:40, height:40, borderRadius:"50%", border:"3px solid var(--border)", borderTopColor:"var(--primary)", animation:"spin .7s linear infinite" }} />
@@ -617,21 +649,21 @@ className="grid-cols-4"
                             Edit
                           </button>
                         )}
-                        {!isReadOnly && (
-                          <button
-                            onClick={async () => { if(!confirm("Ubah status?")) return; await fetch(`/api/users/${user.id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ isActive:!user.isActive }) }); fetchUsers() }}
-                            style={{ padding:"5px 10px", background: user.isActive?"rgba(245,158,11,0.1)":"rgba(16,185,129,0.1)", color: user.isActive?"var(--warning)":"var(--success)", border:`1px solid ${user.isActive?"rgba(245,158,11,0.2)":"rgba(16,185,129,0.2)"}`, borderRadius:7, fontSize:11, fontWeight:600, cursor:"pointer" }}
-                          >
-                            {user.isActive ? "Nonaktifkan" : "Aktifkan"}
-                          </button>
-                        )}
+                        {canEdit && (
+  <button
+    onClick={() => handleToggleActive(user.id, user.isActive)}
+    style={{ padding:"5px 10px", background: user.isActive?"rgba(245,158,11,0.1)":"rgba(16,185,129,0.1)", color: user.isActive?"var(--warning)":"var(--success)", border:`1px solid ${user.isActive?"rgba(245,158,11,0.2)":"rgba(16,185,129,0.2)"}`, borderRadius:7, fontSize:11, fontWeight:600, cursor:"pointer" }}
+  >
+    {user.isActive ? "Nonaktifkan" : "Aktifkan"}
+  </button>
+)}
                         {!isReadOnly && canDelete && (
                           <button
-                            onClick={async () => { if(!confirm("Hapus?")) return; await fetch(`/api/users/${user.id}`, { method:"DELETE" }); fetchUsers() }}
-                            style={{ padding:"5px 10px", background:"var(--danger-pale)", color:"var(--danger)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:7, fontSize:11, cursor:"pointer" }}
-                          >
-                            Hapus
-                          </button>
+  onClick={() => handleDelete(user.id)}
+  style={{ padding:"5px 10px", background:"var(--danger-pale)", color:"var(--danger)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:7, fontSize:11, cursor:"pointer" }}
+>
+  Hapus
+</button>
                         )}
                       </div>
                     </td>

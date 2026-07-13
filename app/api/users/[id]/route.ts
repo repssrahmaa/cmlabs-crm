@@ -14,6 +14,10 @@ const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
   password: z.string().min(6).optional(),
 })
+const toggleActiveSchema = z.object({
+  isActive: z.boolean(),
+})
+
 
 export async function PUT(
   req: NextRequest,
@@ -60,10 +64,18 @@ export async function PUT(
   }
 
   // Tidak bisa manage user dengan level lebih tinggi
-  if (!isSelf && !canManage(role, targetUser.role as RoleType)) {
+ if (!isSelf && !canManage(role, targetUser.role as RoleType)) {
     return NextResponse.json(
       { error: "Forbidden: Tidak bisa mengelola user dengan role lebih tinggi" },
       { status: 403 }
+    )
+  }
+
+  // Cegah menonaktifkan akun sendiri meski punya permission — supaya tidak terkunci
+  if (isSelf && parsed.data.isActive === false) {
+    return NextResponse.json(
+      { error: "Tidak bisa menonaktifkan akun sendiri" },
+      { status: 400 }
     )
   }
 
