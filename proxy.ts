@@ -22,15 +22,11 @@ const ROUTE_PERMISSIONS: {
     pattern: /^\/reports/,
     allow: ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
-  // Leads — semua kecuali viewer
+  // Leads — semua kecuali 
+  
   {
     pattern: /^\/leads/,
     allow: ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
-  },
-  // Mailing — semua kecuali VIEWER dan EXECUTIVE
-  {
-    pattern: /^\/mails/,
-    allow: ["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Dashboard — semua role bisa akses
   {

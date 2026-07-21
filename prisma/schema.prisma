@@ -90,7 +90,6 @@ enum Role {
   EXECUTIVE
   SALES_MANAGER
   ACCOUNT_EXECUTIVE
-  VIEWER
 }
 
 enum LeadStatus {

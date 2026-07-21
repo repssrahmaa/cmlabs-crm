@@ -25,8 +25,7 @@ CREATE TYPE "Role" AS ENUM (
   'ADMIN',
   'EXECUTIVE',
   'SALES_MANAGER',
-  'ACCOUNT_EXECUTIVE',
-  'VIEWER'
+  'ACCOUNT_EXECUTIVE'
 );
 
 -- ── Step 6: Copy data from temp column ke role column ──────────

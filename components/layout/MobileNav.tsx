@@ -94,15 +94,13 @@ export default function MobileNav() {
   const ROLE_LABEL: Record<string, string> = {
     ADMIN: "Administrator", EXECUTIVE: "Executive",
     SALES_MANAGER: "Sales Manager", ACCOUNT_EXECUTIVE: "Account Executive",
-    VIEWER: "Viewer",
   }
   const ROLE_COLOR: Record<string, string> = {
     ADMIN: "#ef4444", EXECUTIVE: "#8b5cf6",
     SALES_MANAGER: "#3b82f6", ACCOUNT_EXECUTIVE: "#10b981",
-    VIEWER: "#94a3b8",
   }
 
-  const userRole      = role ?? "VIEWER"
+  const userRole      = role ?? "ACCOUNT_EXECUTIVE"
   const userRoleLabel = ROLE_LABEL[userRole] ?? userRole
   const userRoleColor = ROLE_COLOR[userRole] ?? "#94a3b8"
   const userName      = session?.user?.name ?? "User"
