@@ -21,8 +21,8 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
-    id: string
-    role: string
+    id?: string
+    role?: string
   }
 }
 
@@ -31,7 +31,6 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-// Error kustom supaya "akun nonaktif" bisa dibedakan dari "kredensial salah"
 class AccountInactiveError extends CredentialsSignin {
   code = "account_inactive"
 }
@@ -43,18 +42,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user && "role" in user) {
-        token.id   = user.id as string
+      // Saat Login Pertama Kali: Simpan id & role ke token
+      if (user) {
+        token.id = user.id
         token.role = user.role
       }
+      // Return token yang sudah membawa 'id' dan 'role' (tidak akan hilang saat refresh)
       return token
     },
     async session({ session, token }) {
-      if (token?.id) {
-        session.user.id = token.id as string
-      }
-      if (token?.role) {
-        session.user.role = token.role as string
+      // Salin 'id' dan 'role' dari JWT token ke Objek Session
+      if (session.user) {
+        if (token.id) session.user.id = token.id as string
+        if (token.role) session.user.role = token.role as string
       }
       return session
     },
@@ -81,7 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id:    user.id,
           name:  user.name,
           email: user.email,
-          role:  user.role,
+          role:  user.role, // Memastikan role dikembalikan di sini
         }
       },
     }),
