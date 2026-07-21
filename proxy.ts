@@ -57,7 +57,7 @@ function buildUnauthorizedUrl(
 ): URL {
   const url = new URL("/unauthorized", base)
   url.searchParams.set("from", from)
-  url.searchParams.set("required", requiredRoles.join(",")) // Tampilkan semua role yang diperbolehkan
+  url.searchParams.set("required", requiredRoles.join(","))
   return url
 }
 
@@ -102,19 +102,19 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
+  // ── Cari Route Rule Terlebih Dahulu ─────────────────────────
+  const rule = findRouteRule(pathname)
+  if (!rule) return NextResponse.next() // tidak ada rule → izinkan
+
   // ── Role-based route protection ───────────────────────────
-  // Normalisasi role ke UPPERCASE agar tidak error case-sensitivity
   const rawRole = session?.user?.role as string | undefined
   const userRole = rawRole?.toUpperCase() as RoleType | undefined
 
-  // Jika user terautentikasi tapi tidak punya role di session -> Tendang ke unauthorized
+  // Jika user logged-in tapi role tidak terbaca, gunakan rule.allow dari route tersebut
   if (!userRole) {
     console.warn("[AUTH] User logged in but has no role assigned:", session?.user)
-    return NextResponse.redirect(buildUnauthorizedUrl(req.nextUrl, pathname, ["ADMIN"]))
+    return NextResponse.redirect(buildUnauthorizedUrl(req.nextUrl, pathname, rule.allow))
   }
-
-  const rule = findRouteRule(pathname)
-  if (!rule) return NextResponse.next() // tidak ada rule → izinkan
 
   // Cek apakah userRole ada di daftar allow
   const isAllowed = rule.allow.includes(userRole)
