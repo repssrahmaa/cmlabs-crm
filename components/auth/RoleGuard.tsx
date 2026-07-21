@@ -130,19 +130,6 @@ export async function CanDeleteUser({
   )
 }
 
-export async function SuperAdminOnly({
-  children,
-  fallback = null,
-}: {
-  children: React.ReactNode
-  fallback?: React.ReactNode
-}) {
-  return (
-    <RoleGuard allow={["ADMIN"]} fallback={fallback}>
-      {children}
-    </RoleGuard>
-  )
-}
 
 export async function ManagementOnly({
   children,
