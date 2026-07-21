@@ -23,7 +23,7 @@ async function main() {
   console.log("\n👤 Seeding users...")
 
   const Admin = await prisma.user.upsert({
-    where:  { email: "ADMIN@cmlabs.co" },
+    where:  { email: "admin@cmlabs.co" },
     update: {
       name:     "Admin",
       password: hashedPassword,
@@ -32,7 +32,7 @@ async function main() {
     },
     create: {
       name:     "Admin",
-      email:    "ADMIN@cmlabs.co",
+      email:    "admin@cmlabs.co",
       password: hashedPassword,
       role:     "ADMIN",
       phone:    "081100000001",
