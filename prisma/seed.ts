@@ -22,7 +22,7 @@ async function main() {
   // ────────────────────────────────────────────────────────────
   console.log("\n👤 Seeding users...")
 
-  const superAdmin = await prisma.user.upsert({
+  const Admin = await prisma.user.upsert({
     where:  { email: "ADMIN@cmlabs.co" },
     update: {
       name:     "Admin",
@@ -39,7 +39,7 @@ async function main() {
       isActive: true,
     },
   })
-  console.log(`  ✓ ADMIN    → ${superAdmin.email}`)
+  console.log(`  ✓ ADMIN    → ${Admin.email}`)
 
   const executive = await prisma.user.upsert({
     where:  { email: "executive@cmlabs.co" },
@@ -194,7 +194,7 @@ async function main() {
       id: (await prisma.lead.findFirst({
         where: {
           title:       "Content Writing Package - Startup Inovatif",
-          createdById: superAdmin.id,
+          createdById: Admin.id,
         },
         select: { id: true },
       }))?.id ?? "seed-lead-unassigned-001",
@@ -211,7 +211,7 @@ async function main() {
       source:        "Cold Call",
       description:   "Belum ada PIC — menunggu assignment dari manager",
       assignedToId:  null,
-      createdById:   superAdmin.id,
+      createdById:   Admin.id,
     },
     create: {
       title:         "Content Writing Package - Startup Inovatif",
@@ -225,7 +225,7 @@ async function main() {
       source:        "Cold Call",
       description:   "Belum ada PIC — menunggu assignment dari manager",
       assignedToId:  null,
-      createdById:   superAdmin.id,
+      createdById:   Admin.id,
     },
   })
   console.log(`  ✓ Lead (none)    → "${leadUnassigned.title}"`)
@@ -316,7 +316,7 @@ async function main() {
   console.log("   ┌─────────────────────────────┬──────────────────┬───────────────────┐")
   console.log("   │ Email                       │ Password         │ Role              │")
   console.log("   ├─────────────────────────────┼──────────────────┼───────────────────┤")
-  console.log("   │ ADMIN@cmlabs.co       │ Demo123!        │ ADMIN       │")
+  console.log("   │ admin@cmlabs.co       │ Demo123!        │ ADMIN       │")
   console.log("   │ executive@cmlabs.co         │ Demo123!        │ EXECUTIVE         │")
   console.log("   │ sales_mgr@cmlabs.co         │ Demo123!        │ SALES_MANAGER     │")
   console.log("   │ ae@cmlabs.co                │ Demo123!        │ ACCOUNT_EXECUTIVE │")
