@@ -7,31 +7,14 @@ import RichTextEditor          from "@/components/ui/RichTextEditor"
 
 interface User { id: string; name: string; role: string }
 
-interface LeadData {
-  id: string
-  title: string
-  clientName: string
-  clientEmail?: string
-  clientPhone?: string
-  clientCompany?: string
-  clientPosition?: string
-  value?: number | null
-  source?: string
-  description?: string
-  priority: string
-  assignedToId?: string
-}
-
 interface Props {
-  lead: LeadData
-  onClose: () => void
-  onUpdate: (id: string, data: any) => Promise<void>
+  onClose:  () => void
+  onCreate: (data: any) => Promise<any>
 }
 
 // ── Helper Formatter Rupiah ────────────────────────────────────
 const formatRupiah = (value: string | number | undefined | null) => {
   if (value === undefined || value === null || value === "") return ""
-  // Jika value bertipe number/string, ambil hanya karakter angka
   const rawNumber = String(value).replace(/\D/g, "")
   if (!rawNumber) return ""
   return "Rp " + new Intl.NumberFormat("id-ID").format(Number(rawNumber))
@@ -42,31 +25,21 @@ const parseRupiahToNumber = (value: string) => {
   return rawNumber ? Number(rawNumber) : undefined
 }
 
-export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
-  const [loading, setLoading] = useState(false)
-  const [users, setUsers] = useState<User[]>([])
-  const [errorMsg, setErrorMsg] = useState("")
+export default function AddLeadModal({ onClose, onCreate }: Props) {
+  const [loading,   setLoading]   = useState(false)
+  const [users,     setUsers]     = useState<User[]>([])
+  const [errorMsg,  setErrorMsg]  = useState("")
   const { canAssignLead } = useRoleGuard()
 
-  // Inisialisasi state form dengan memformat 'value' awal ke Rupiah
   const [form, setForm] = useState({
-    title: lead.title || "",
-    clientName: lead.clientName || "",
-    clientEmail: lead.clientEmail || "",
-    clientPhone: lead.clientPhone || "",
-    clientCompany: lead.clientCompany || "",
-    clientPosition: lead.clientPosition || "",
-    value: formatRupiah(lead.value), // ← Format nilai awal dari DB
-    source: lead.source || "",
-    description: lead.description || "",
-    priority: lead.priority || "MEDIUM",
-    assignedToId: lead.assignedToId || "",
+    title: "", clientName: "", clientEmail: "", clientPhone: "",
+    clientCompany: "", clientPosition: "", value: "",
+    source: "", description: "", priority: "MEDIUM", assignedToId: "",
   })
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
-  // Handler khusus ketik Nilai Deal
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatRupiah(e.target.value)
     setForm((f) => ({ ...f, value: formatted }))
@@ -88,16 +61,15 @@ export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
     setLoading(true)
     setErrorMsg("")
     try {
-      // Parse string "Rp 10.000.000" kembali ke Number sebelum dikirim ke DB
       const payload = {
         ...form,
         value: parseRupiahToNumber(form.value),
-        assignedToId: form.assignedToId || undefined,
+        assignedToId: form.assignedToId || undefined
       }
-      await onUpdate(lead.id, payload)
+      await onCreate(payload)
       onClose()
     } catch (err: any) {
-      setErrorMsg(err.message ?? "Gagal memperbarui lead")
+      setErrorMsg(err.message ?? "Gagal membuat lead")
     } finally {
       setLoading(false)
     }
@@ -122,8 +94,8 @@ export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
           <div>
-            <h2 style={{ margin: "0 0 3px", fontSize: 17, fontWeight: 700, color: "var(--text-primary)" }}>Edit Lead</h2>
-            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Perbarui informasi lead dan detail klien</p>
+            <h2 style={{ margin: "0 0 3px", fontSize: 17, fontWeight: 700, color: "var(--text-primary)" }}>Tambah Lead Baru</h2>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Isi informasi lead dan detail klien</p>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 20, padding: 4 }}>&times;</button>
         </div>
@@ -163,7 +135,6 @@ export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
           </FormField>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {/* INPUT NILAI DEAL (EDIT FORMAT RUPIAH) */}
             <FormField label="Nilai Deal">
               <input 
                 type="text" 
@@ -188,17 +159,21 @@ export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
           </FormField>
 
           {/* PIC */}
-          {canAssignLead && (
+          {canAssignLead ? (
             <FormField label="PIC (Person in Charge)">
               <select value={form.assignedToId} onChange={set("assignedToId")} style={selectStyle}>
                 <option value="">-- Pilih PIC --</option>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
             </FormField>
+          ) : (
+            <div style={{ padding: "10px 14px", background: "var(--success-pale)", border: "1px solid rgba(5,150,105,0.2)", borderRadius: 8, fontSize: 13, color: "var(--success)" }}>
+              <strong>PIC:</strong> Ditugaskan ke Anda secara otomatis
+            </div>
           )}
 
           {/* Deskripsi (Rich Text) */}
-          <RichTextEditor label="Deskripsi" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Tambahkan catatan, konteks, atau informasi penting..." minHeight={90} />
+          <RichTextEditor label="Deskripsi" value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Tambahkan catatan, konteks, atau informasi penting tentang lead ini..." minHeight={90} />
 
           <button type="submit" disabled={loading} style={{
             marginTop: 4, padding: "11px",
@@ -209,7 +184,7 @@ export default function EditLeadModal({ lead, onClose, onUpdate }: Props) {
             cursor: loading ? "not-allowed" : "pointer",
             boxShadow: loading ? "none" : "var(--shadow-primary)",
           }}>
-            {loading ? "Menyimpan..." : "Simpan Perubahan"}
+            {loading ? "Menyimpan..." : "Tambah Lead"}
           </button>
         </form>
       </div>
