@@ -15,6 +15,19 @@ interface Props {
   onDelete: (id: string) => Promise<void>
 }
 
+// ── Helper Formatter Rupiah ────────────────────────────────────
+const formatRupiah = (value: string | number | undefined | null) => {
+  if (value === undefined || value === null || value === "") return ""
+  const rawNumber = String(value).replace(/\D/g, "")
+  if (!rawNumber) return ""
+  return "Rp " + new Intl.NumberFormat("id-ID").format(Number(rawNumber))
+}
+
+const parseRupiahToNumber = (value: string) => {
+  const rawNumber = value.replace(/\D/g, "")
+  return rawNumber ? Number(rawNumber) : undefined
+}
+
 // ── SVG Icons ──────────────────────────────────────────────────
 const IconEdit = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -51,7 +64,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
     clientPhone:    lead.clientPhone    ?? "",
     clientCompany:  lead.clientCompany  ?? "",
     clientPosition: lead.clientPosition ?? "",
-    value:          lead.value ? String(lead.value) : "",
+    value:          formatRupiah(lead.value), // ← Format nilai awal dari DB ke "Rp x.xxx"
     source:         lead.source         ?? "",
     description:    lead.description    ?? "",
     status:         lead.status,
@@ -60,6 +73,12 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement|HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  // Handler khusus untuk pengetikan input Nilai Deal (Rp)
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatRupiah(e.target.value)
+    setForm((f) => ({ ...f, value: formatted }))
+  }
 
   const canEdit = can("update", "lead", lead.assignedTo?.id ?? lead.assignedToId)
 
@@ -83,7 +102,7 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
     try {
       await onUpdate(lead.id, {
         ...form,
-        value: form.value ? Number(form.value) : undefined,
+        value: parseRupiahToNumber(form.value), // ← Parse string "Rp 10.000" ke Number murni
       })
       setMode("view")
     } catch (err: any) { setError(err.message ?? "Gagal menyimpan")
@@ -106,189 +125,182 @@ export default function LeadModal({ lead, onClose, onUpdate, onDelete }: Props) 
       <div
         onClick={onClose}
         style={{
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.6)",
-  zIndex: 100,
-
-  display: "flex",
-  justifyContent: "center",
-
-  overflowY: "auto",
-  padding: "24px 16px",
-
-  alignItems: "flex-start",
-}}
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          zIndex: 100,
+          display: "flex",
+          justifyContent: "center",
+          overflowY: "auto",
+          padding: "24px 16px",
+          alignItems: "flex-start",
+        }}
       >
         <div
           onClick={(e) => e.stopPropagation()}
-         className="modal-responsive"
-style={{
-  background: "var(--bg-card)",
-  color: "var(--text-primary)",
-  border: "1px solid var(--border)",
-  borderRadius: 16,
-  boxShadow: "var(--shadow-xl)",
-
-  maxWidth: "920px",
-width: "100%",
-maxHeight: "90vh",
-overflowY: "auto",
-
-  padding: 22,
-
-  margin: "auto 0",
-
-  scrollbarWidth: "thin",
-}}
+          className="modal-responsive"
+          style={{
+            background: "var(--bg-card)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+            borderRadius: 16,
+            boxShadow: "var(--shadow-xl)",
+            maxWidth: "920px",
+            width: "100%",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            padding: 22,
+            margin: "auto 0",
+            scrollbarWidth: "thin",
+          }}
         >
-{/* Header */}
-<div
-  className="modal-header-responsive"
-  style={{
-    marginBottom: 18,
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 14,
-  }}
->
-  {/* LEFT */}
-  <div style={{ flex: 1, minWidth: 0 }}>
-    
-    {/* Status + Priority */}
-    <div
-      style={{
-        display: "flex",
-        gap: 6,
-        marginBottom: 8,
-        flexWrap: "wrap",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          padding: "3px 10px",
-          borderRadius: 999,
-          background: sc + "20",
-          color: sc,
-        }}
-      >
-        {sl}
-      </span>
+          {/* Header */}
+          <div
+            className="modal-header-responsive"
+            style={{
+              marginBottom: 18,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 14,
+            }}
+          >
+            {/* LEFT */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              
+              {/* Status + Priority */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  marginBottom: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: 999,
+                    background: sc + "20",
+                    color: sc,
+                  }}
+                >
+                  {sl}
+                </span>
 
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          padding: "3px 10px",
-          borderRadius: 999,
-          background:
-            (PRIORITY_COLOR[lead.priority] ?? "#94a3b8") + "20",
-          color:
-            PRIORITY_COLOR[lead.priority] ??
-            "var(--text-muted)",
-        }}
-      >
-        {PRIORITY_LABEL[lead.priority] ?? lead.priority}
-      </span>
-    </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: 999,
+                    background:
+                      (PRIORITY_COLOR[lead.priority] ?? "#94a3b8") + "20",
+                    color:
+                      PRIORITY_COLOR[lead.priority] ??
+                      "var(--text-muted)",
+                  }}
+                >
+                  {PRIORITY_LABEL[lead.priority] ?? lead.priority}
+                </span>
+              </div>
 
-    {/* Title */}
-    <h2
-      style={{
-        margin: 0,
-        fontSize: 16,
-        fontWeight: 700,
-        color: "var(--text-primary)",
-        lineHeight: 1.35,
-      }}
-    >
-      {lead.title}
-    </h2>
-  </div>
+              {/* Title */}
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  lineHeight: 1.35,
+                }}
+              >
+                {lead.title}
+              </h2>
+            </div>
 
-  {/* RIGHT ACTIONS */}
-  <div
-    style={{
-      display: "flex",
-      gap: 8,
-      flexShrink: 0,
-      alignItems: "center",
-    }}
-  >
-    {canDeleteLead && (
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        title="Hapus lead"
-        style={{
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          background: "var(--danger-pale)",
-          border: "1px solid rgba(239,68,68,0.18)",
-          color: "var(--danger)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <IconTrash />
-      </button>
-    )}
+            {/* RIGHT ACTIONS */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                flexShrink: 0,
+                alignItems: "center",
+              }}
+            >
+              {canDeleteLead && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  title="Hapus lead"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: "var(--danger-pale)",
+                    border: "1px solid rgba(239,68,68,0.18)",
+                    color: "var(--danger)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <IconTrash />
+                </button>
+              )}
 
-    <button
-      onClick={handleEditClick}
-      title="Edit lead"
-      style={{
-        width: 34,
-        height: 34,
-        borderRadius: 10,
-        background:
-          mode === "edit"
-            ? "var(--primary)"
-            : "var(--bg-card2)",
-        border: `1px solid ${
-          mode === "edit"
-            ? "var(--primary)"
-            : "var(--border)"
-        }`,
-        color:
-          mode === "edit"
-            ? "#fff"
-            : "var(--text-secondary)",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <IconEdit />
-    </button>
+              <button
+                onClick={handleEditClick}
+                title="Edit lead"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background:
+                    mode === "edit"
+                      ? "var(--primary)"
+                      : "var(--bg-card2)",
+                  border: `1px solid ${
+                    mode === "edit"
+                      ? "var(--primary)"
+                      : "var(--border)"
+                  }`,
+                  color:
+                    mode === "edit"
+                      ? "#fff"
+                      : "var(--text-secondary)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <IconEdit />
+              </button>
 
-    <button
-      onClick={onClose}
-      title="Tutup"
-      style={{
-        width: 34,
-        height: 34,
-        borderRadius: 10,
-        background: "var(--bg-card2)",
-        border: "1px solid var(--border)",
-        color: "var(--text-muted)",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <IconX />
-    </button>
-  </div>
-</div>
+              <button
+                onClick={onClose}
+                title="Tutup"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: "var(--bg-card2)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <IconX />
+              </button>
+            </div>
+          </div>
           {error && (
             <div style={{ marginBottom:16, padding:"10px 14px", background:"var(--danger-pale)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, fontSize:13, color:"var(--danger)" }}>
               {error}
@@ -302,45 +314,45 @@ overflowY: "auto",
               <div style={{ background:"var(--bg-card2)", border:"1px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Klien</p>
                 <div className="info-grid">
-{[
-  { l:"Nama",       v:lead.clientName },
-  { l:"Jabatan",    v:lead.clientPosition ?? "-" },
-  { l:"Email",      v:lead.clientEmail ?? "-" },
-  { l:"Telepon",    v:lead.clientPhone ?? "-" },
-  { l:"Perusahaan", v:lead.clientCompany ?? "-" },
-  { l:"Sumber",     v:lead.source ?? "-" },
-].map((r) => (
-  <div
-    key={r.l}
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 8,
-      fontSize: 13,
-      lineHeight: 1.6,
-    }}
-  >
-    <span
-      style={{
-        minWidth: 95,
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        flexShrink: 0,
-      }}
-    >
-      {r.l}:
-    </span>
+                  {[
+                    { l:"Nama",       v:lead.clientName },
+                    { l:"Jabatan",    v:lead.clientPosition ?? "-" },
+                    { l:"Email",      v:lead.clientEmail ?? "-" },
+                    { l:"Telepon",    v:lead.clientPhone ?? "-" },
+                    { l:"Perusahaan", v:lead.clientCompany ?? "-" },
+                    { l:"Sumber",     v:lead.source ?? "-" },
+                  ].map((r) => (
+                    <div
+                      key={r.l}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 8,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          minWidth: 95,
+                          fontWeight: 700,
+                          color: "var(--text-muted)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {r.l}:
+                      </span>
 
-    <span
-      style={{
-        color: "var(--text-primary)",
-        wordBreak: "break-word",
-      }}
-    >
-      {r.v}
-    </span>
-  </div>
-))}
+                      <span
+                        style={{
+                          color: "var(--text-primary)",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {r.v}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -349,12 +361,12 @@ overflowY: "auto",
                 <p style={{ margin:"0 0 10px", fontSize:10, fontWeight:700, color:"var(--text-muted)", textTransform:"uppercase", letterSpacing:"0.06em" }}>Informasi Deal</p>
                 <div className="info-grid">
                   {[
-  { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
-  { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
-  { l:"Dibuat",   v: lead.createdBy?.name  ?? "-" },
-  { l:"Aktivitas",v: String(lead._count.activities) },
-].map((r) => (
-  <div key={r.l}>
+                    { l:"Nilai",    v: lead.value ? `Rp ${Number(lead.value).toLocaleString("id-ID")}` : "-" },
+                    { l:"PIC",      v: lead.assignedTo?.name ?? "-" },
+                    { l:"Dibuat",   v: lead.createdBy?.name  ?? "-" },
+                    { l:"Aktivitas",v: String(lead._count.activities) },
+                  ].map((r) => (
+                    <div key={r.l}>
                       <div style={{ fontSize:10, color:"var(--text-muted)", marginBottom:2, fontWeight:600 }}>{r.l}</div>
                       <div style={{ fontSize:13, color:"var(--text-primary)", fontWeight:500 }}>{r.v}</div>
                     </div>
@@ -372,52 +384,53 @@ overflowY: "auto",
                   />
                 </div>
               )}
+
               {/* Timeline Aktivitas */}
-<div
-  style={{
-    background: "var(--bg-card2)",
-    border: "1px solid var(--border)",
-    borderRadius: 10,
-    padding: "14px 16px",
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 14,
-    }}
-  >
-    <p
-      style={{
-        margin: 0,
-        fontSize: 10,
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: "0.06em",
-      }}
-    >
-      Timeline Komunikasi
-    </p>
+              <div
+                style={{
+                  background: "var(--bg-card2)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 14,
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "var(--text-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Timeline Komunikasi
+                  </p>
 
-    <span
-      style={{
-        fontSize: 11,
-        color: "var(--text-muted)",
-        fontWeight: 500,
-      }}
-    >
-      {lead._count.activities} aktivitas
-    </span>
-  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-muted)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {lead._count.activities} aktivitas
+                  </span>
+                </div>
 
-  <LeadTimeline
-    leadId={lead.id}
-    clientEmail={lead.clientEmail}
-  />
-</div>
+                <LeadTimeline
+                  leadId={lead.id}
+                  clientEmail={lead.clientEmail}
+                />
+              </div>
             </div>
           )}
 
@@ -456,9 +469,17 @@ overflowY: "auto",
               </div>
 
               <div className="grid-responsive-3">
-                <FormField label="Nilai (Rp)">
-                  <input type="number" min={0} value={form.value} onChange={set("value")} style={inputStyle} />
+                {/* INPUT NILAI DEAL BERFORMAT RUPIAH */}
+                <FormField label="Nilai Deal">
+                  <input
+                    type="text"
+                    value={form.value}
+                    onChange={handleValueChange}
+                    placeholder="Rp 0"
+                    style={inputStyle}
+                  />
                 </FormField>
+
                 <FormField label="Status">
                   <select value={form.status} onChange={set("status")} style={selectStyle}>
                     {KANBAN_COLUMNS.map((c) => (
@@ -466,6 +487,7 @@ overflowY: "auto",
                     ))}
                   </select>
                 </FormField>
+
                 <FormField label="Prioritas">
                   <select value={form.priority} onChange={set("priority")} style={selectStyle}>
                     <option value="LOW">Rendah</option>
@@ -558,19 +580,20 @@ overflowY: "auto",
       width: 100%;
     }
   }
-    .modal-responsive {
-  width: 100%;
-}
 
-@media (max-width: 768px) {
   .modal-responsive {
-    padding: 16px !important;
-    border-radius: 12px !important;
-    max-height: 95vh !important;
+    width: 100%;
   }
 
-  .info-grid {
-    grid-template-columns: 1fr !important;
+  @media (max-width: 768px) {
+    .modal-responsive {
+      padding: 16px !important;
+      border-radius: 12px !important;
+      max-height: 95vh !important;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr !important;
+    }
   }
-}
 `}</style>
