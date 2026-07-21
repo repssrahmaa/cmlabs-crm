@@ -9,7 +9,7 @@ import type { RoleType, ActionType, ResourceType } from "../permissions"
 
 // ── Test fixtures ──────────────────────────────────────────────
 const USER_IDS = {
-  superAdmin:       "user-super-admin-001",
+  Admin:       "user--admin-001",
   executive:        "user-executive-001",
   salesManager:     "user-sales-manager-001",
   accountExecutive: "user-ae-001",
@@ -43,7 +43,7 @@ describe("ADMIN permissions", () => {
   test("can update any lead", () => {
     expect(perm(role, "update", "lead",
       USER_IDS.accountExecutive,
-      USER_IDS.superAdmin
+      USER_IDS.Admin
     )).toBe(true)
   })
 
