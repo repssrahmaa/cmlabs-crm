@@ -1,12 +1,10 @@
 // ── Role definitions untuk RBAC sistem CMLabs CRM ────────────
 
 export type RoleType =
-  | "SUPER_ADMIN"
+  | "ADMIN"
   | "EXECUTIVE"
   | "SALES_MANAGER"
   | "ACCOUNT_EXECUTIVE"
-  | "VIEWER"
-
 // ── 1. ROLES array — untuk UI badges dan display ──────────────
 
 export interface RoleConfig {
@@ -19,8 +17,8 @@ export interface RoleConfig {
 
 export const ROLES: RoleConfig[] = [
   {
-    value:       "SUPER_ADMIN",
-    label:       "Super Admin",
+    value:       "ADMIN",
+    label:       "Admin",
     description: "Akses penuh ke seluruh sistem termasuk konfigurasi dan manajemen user",
     color:       "#dc2626",
     bg:          "#fef2f2",
@@ -46,30 +44,22 @@ export const ROLES: RoleConfig[] = [
     color:       "#059669",
     bg:          "#ecfdf5",
   },
-  {
-    value:       "VIEWER",
-    label:       "Viewer",
-    description: "Hanya bisa melihat data tanpa bisa melakukan perubahan apapun",
-    color:       "#64748b",
-    bg:          "#f8fafc",
-  },
 ]
 
 // ── 2. ROLE_HIERARCHY — level 1 paling tinggi ─────────────────
 
 export const ROLE_HIERARCHY: Record<RoleType, number> = {
-  SUPER_ADMIN:       1,
+  ADMIN:       1,
   EXECUTIVE:         2,
   SALES_MANAGER:     3,
   ACCOUNT_EXECUTIVE: 4,
-  VIEWER:            5,
 }
 
 // ── 3. canManage — cek apakah actor bisa manage target ────────
 // Returns true hanya jika level actor LEBIH RENDAH dari target
 // (angka lebih kecil = level lebih tinggi)
 // Contoh: SALES_MANAGER (3) TIDAK bisa manage EXECUTIVE (2)
-//         SUPER_ADMIN (1) BISA manage semua role
+//         ADMIN (1) BISA manage semua role
 
 export function canManage(
   actorRole:  RoleType,
@@ -95,14 +85,9 @@ export function canAccessReports(role: RoleType): boolean {
   return ROLE_HIERARCHY[role] <= ROLE_HIERARCHY["SALES_MANAGER"]
 }
 
-// Cek apakah role bisa mengedit data
-export function canEdit(role: RoleType): boolean {
-  return role !== "VIEWER"
-}
-
 // Cek apakah role bisa menghapus data
 export function canDelete(role: RoleType): boolean {
-  return role === "SUPER_ADMIN" || role === "SALES_MANAGER"
+  return role === "ADMIN" || role === "SALES_MANAGER"
 }
 
 // Ambil config role berdasarkan value

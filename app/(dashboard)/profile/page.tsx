@@ -19,11 +19,10 @@ interface Profile {
 }
 
 const ROLE_CONFIG = {
-  SUPER_ADMIN:       { label: "Super Admin",       color: "#ef4444", icon: <Crown size={14} /> },
+  ADMIN:       { label: "Admin",       color: "#ef4444", icon: <Crown size={14} /> },
   EXECUTIVE:         { label: "Executive",         color: "#8b5cf6", icon: <Briefcase size={14} /> },
   SALES_MANAGER:     { label: "Sales Manager",     color: "#4B9EF3", icon: <BarChart3 size={14} /> },
   ACCOUNT_EXECUTIVE: { label: "Account Executive", color: "#10b981", icon: <Target size={14} /> },
-  VIEWER:            { label: "Viewer",            color: "#64748b", icon: <Eye size={14} /> },
 }
 
 // ── Toast notification ──────────────────────────────────────────
@@ -243,7 +242,7 @@ export default function ProfilePage() {
   )
 
   if (!profile) return null
-  const roleCfg = ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG] ?? ROLE_CONFIG.VIEWER
+  const roleCfg = ROLE_CONFIG[profile.role as keyof typeof ROLE_CONFIG] ?? ROLE_CONFIG.ACCOUNT_EXECUTIVE
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>

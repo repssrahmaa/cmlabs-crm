@@ -9,7 +9,7 @@ import bcrypt from "bcryptjs"
 const updateUserSchema = z.object({
   name:     z.string().min(1).optional(),
   email:    z.string().email().optional(),
-  role:     z.enum(["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"]).optional(),
+  role:     z.enum(["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"]).optional(),
   phone:    z.string().optional(),
   isActive: z.boolean().optional(),
   password: z.string().min(6).optional(),
@@ -111,7 +111,7 @@ export async function DELETE(
 
   if (!UI_PERMISSIONS.canDeleteUser(role)) {
     return NextResponse.json(
-      { error: "Forbidden", required: "SUPER_ADMIN" },
+      { error: "Forbidden", required: "ADMIN" },
       { status: 403 }
     )
   }

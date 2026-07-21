@@ -6,43 +6,41 @@ import type { RoleType } from "@/lib/permissions"
 const ROUTE_PERMISSIONS: {
   pattern:       RegExp
   allow:         RoleType[]
-  redirectViewer?: boolean   // redirect VIEWER ke read-only version
 }[] = [
   // Forecasting — management only
   {
     pattern: /^\/forecasting/,
-    allow:   ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+    allow:   ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Team management — admin only
   {
     pattern: /^\/team/,
-    allow:   ["SUPER_ADMIN", "SALES_MANAGER", "EXECUTIVE"],
+    allow:   ["ADMIN", "SALES_MANAGER", "EXECUTIVE"],
   },
   // Reports — management only
   {
     pattern: /^\/reports/,
-    allow:   ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+    allow:   ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Leads — semua bisa akses, tapi VIEWER read-only (handle di UI)
   {
     pattern:         /^\/leads/,
-    allow:           ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
-    redirectViewer:  false,  // biarkan masuk, UI akan handle read-only
+    allow:           ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Mailing — semua kecuali VIEWER dan EXECUTIVE
   {
     pattern: /^\/mails/,
-    allow:   ["SUPER_ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+    allow:   ["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Dashboard — semua role bisa akses
   {
     pattern: /^\/dashboard/,
-    allow:   ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
+    allow:   ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
   // Profile — semua role bisa akses
   {
     pattern: /^\/profile/,
-    allow:   ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
+    allow:   ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
   },
 ]
 

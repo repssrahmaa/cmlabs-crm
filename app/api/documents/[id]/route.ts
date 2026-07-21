@@ -104,8 +104,8 @@ export async function DELETE(
   const { id } = await context.params
   const role   = session.user.role as RoleType
 
-  // Hanya SUPER_ADMIN dan SALES_MANAGER yang bisa hapus
-  if (!["SUPER_ADMIN", "SALES_MANAGER"].includes(role)) {
+  // Hanya ADMIN dan SALES_MANAGER yang bisa hapus
+  if (!["ADMIN", "SALES_MANAGER"].includes(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

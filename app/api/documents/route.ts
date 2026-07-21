@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   const leadId      = searchParams.get("leadId")
   const statusFilter = searchParams.get("status")
 
-  // SUPER_ADMIN, SALES_MANAGER, EXECUTIVE — lihat semua dokumen
+  // ADMIN, SALES_MANAGER, EXECUTIVE — lihat semua dokumen
   // ACCOUNT_EXECUTIVE — lihat semua dokumen yang sudah FINALIZED/SENT
   //                     + semua dokumen dari lead miliknya sendiri
   let whereClause: any = {}
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   const role = session.user.role as RoleType
 
-  if (!["SUPER_ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role)) {
+  if (!["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

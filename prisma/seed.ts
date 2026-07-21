@@ -23,23 +23,23 @@ async function main() {
   console.log("\n👤 Seeding users...")
 
   const superAdmin = await prisma.user.upsert({
-    where:  { email: "super_admin@cmlabs.co" },
+    where:  { email: "ADMIN@cmlabs.co" },
     update: {
-      name:     "Super Admin",
+      name:     "Admin",
       password: hashedPassword,
-      role:     "SUPER_ADMIN",
+      role:     "ADMIN",
       isActive: true,
     },
     create: {
-      name:     "Super Admin",
-      email:    "super_admin@cmlabs.co",
+      name:     "Admin",
+      email:    "ADMIN@cmlabs.co",
       password: hashedPassword,
-      role:     "SUPER_ADMIN",
+      role:     "ADMIN",
       phone:    "081100000001",
       isActive: true,
     },
   })
-  console.log(`  ✓ SUPER_ADMIN    → ${superAdmin.email}`)
+  console.log(`  ✓ ADMIN    → ${superAdmin.email}`)
 
   const executive = await prisma.user.upsert({
     where:  { email: "executive@cmlabs.co" },
@@ -188,7 +188,7 @@ async function main() {
   })
   console.log(`  ✓ Lead (SM)      → "${leadAssignedToSM.title}"`)
 
-  // Lead 3: Unassigned — dibuat Super Admin
+  // Lead 3: Unassigned — dibuat Admin
   const leadUnassigned = await prisma.lead.upsert({
     where: {
       id: (await prisma.lead.findFirst({
@@ -316,7 +316,7 @@ async function main() {
   console.log("   ┌─────────────────────────────┬──────────────────┬───────────────────┐")
   console.log("   │ Email                       │ Password         │ Role              │")
   console.log("   ├─────────────────────────────┼──────────────────┼───────────────────┤")
-  console.log("   │ super_admin@cmlabs.co       │ Demo123!        │ SUPER_ADMIN       │")
+  console.log("   │ ADMIN@cmlabs.co       │ Demo123!        │ ADMIN       │")
   console.log("   │ executive@cmlabs.co         │ Demo123!        │ EXECUTIVE         │")
   console.log("   │ sales_mgr@cmlabs.co         │ Demo123!        │ SALES_MANAGER     │")
   console.log("   │ ae@cmlabs.co                │ Demo123!        │ ACCOUNT_EXECUTIVE │")

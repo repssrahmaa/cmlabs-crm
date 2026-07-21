@@ -25,7 +25,7 @@ export default function LeadsPage() {
   const [showAddModal, setShowAddModal]  = useState(false)
   const [search, setSearch]             = useState("")
 
-  const isReadOnly  = is("EXECUTIVE", "VIEWER")
+  const isReadOnly  = is("EXECUTIVE")
   const isAE        = is("ACCOUNT_EXECUTIVE")
 
   const leadsByStatus = useMemo(() => {
@@ -61,7 +61,6 @@ const pipelineValue = useMemo(() => {
     if (!destination) return
     if (destination.droppableId === source.droppableId) return
 
-    // Cek akses drag
     if (isReadOnly) {
       showNotice("readonly", "Anda tidak dapat memindahkan lead dalam mode lihat saja.")
       return
@@ -134,13 +133,6 @@ function formatRupiah(value: number): string {
           message="Anda dapat melihat semua leads namun tidak dapat melakukan perubahan."
         />
       )}
-      {is("VIEWER") && (
-        <AccessBanner
-          type="readonly"
-          role="Viewer"
-          message="Anda hanya dapat melihat data leads."
-        />
-      )}
       {isAE && (
         <AccessBanner
           type="own_only"
@@ -174,7 +166,7 @@ color: "var(--input-text)",
             Total: <strong>{leads.length}</strong> leads
           </span>
 
-          {/* Tombol tambah — semua kecuali EXECUTIVE dan VIEWER */}
+          {/* Tombol tambah — semua kecuali EXECUTIVE */}
           {!isReadOnly && (
             <button
               onClick={handleAddClick}

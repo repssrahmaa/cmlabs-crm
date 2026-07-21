@@ -13,7 +13,6 @@ const USER_IDS = {
   executive:        "user-executive-001",
   salesManager:     "user-sales-manager-001",
   accountExecutive: "user-ae-001",
-  viewer:           "user-viewer-001",
 }
 
 // ── Helper ─────────────────────────────────────────────────────
@@ -28,10 +27,10 @@ function perm(
 }
 
 // ════════════════════════════════════════════════════════════════
-// SUPER_ADMIN
+// ADMIN
 // ════════════════════════════════════════════════════════════════
-describe("SUPER_ADMIN permissions", () => {
-  const role: RoleType = "SUPER_ADMIN"
+describe("ADMIN permissions", () => {
+  const role: RoleType = "ADMIN"
 
   test("can delete any lead", () => {
     expect(perm(role, "delete", "lead")).toBe(true)
@@ -72,12 +71,12 @@ describe("SUPER_ADMIN permissions", () => {
     expect(UI_PERMISSIONS.canAccessForecasting(role)).toBe(true)
   })
 
-  test("cannot manage another SUPER_ADMIN", () => {
-    expect(canManage("SUPER_ADMIN", "SUPER_ADMIN")).toBe(false)
+  test("cannot manage another ADMIN", () => {
+    expect(canManage("ADMIN", "ADMIN")).toBe(false)
   })
 
   test("can manage EXECUTIVE", () => {
-    expect(canManage("SUPER_ADMIN", "EXECUTIVE")).toBe(true)
+    expect(canManage("ADMIN", "EXECUTIVE")).toBe(true)
   })
 })
 
@@ -111,8 +110,8 @@ describe("EXECUTIVE permissions", () => {
     expect(UI_PERMISSIONS.canGenerateDoc(role)).toBe(false)
   })
 
-  test("cannot manage SUPER_ADMIN", () => {
-    expect(canManage("EXECUTIVE", "SUPER_ADMIN")).toBe(false)
+  test("cannot manage ADMIN", () => {
+    expect(canManage("EXECUTIVE", "ADMIN")).toBe(false)
   })
 
   test("can manage SALES_MANAGER", () => {
@@ -211,95 +210,30 @@ describe("ACCOUNT_EXECUTIVE permissions", () => {
     expect(perm(role, "read", "user")).toBe(false)
   })
 
-  test("cannot access full forecasting", () => {
-    expect(UI_PERMISSIONS.canAccessForecasting(role)).toBe(false)
-  })
-
   test("cannot access team management", () => {
     expect(UI_PERMISSIONS.canAccessTeam(role)).toBe(false)
   })
 
-  test("can manage VIEWER", () => {
-    expect(canManage("ACCOUNT_EXECUTIVE", "VIEWER")).toBe(true)
-  })
 
   test("cannot manage SALES_MANAGER", () => {
     expect(canManage("ACCOUNT_EXECUTIVE", "SALES_MANAGER")).toBe(false)
   })
 })
-
-// ════════════════════════════════════════════════════════════════
-// VIEWER
-// ════════════════════════════════════════════════════════════════
-describe("VIEWER permissions", () => {
-  const role: RoleType = "VIEWER"
-
-  test("can read lead", () => {
-    expect(perm(role, "read", "lead")).toBe(true)
-  })
-
-  test("cannot create lead", () => {
-    expect(perm(role, "create", "lead")).toBe(false)
-  })
-
-  test("cannot create activity", () => {
-    expect(perm(role, "create", "activity")).toBe(false)
-  })
-
-  test("cannot update activity", () => {
-    expect(perm(role, "update", "activity")).toBe(false)
-  })
-
-  test("cannot delete activity", () => {
-    expect(perm(role, "delete", "activity")).toBe(false)
-  })
-
-  test("cannot read user list", () => {
-    expect(perm(role, "read", "user")).toBe(false)
-  })
-
-  test("cannot read report", () => {
-    expect(perm(role, "read", "report")).toBe(false)
-  })
-
-  test("cannot create document", () => {
-    expect(perm(role, "create", "document")).toBe(false)
-  })
-
-  test("cannot access forecasting", () => {
-    expect(UI_PERMISSIONS.canAccessForecasting(role)).toBe(false)
-  })
-
-  test("cannot manage any role", () => {
-    const roles: RoleType[] = [
-      "SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER",
-      "ACCOUNT_EXECUTIVE", "VIEWER",
-    ]
-    roles.forEach((target) => {
-      expect(canManage("VIEWER", target)).toBe(false)
-    })
-  })
-})
-
 // ════════════════════════════════════════════════════════════════
 // ROLE_HIERARCHY
 // ════════════════════════════════════════════════════════════════
 describe("ROLE_HIERARCHY", () => {
-  test("SUPER_ADMIN is level 1 (highest)", () => {
-    expect(ROLE_HIERARCHY["SUPER_ADMIN"]).toBe(1)
+  test("ADMIN is level 1 (highest)", () => {
+    expect(ROLE_HIERARCHY["ADMIN"]).toBe(1)
   })
 
-  test("VIEWER is level 5 (lowest)", () => {
-    expect(ROLE_HIERARCHY["VIEWER"]).toBe(5)
-  })
 
   test("levels are strictly increasing", () => {
     const levels = [
-      ROLE_HIERARCHY["SUPER_ADMIN"],
+      ROLE_HIERARCHY["ADMIN"],
       ROLE_HIERARCHY["EXECUTIVE"],
       ROLE_HIERARCHY["SALES_MANAGER"],
-      ROLE_HIERARCHY["ACCOUNT_EXECUTIVE"],
-      ROLE_HIERARCHY["VIEWER"],
+      ROLE_HIERARCHY["ACCOUNT_EXECUTIVE"]
     ]
     for (let i = 0; i < levels.length - 1; i++) {
       expect(levels[i]).toBeLessThan(levels[i + 1])
@@ -312,8 +246,8 @@ describe("ROLE_HIERARCHY", () => {
 // ════════════════════════════════════════════════════════════════
 describe("ROLE_PERMISSIONS matrix is complete", () => {
   const allRoles: RoleType[] = [
-    "SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER",
-    "ACCOUNT_EXECUTIVE", "VIEWER",
+    "ADMIN", "EXECUTIVE", "SALES_MANAGER",
+    "ACCOUNT_EXECUTIVE",
   ]
   const allResources: ResourceType[] = [
     "lead", "activity", "user", "report",

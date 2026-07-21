@@ -54,7 +54,7 @@ export async function CanAccessForecasting({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER"]}
+      allow={["ADMIN", "EXECUTIVE", "SALES_MANAGER"]}
       fallback={fallback}
     >
       {children}
@@ -71,7 +71,7 @@ export async function CanAccessTeam({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN", "SALES_MANAGER"]}
+      allow={["ADMIN", "SALES_MANAGER"]}
       fallback={fallback}
     >
       {children}
@@ -88,7 +88,7 @@ export async function CanDeleteLead({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN", "SALES_MANAGER"]}
+      allow={["ADMIN", "SALES_MANAGER"]}
       fallback={fallback}
     >
       {children}
@@ -105,7 +105,7 @@ export async function CanGenerateDocument({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"]}
+      allow={["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"]}
       fallback={fallback}
     >
       {children}
@@ -122,7 +122,7 @@ export async function CanDeleteUser({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN"]}
+      allow={["ADMIN"]}
       fallback={fallback}
     >
       {children}
@@ -138,7 +138,7 @@ export async function SuperAdminOnly({
   fallback?: React.ReactNode
 }) {
   return (
-    <RoleGuard allow={["SUPER_ADMIN"]} fallback={fallback}>
+    <RoleGuard allow={["ADMIN"]} fallback={fallback}>
       {children}
     </RoleGuard>
   )
@@ -153,23 +153,9 @@ export async function ManagementOnly({
 }) {
   return (
     <RoleGuard
-      allow={["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER"]}
+      allow={["ADMIN", "EXECUTIVE", "SALES_MANAGER"]}
       fallback={fallback}
     >
-      {children}
-    </RoleGuard>
-  )
-}
-
-export async function NotViewer({
-  children,
-  fallback = null,
-}: {
-  children: React.ReactNode
-  fallback?: React.ReactNode
-}) {
-  return (
-    <RoleGuard deny={["VIEWER"]} fallback={fallback}>
       {children}
     </RoleGuard>
   )

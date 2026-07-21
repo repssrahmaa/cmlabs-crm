@@ -6,16 +6,16 @@ import { useRouter }           from "next/navigation"
 import Image from "next/image"
 
 // ─── Types ────────────────────────────────────────────────────────
-type DemoRole    = "SUPER_ADMIN" | "SALES_MANAGER" | "ACCOUNT_EXEC" | "EXECUTIVE"
+type DemoRole    = "ADMIN" | "SALES_MANAGER" | "ACCOUNT_EXEC" | "EXECUTIVE"
 type LoginStatus = "idle" | "loading" | "success"
 
 const DEMO_ACCOUNTS: {
   role: DemoRole; label: string; pos: string
   email: string; color: string; bg: string
 }[] = [
-  { role:"SUPER_ADMIN",   label:"Super Admin",   pos:"Developer Tim",  email:"super_admin@cmlabs.co", color:"#C0292B", bg:"rgba(192,41,43,0.08)"  },
+  { role:"ADMIN",   label:"Admin",   pos:"Developer Tim",  email:"ADMIN@cmlabs.co", color:"#C0292B", bg:"rgba(192,41,43,0.08)"  },
   { role:"SALES_MANAGER", label:"Sales Manager", pos:"Leader Divisi",  email:"sales_mgr@cmlabs.co",  color:"#0047B3", bg:"rgba(0,71,179,0.08)"   },
-  { role:"ACCOUNT_EXEC",  label:"Account Exec",  pos:"Marketing Team", email:"ae@cmlabs.co",          color:"#0C7A4B", bg:"rgba(12,122,75,0.08)"  },
+  { role:"ACCOUNT_EXEC",  label:"Account Executive (AE)",  pos:"Marketing Team", email:"ae@cmlabs.co",          color:"#0C7A4B", bg:"rgba(12,122,75,0.08)"  },
   { role:"EXECUTIVE",     label:"Executive",     pos:"Head / C-Level", email:"executive@cmlabs.co",  color:"#5E35B1", bg:"rgba(94,53,177,0.08)"   },
 ]
 const DEMO_PASSWORD = "Demo123!"
@@ -169,7 +169,7 @@ async function handleSubmit(e: React.FormEvent) {
       const code = (res as any).code
       setError(
         code === "account_inactive"
-          ? "Akun Anda telah dinonaktifkan. Hubungi Super Admin untuk mengaktifkan kembali."
+          ? "Akun Anda telah dinonaktifkan. Hubungi Admin untuk mengaktifkan kembali."
           : "Email atau password tidak valid."
       )
     }
@@ -440,9 +440,9 @@ const inp = (f: boolean): React.CSSProperties => ({
                     </div>
                     <span style={{ fontSize:12, color:T.body }}>Tetap masuk</span>
                   </label>
-                  {/* Tidak ada lupa password — Super Admin yang reset */}
+                  {/* Tidak ada lupa password — Admin yang reset */}
                   <span style={{ fontSize:11.5, color:T.muted, fontStyle:"italic" }}>
-                    Hubungi Super Admin jika lupa password
+                    Hubungi Admin jika lupa password
                   </span>
                 </div>
 

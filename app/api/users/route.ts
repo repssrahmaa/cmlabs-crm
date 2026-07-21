@@ -10,7 +10,7 @@ const createUserSchema = z.object({
   name:     z.string().min(1),
   email:    z.string().email(),
   password: z.string().min(6),
-  role:     z.enum(["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"]),
+  role:     z.enum(["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"]),
   phone:    z.string().optional(),
 })
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   // SALES_MANAGER tidak bisa membuat user dengan role lebih tinggi
-  const actorLevel = { SUPER_ADMIN: 1, EXECUTIVE: 2, SALES_MANAGER: 3, ACCOUNT_EXECUTIVE: 4, VIEWER: 5 }
+  const actorLevel = { ADMIN: 1, EXECUTIVE: 2, SALES_MANAGER: 3, ACCOUNT_EXECUTIVE: 4, VIEWER: 5 }
   if (
     role === "SALES_MANAGER" &&
     actorLevel[parsed.data.role as RoleType] <= actorLevel["SALES_MANAGER"]

@@ -30,7 +30,7 @@ export default function AddLeadModal({ onClose, onCreate }: Props) {
   useEffect(() => {
     if (!canAssignLead) return
     fetch("/api/users").then((r) => r.json()).then((d) => {
-      if (Array.isArray(d)) setUsers(d.filter((u: User) => u.role !== "VIEWER"))
+      if (Array.isArray(d)) setUsers(Array.isArray(d) ? d : [])
     }).catch(() => {})
   }, [canAssignLead])
 

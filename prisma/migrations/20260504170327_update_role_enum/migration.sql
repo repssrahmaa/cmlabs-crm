@@ -5,7 +5,7 @@
 ALTER TABLE "users" ADD COLUMN "role_new" TEXT;
 
 -- ── Step 2: Map existing data to new roles ─────────────────────
-UPDATE "users" SET "role_new" = 'SUPER_ADMIN'       WHERE "role"::TEXT = 'ADMIN';
+UPDATE "users" SET "role_new" = 'ADMIN'       WHERE "role"::TEXT = 'ADMIN';
 UPDATE "users" SET "role_new" = 'SALES_MANAGER'     WHERE "role"::TEXT = 'MANAGER';
 UPDATE "users" SET "role_new" = 'ACCOUNT_EXECUTIVE' WHERE "role"::TEXT = 'SALES';
 UPDATE "users" SET "role_new" = 'ACCOUNT_EXECUTIVE' WHERE "role"::TEXT = 'MARKETING';
@@ -22,7 +22,7 @@ DROP TYPE IF EXISTS "Role";
 
 -- ── Step 5: Create new enum ────────────────────────────────────
 CREATE TYPE "Role" AS ENUM (
-  'SUPER_ADMIN',
+  'ADMIN',
   'EXECUTIVE',
   'SALES_MANAGER',
   'ACCOUNT_EXECUTIVE',

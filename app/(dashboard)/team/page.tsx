@@ -315,8 +315,8 @@ export default function TeamPage() {
   const { role, is }                       = useRoleGuard()
   const { notice, showNotice, hideNotice } = useAccessNotice()
   const isReadOnly = is("EXECUTIVE")
-  const canDelete  = is("SUPER_ADMIN")
-  const canEdit    = is("SUPER_ADMIN", "SALES_MANAGER")
+  const canDelete  = is("ADMIN")
+  const canEdit    = is("ADMIN", "SALES_MANAGER")
 
   const [users,       setUsers]       = useState<any[]>([])
   const [loading,     setLoading]     = useState(true)
@@ -361,14 +361,14 @@ const roleDistrib = Object.entries(
   }, {})
 ).map(([r, count]) => ({
   name: {
-    SUPER_ADMIN: "Super Admin",
+    ADMIN: "Admin",
     EXECUTIVE: "Executive",
     SALES_MANAGER: "Sales Manager",
     ACCOUNT_EXECUTIVE: "Account Executive",
   }[r] ?? r,
   value: count as number,
   color: {
-    SUPER_ADMIN: "#dc2626",
+    ADMIN: "#dc2626",
     EXECUTIVE: "#7c3aed",
     SALES_MANAGER: "#3b82f6",
     ACCOUNT_EXECUTIVE: "#10b981",
@@ -402,13 +402,13 @@ const salesBarData = [...salesChartData]
   }
 
 const ROLE_LABEL: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
   EXECUTIVE: "Executive",
   SALES_MANAGER: "Sales Manager",
   ACCOUNT_EXECUTIVE: "Account Executive",
 }
 const ROLE_COLOR: Record<string, string> = {
-  SUPER_ADMIN: "#dc2626",
+  ADMIN: "#dc2626",
   EXECUTIVE: "#7c3aed",
   SALES_MANAGER: "#3b82f6",
   ACCOUNT_EXECUTIVE: "#10b981",
@@ -469,7 +469,7 @@ async function handleDelete(id: string) {
 }}
 className="grid-cols-4"
 >
-        {["SUPER_ADMIN","EXECUTIVE","SALES_MANAGER","ACCOUNT_EXECUTIVE"].map((r) => {
+        {["ADMIN","EXECUTIVE","SALES_MANAGER","ACCOUNT_EXECUTIVE"].map((r) => {
           const count = users.filter((u) => u.role === r).length
           const c     = ROLE_COLOR[r]
           return (
@@ -704,11 +704,11 @@ className="grid-cols-4"
                   />
                 </div>
               ))}
-              {is("SUPER_ADMIN") && (
+              {is("ADMIN") && (
                 <div>
                   <label style={{ display:"block", fontSize:11, fontWeight:700, color:"var(--text-muted)", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.06em" }}>Role</label>
                   <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role:e.target.value }))} style={{ width:"100%", padding:"9px 12px", background:"var(--input-bg)", color:"var(--input-text)", border:"1px solid var(--input-border)", borderRadius:9, fontSize:13 }}>
-                    <option value="SUPER_ADMIN">Super Admin</option>
+                    <option value="ADMIN">Admin</option>
                     <option value="EXECUTIVE">Executive</option>
                     <option value="SALES_MANAGER">Sales Manager</option>
                     <option value="ACCOUNT_EXECUTIVE">Account Executive</option>

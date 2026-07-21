@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   if (!UI_PERMISSIONS.canCreateLead(role)) {
     return NextResponse.json(
-      { error: "Forbidden — hanya SUPER_ADMIN, SALES_MANAGER, dan ACCOUNT_EXECUTIVE yang bisa membuat lead" },
+      { error: "Forbidden — hanya ADMIN, SALES_MANAGER, dan ACCOUNT_EXECUTIVE yang bisa membuat lead" },
       { status: 403 }
     )
   }

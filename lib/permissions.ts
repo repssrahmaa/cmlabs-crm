@@ -1,9 +1,8 @@
 export type RoleType =
-  | "SUPER_ADMIN"
+  | "ADMIN"
   | "EXECUTIVE"
   | "SALES_MANAGER"
   | "ACCOUNT_EXECUTIVE"
-  | "VIEWER"
 
 export type ActionType =
   | "create"
@@ -30,23 +29,21 @@ export type PermissionScope =
 
 // ── Runtime constants ─────────────────────────────────────────
 export const ALL_ROLES: RoleType[] = [
-  "SUPER_ADMIN",
+  "ADMIN",
   "EXECUTIVE",
   "SALES_MANAGER",
-  "ACCOUNT_EXECUTIVE",
-  "VIEWER",
+  "ACCOUNT_EXECUTIVE"
 ]
 
 // ── Permission Matrix ─────────────────────────────────────────
 //
-// SUPER_ADMIN     → FULL semua
+// ADMIN     → FULL semua
 // EXECUTIVE       → VIEW semua (bisa lihat semua fitur, tidak bisa edit)
 // SALES_MANAGER   → FULL lead/activity/doc, WRITE user (no delete/role change)
 // ACCOUNT_EXECUTIVE → VIEW semua lead (sama isinya), OWN_WRITE untuk edit
-// VIEWER          → VIEW dashboard & lead saja, NONE yang lain
-//
+
 export const ROLE_PERMISSIONS: Record<RoleType, Record<ResourceType, PermissionScope>> = {
-  SUPER_ADMIN: {
+  ADMIN: {
     dashboard: "FULL",
     forecast:  "FULL",
     lead:      "FULL",
@@ -81,15 +78,6 @@ export const ROLE_PERMISSIONS: Record<RoleType, Record<ResourceType, PermissionS
     user:      "NONE",
     report:    "VIEW",      // lihat laporan (dibatasi di UI ke personal stats)
     document:  "OWN_WRITE", // generate dari lead sendiri
-  },
-  VIEWER: {
-    dashboard: "VIEW",  // lihat dashboard
-    forecast:  "NONE",  // tidak ada akses forecast
-    lead:      "VIEW",  // lihat semua lead, tidak bisa edit
-    activity:  "NONE",
-    user:      "NONE",
-    report:    "NONE",
-    document:  "NONE",
   },
 }
 
@@ -142,13 +130,13 @@ export function hasPermission(
 
 // ── Route access ──────────────────────────────────────────────
 const ROUTE_ALLOW_MAP: Record<string, RoleType[]> = {
-  "/dashboard":   ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
-  "/leads":       ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
-  "/forecasting": ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
-  "/mails":       ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
-  "/team":        ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER"],
-  "/reports":     ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
-  "/profile":     ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE", "VIEWER"],
+  "/dashboard":   ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+  "/leads":       ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+  "/forecasting": ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+  "/mails":       ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+  "/team":        ["ADMIN", "EXECUTIVE", "SALES_MANAGER"],
+  "/reports":     ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
+  "/profile":     ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"],
 }
 
 export function canAccessRoute(role: RoleType, route: string): boolean {
@@ -159,11 +147,10 @@ export function canAccessRoute(role: RoleType, route: string): boolean {
 
 // ── Role hierarchy ────────────────────────────────────────────
 export const ROLE_HIERARCHY: Record<RoleType, number> = {
-  SUPER_ADMIN:       1,
+  ADMIN:       1,
   EXECUTIVE:         2,
   SALES_MANAGER:     3,
-  ACCOUNT_EXECUTIVE: 4,
-  VIEWER:            5,
+  ACCOUNT_EXECUTIVE: 4
 }
 
 export function canManage(actorRole: RoleType, targetRole: RoleType): boolean {
@@ -174,16 +161,16 @@ export function canManage(actorRole: RoleType, targetRole: RoleType): boolean {
 export const UI_PERMISSIONS = {
   // Lead actions
   canCreateLead:   (role: RoleType) =>
-    ["SUPER_ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
+    ["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
 
   canDeleteLead:   (role: RoleType) =>
-    ["SUPER_ADMIN", "SALES_MANAGER"].includes(role),
+    ["ADMIN", "SALES_MANAGER"].includes(role),
 
   canAssignLead:   (role: RoleType) =>
-    ["SUPER_ADMIN", "SALES_MANAGER"].includes(role),
+    ["ADMIN", "SALES_MANAGER"].includes(role),
 
   canEditLead:     (role: RoleType, ownerId?: string | null, userId?: string) => {
-    if (["SUPER_ADMIN", "SALES_MANAGER"].includes(role)) return true
+    if (["ADMIN", "SALES_MANAGER"].includes(role)) return true
     if (role === "ACCOUNT_EXECUTIVE") {
       return !!userId && !!ownerId && userId === ownerId
     }
@@ -192,26 +179,26 @@ export const UI_PERMISSIONS = {
 
   // Navigation access
   canAccessForecasting: (role: RoleType) =>
-    ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
+    ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
 
   canAccessTeam:   (role: RoleType) =>
-    ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER"].includes(role),
+    ["ADMIN", "EXECUTIVE", "SALES_MANAGER"].includes(role),
 
   canAccessReports: (role: RoleType) =>
-    ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
+    ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
 
   canAccessMails:  (role: RoleType) =>
-    ["SUPER_ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
+    ["ADMIN", "EXECUTIVE", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
 
   // Document & report
   canGenerateDoc:  (role: RoleType) =>
-    ["SUPER_ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
+    ["ADMIN", "SALES_MANAGER", "ACCOUNT_EXECUTIVE"].includes(role),
 
   // User management
-  canDeleteUser:   (role: RoleType) => role === "SUPER_ADMIN",
-  canChangeRole:   (role: RoleType) => role === "SUPER_ADMIN",
+  canDeleteUser:   (role: RoleType) => role === "ADMIN",
+  canChangeRole:   (role: RoleType) => role === "ADMIN",
 
   // Read-only roles
   isReadOnly:      (role: RoleType) =>
-    ["EXECUTIVE", "VIEWER"].includes(role),
+    ["EXECUTIVE"].includes(role),
 }

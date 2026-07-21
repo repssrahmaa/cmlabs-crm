@@ -86,7 +86,7 @@ model Document {
 
 
 enum Role {
-  SUPER_ADMIN
+  ADMIN
   EXECUTIVE
   SALES_MANAGER
   ACCOUNT_EXECUTIVE

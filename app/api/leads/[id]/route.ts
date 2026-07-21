@@ -184,7 +184,7 @@ export async function DELETE(
 
   if (!UI_PERMISSIONS.canDeleteLead(role)) {
     return NextResponse.json(
-      { error: "Forbidden — hanya SUPER_ADMIN dan SALES_MANAGER yang bisa menghapus lead" },
+      { error: "Forbidden — hanya ADMIN dan SALES_MANAGER yang bisa menghapus lead" },
       { status: 403 }
     )
   }

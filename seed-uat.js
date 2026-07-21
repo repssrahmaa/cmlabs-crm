@@ -84,7 +84,7 @@ async function seed() {
         name:  "Admin UAT",
         email: "admin.uat@cmlabs.co",
         password: hashedPassword,
-        role:  "SUPER_ADMIN",
+        role:  "ADMIN",
         phone: "081111111111",
       },
       {

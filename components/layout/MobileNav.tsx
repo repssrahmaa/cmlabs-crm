@@ -92,12 +92,12 @@ export default function MobileNav() {
   const close = () => setOpen(false)
 
   const ROLE_LABEL: Record<string, string> = {
-    SUPER_ADMIN: "Super Administrator", EXECUTIVE: "Executive",
+    ADMIN: "Administrator", EXECUTIVE: "Executive",
     SALES_MANAGER: "Sales Manager", ACCOUNT_EXECUTIVE: "Account Executive",
     VIEWER: "Viewer",
   }
   const ROLE_COLOR: Record<string, string> = {
-    SUPER_ADMIN: "#ef4444", EXECUTIVE: "#8b5cf6",
+    ADMIN: "#ef4444", EXECUTIVE: "#8b5cf6",
     SALES_MANAGER: "#3b82f6", ACCOUNT_EXECUTIVE: "#10b981",
     VIEWER: "#94a3b8",
   }
