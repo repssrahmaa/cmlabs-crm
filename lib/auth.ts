@@ -21,8 +21,8 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
-    id?: string
-    role?: string
+    id: string
+    role: string
   }
 }
 
@@ -42,19 +42,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Saat Login Pertama Kali: Simpan id & role ke token
       if (user) {
-        token.id = user.id
+        token.id = user.id as string
         token.role = user.role
       }
-      // Return token yang sudah membawa 'id' dan 'role' (tidak akan hilang saat refresh)
       return token
     },
     async session({ session, token }) {
-      // Salin 'id' dan 'role' dari JWT token ke Objek Session
       if (session.user) {
-        if (token.id) session.user.id = token.id as string
-        if (token.role) session.user.role = token.role as string
+        if (token.id) session.user.id = token.id
+        if (token.role) session.user.role = token.role
       }
       return session
     },
@@ -81,7 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id:    user.id,
           name:  user.name,
           email: user.email,
-          role:  user.role, // Memastikan role dikembalikan di sini
+          role:  user.role,
         }
       },
     }),
