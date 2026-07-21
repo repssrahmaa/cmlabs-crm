@@ -12,6 +12,21 @@ interface Props {
   onCreate: (data: any) => Promise<void>
 }
 
+// ── Helper Formatter Rupiah ────────────────────────────────────
+const formatRupiah = (value: string) => {
+  // Ambil hanya karakter angka
+  const rawNumber = value.replace(/\D/g, "")
+  if (!rawNumber) return ""
+  // Format ke standar Rupiah (id-ID)
+  return "Rp " + new Intl.NumberFormat("id-ID").format(Number(rawNumber))
+}
+
+const parseRupiahToNumber = (value: string) => {
+  // Bersihkan "Rp" dan titik pemisah ribuan untuk dikirim ke backend
+  const rawNumber = value.replace(/\D/g, "")
+  return rawNumber ? Number(rawNumber) : undefined
+}
+
 export default function AddLeadModal({ onClose, onCreate }: Props) {
   const [loading,   setLoading]   = useState(false)
   const [users,     setUsers]     = useState<User[]>([])
@@ -27,6 +42,12 @@ export default function AddLeadModal({ onClose, onCreate }: Props) {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  // Handler khusus untuk input Nilai Deal dengan autostyle Rupiah
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatRupiah(e.target.value)
+    setForm((f) => ({ ...f, value: formatted }))
+  }
+
   useEffect(() => {
     if (!canAssignLead) return
     fetch("/api/users").then((r) => r.json()).then((d) => {
@@ -39,7 +60,13 @@ export default function AddLeadModal({ onClose, onCreate }: Props) {
     if (!form.title || !form.clientName) return
     setLoading(true); setErrorMsg("")
     try {
-      await onCreate({ ...form, value: form.value ? Number(form.value) : undefined, assignedToId: form.assignedToId || undefined })
+      // Convert formatted string "Rp 10.000.000" kembali ke Number (10000000) sebelum dipost
+      const payload = {
+        ...form,
+        value: parseRupiahToNumber(form.value),
+        assignedToId: form.assignedToId || undefined
+      }
+      await onCreate(payload)
       onClose()
     } catch (err: any) { setErrorMsg(err.message ?? "Gagal membuat lead")
     } finally { setLoading(false) }
@@ -105,9 +132,17 @@ export default function AddLeadModal({ onClose, onCreate }: Props) {
           </FormField>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <FormField label="Nilai Deal (Rp)">
-              <input type="number" value={form.value} onChange={set("value")} placeholder="0" min={0} style={inputStyle} />
+            {/* INPUT NILAI DEAL YANG SUDAH DIBERIKAN FORMAT RUPIAH */}
+            <FormField label="Nilai Deal">
+              <input 
+                type="text" 
+                value={form.value} 
+                onChange={handleValueChange} 
+                placeholder="Rp 0" 
+                style={inputStyle} 
+              />
             </FormField>
+
             <FormField label="Prioritas">
               <select value={form.priority} onChange={set("priority")} style={selectStyle}>
                 <option value="LOW">Rendah</option>
